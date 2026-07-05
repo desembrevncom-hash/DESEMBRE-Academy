@@ -24,9 +24,7 @@ export function SiteHeader() {
           </div>
           <div className="leading-tight">
             <div className="text-[13px] font-bold tracking-tight">DESEMBRE</div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Academy
-            </div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Academy</div>
           </div>
         </Link>
 
@@ -45,10 +43,7 @@ export function SiteHeader() {
 
         <div className="hidden md:flex items-center gap-2">
           {isAuthed ? (
-            <Button
-              asChild
-              className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground"
-            >
+            <Button asChild className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
               <Link to="/student">Vào học ngay</Link>
             </Button>
           ) : (
@@ -56,10 +51,7 @@ export function SiteHeader() {
               <Button asChild variant="ghost" className="rounded-full">
                 <Link to="/auth/phone">Đăng nhập</Link>
               </Button>
-              <Button
-                asChild
-                className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground"
-              >
+              <Button asChild className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
                 <Link to="/courses">Bắt đầu học</Link>
               </Button>
             </>
@@ -91,28 +83,16 @@ export function SiteHeader() {
             ))}
             <div className="mt-2 grid grid-cols-2 gap-2">
               {isAuthed ? (
-                <Button
-                  asChild
-                  className="col-span-2 rounded-full bg-primary hover:bg-primary-dark text-primary-foreground"
-                >
-                  <Link to="/student" onClick={() => setOpen(false)}>
-                    Vào học ngay
-                  </Link>
+                <Button asChild className="col-span-2 rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
+                  <Link to="/student" onClick={() => setOpen(false)}>Vào học ngay</Link>
                 </Button>
               ) : (
                 <>
                   <Button asChild variant="outline" className="rounded-full">
-                    <Link to="/auth/phone" onClick={() => setOpen(false)}>
-                      Đăng nhập
-                    </Link>
+                    <Link to="/auth/phone" onClick={() => setOpen(false)}>Đăng nhập</Link>
                   </Button>
-                  <Button
-                    asChild
-                    className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground"
-                  >
-                    <Link to="/courses" onClick={() => setOpen(false)}>
-                      Bắt đầu học
-                    </Link>
+                  <Button asChild className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
+                    <Link to="/courses" onClick={() => setOpen(false)}>Bắt đầu học</Link>
                   </Button>
                 </>
               )}
