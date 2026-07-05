@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let subscription: { unsubscribe: () => void } | null = null;
 
     async function initializeAuth() {
       try {
@@ -31,9 +32,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(currentSession?.user ?? null);
           setError(null);
         }
+
+        subscription = authService.onAuthStateChange((event, newSession) => {
+          if (mounted) {
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+            setLoading(false);
+          }
+        });
       } catch (err: any) {
         if (mounted) {
-          setError(err as AuthErrorInfo);
+          setError({
+            message: err.message || 'Failed to initialize authentication',
+            code: err.code,
+            status: err.status
+          });
         }
       } finally {
         if (mounted) {
@@ -45,17 +58,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initializeAuth();
 
-    const subscription = authService.onAuthStateChange((event, newSession) => {
-      if (mounted) {
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        setLoading(false);
-      }
-    });
-
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, []);
 

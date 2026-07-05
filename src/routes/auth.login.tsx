@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,10 +12,6 @@ import { authService } from "@/features/auth/services/auth.service";
 import { useAuth } from "@/features/auth/useAuth";
 
 export const Route = createFileRoute("/auth/login")({
-  beforeLoad: async ({ context }) => {
-    // If we're already initialized and have a session, redirect
-    // The exact route context type depends on setup, but we'll handle redirect in component or via standard loader if integrated
-  },
   component: Login,
 });
 
@@ -37,10 +33,11 @@ function Login() {
   });
 
   // Redirect if already authenticated
-  if (initialized && session) {
-    navigate({ to: "/student" });
-    return null;
-  }
+  useEffect(() => {
+    if (initialized && session) {
+      navigate({ to: "/student", replace: true });
+    }
+  }, [initialized, session, navigate]);
 
   const onSubmit = async (values: FormValues) => {
     try {

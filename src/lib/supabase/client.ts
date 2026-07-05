@@ -1,8 +1,21 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from './env';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseEnvironment } from './env';
 
-if (typeof window === "undefined") {
-    throw new Error("Supabase client should only be instantiated in the browser.");
+let browserClient: SupabaseClient | null = null;
+
+export function getSupabaseBrowserClient(): SupabaseClient | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  if (!browserClient) {
+    const environment = getSupabaseEnvironment();
+
+    browserClient = createClient(
+      environment.url,
+      environment.publishableKey
+    );
+  }
+
+  return browserClient;
 }
-
-export const supabase = createClient(env.supabaseUrl, env.supabaseAnonKey);

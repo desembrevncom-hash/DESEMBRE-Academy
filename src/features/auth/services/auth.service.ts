@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase/client';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 
 export type AuthErrorInfo = {
@@ -15,32 +15,45 @@ function normalizeError(error: any): AuthErrorInfo {
   };
 }
 
+function getClientOrThrow() {
+  const client = getSupabaseBrowserClient();
+  if (!client) {
+    throw new Error('Supabase client is not available in this environment.');
+  }
+  return client;
+}
+
 export const authService = {
   async getSession(): Promise<Session | null> {
-    const { data, error } = await supabase.auth.getSession();
+    const client = getClientOrThrow();
+    const { data, error } = await client.auth.getSession();
     if (error) throw normalizeError(error);
     return data.session;
   },
 
   async getUser(): Promise<User | null> {
-    const { data, error } = await supabase.auth.getUser();
+    const client = getClientOrThrow();
+    const { data, error } = await client.auth.getUser();
     if (error) throw normalizeError(error);
     return data.user;
   },
 
   async signInWithPassword(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const client = getClientOrThrow();
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
     if (error) throw normalizeError(error);
     return data;
   },
 
   async signOut() {
-    const { error } = await supabase.auth.signOut();
+    const client = getClientOrThrow();
+    const { error } = await client.auth.signOut();
     if (error) throw normalizeError(error);
   },
 
   onAuthStateChange(callback: (event: string, session: Session | null) => void) {
-    const { data } = supabase.auth.onAuthStateChange(callback);
+    const client = getClientOrThrow();
+    const { data } = client.auth.onAuthStateChange(callback);
     return data.subscription;
   }
 };
