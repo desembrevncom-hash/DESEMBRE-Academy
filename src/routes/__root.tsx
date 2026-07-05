@@ -115,15 +115,19 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { AuthProvider } from "@/features/auth/AuthProvider";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppStoreProvider>
-        <Outlet />
-        <Toaster position="top-center" richColors />
-      </AppStoreProvider>
+      <AuthProvider>
+        <AppStoreProvider>
+          <Outlet />
+          <Toaster position="top-center" richColors />
+        </AppStoreProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

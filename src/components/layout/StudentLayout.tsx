@@ -1,9 +1,11 @@
 import { Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { BookOpen, Home, LogOut, TrendingUp, User } from "lucide-react";
+import { BookOpen, Home, LogOut, TrendingUp, User, Loader2, Info } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
 import { useEffect } from "react";
+import { useAuth } from "@/features/auth/useAuth";
+import { authService } from "@/features/auth/services/auth.service";
 
 const navItems = [
   { to: "/student", label: "Tổng quan", icon: Home, exact: true },
@@ -13,23 +15,42 @@ const navItems = [
 ] as const;
 
 export function StudentLayout() {
-  const { isAuthed, logout, student } = useAppStore();
+  const { session, initialized, user } = useAuth();
+  const { student } = useAppStore(); // Keep mock student for M2 UI rendering
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (!isAuthed) navigate({ to: "/auth/phone" });
-  }, [isAuthed, navigate]);
+    if (initialized && !session) {
+      navigate({ to: "/auth/login" });
+    }
+  }, [initialized, session, navigate]);
 
-  if (!isAuthed) return null;
+  if (!initialized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-  const handleLogout = () => {
-    logout();
-    navigate({ to: "/" });
+  if (!session) return null;
+
+  const handleLogout = async () => {
+    try {
+      await authService.signOut();
+      navigate({ to: "/auth/login" });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
     <div className="min-h-dvh bg-surface">
+      <div className="bg-primary/10 border-b border-primary/20 p-2 text-center text-xs text-primary-dark flex items-center justify-center gap-2">
+        <Info className="h-4 w-4" />
+        Authenticated session established; student profile integration is the next milestone.
+      </div>
       <div className="mx-auto flex max-w-7xl gap-6 px-3 sm:px-6 py-6">
         {/* Sidebar desktop */}
         <aside className="hidden md:flex w-64 shrink-0 flex-col rounded-3xl border border-border/70 bg-card p-5 sticky top-6 h-[calc(100dvh-3rem)]">
@@ -40,7 +61,7 @@ export function StudentLayout() {
           <div className="mt-6 flex items-center gap-3 rounded-2xl bg-accent/60 p-3">
             <Avatar className="h-10 w-10"><AvatarFallback className="bg-primary/20 text-primary-dark">{student.fullName.slice(0, 1)}</AvatarFallback></Avatar>
             <div className="min-w-0">
-              <div className="text-sm font-semibold truncate">{student.fullName}</div>
+              <div className="text-sm font-semibold truncate">{user?.email || student.fullName}</div>
               <div className="text-xs text-muted-foreground truncate">{student.phone}</div>
             </div>
           </div>

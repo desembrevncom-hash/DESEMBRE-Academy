@@ -19,6 +19,7 @@ import { Route as StudentCoursesRouteImport } from './routes/student.courses'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthPhoneRouteImport } from './routes/auth.phone'
+import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as StudentCoursesSlugLessonsLessonIdRouteImport } from './routes/student.courses.$slug.lessons.$lessonId'
 
 const StudentRoute = StudentRouteImport.update({
@@ -71,6 +72,11 @@ const AuthPhoneRoute = AuthPhoneRouteImport.update({
   path: '/auth/phone',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentCoursesSlugLessonsLessonIdRoute =
   StudentCoursesSlugLessonsLessonIdRouteImport.update({
     id: '/$slug/lessons/$lessonId',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/courses': typeof CoursesRouteWithChildren
   '/student': typeof StudentRouteWithChildren
+  '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/courses': typeof CoursesRouteWithChildren
   '/student': typeof StudentRouteWithChildren
+  '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/courses/$slug': typeof CoursesSlugRoute
@@ -124,6 +133,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/courses'
     | '/student'
+    | '/auth/login'
     | '/auth/phone'
     | '/auth/verify-otp'
     | '/courses/$slug'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/courses'
+    | '/auth/login'
     | '/auth/phone'
     | '/auth/verify-otp'
     | '/courses/$slug'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/courses'
     | '/student'
+    | '/auth/login'
     | '/auth/phone'
     | '/auth/verify-otp'
     | '/courses/$slug'
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   CoursesRoute: typeof CoursesRouteWithChildren
   StudentRoute: typeof StudentRouteWithChildren
+  AuthLoginRoute: typeof AuthLoginRoute
   AuthPhoneRoute: typeof AuthPhoneRoute
   AuthVerifyOtpRoute: typeof AuthVerifyOtpRoute
 }
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPhoneRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/student/courses/$slug/lessons/$lessonId': {
       id: '/student/courses/$slug/lessons/$lessonId'
       path: '/$slug/lessons/$lessonId'
@@ -293,6 +313,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   CoursesRoute: CoursesRouteWithChildren,
   StudentRoute: StudentRouteWithChildren,
+  AuthLoginRoute: AuthLoginRoute,
   AuthPhoneRoute: AuthPhoneRoute,
   AuthVerifyOtpRoute: AuthVerifyOtpRoute,
 }
