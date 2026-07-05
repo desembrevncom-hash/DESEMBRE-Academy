@@ -7,13 +7,7 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CourseCard } from "@/components/common/CourseCard";
 import { CourseCardSkeleton, EmptyState } from "@/components/common/States";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { courses } from "@/data/courses";
 import { categories } from "@/data/categories";
 
@@ -37,16 +31,11 @@ function CoursesPage() {
 
   const filtered = useMemo(() => {
     let list = courses.slice();
-    if (category)
-      list = list.filter(
-        (c) => categories.find((cat) => cat.id === c.categoryId)?.slug === category,
-      );
+    if (category) list = list.filter((c) => categories.find((cat) => cat.id === c.categoryId)?.slug === category);
     if (level) list = list.filter((c) => c.level === level);
     if (q.trim()) {
       const s = q.toLowerCase();
-      list = list.filter(
-        (c) => c.title.toLowerCase().includes(s) || c.shortDescription.toLowerCase().includes(s),
-      );
+      list = list.filter((c) => c.title.toLowerCase().includes(s) || c.shortDescription.toLowerCase().includes(s));
     }
     if (sort === "duration") list.sort((a, b) => a.durationMinutes - b.durationMinutes);
     else if (sort === "popular") list.sort((a, b) => b.enrolledCount - a.enrolledCount);
@@ -68,50 +57,17 @@ function CoursesPage() {
         <div className="mt-6 grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Tìm khóa học..."
-              className="pl-9 rounded-full bg-card h-11"
-            />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm khóa học..." className="pl-9 rounded-full bg-card h-11" />
           </div>
-          <Select
-            value={category ?? "all"}
-            onValueChange={(v) =>
-              navigate({
-                search: (p: Record<string, string | undefined>) => ({
-                  ...p,
-                  category: v === "all" ? undefined : v,
-                }),
-              })
-            }
-          >
-            <SelectTrigger className="rounded-full h-11 bg-card">
-              <SelectValue placeholder="Danh mục" />
-            </SelectTrigger>
+          <Select value={category ?? "all"} onValueChange={(v) => navigate({ search: (p: Record<string, string | undefined>) => ({ ...p, category: v === "all" ? undefined : v }) })}>
+            <SelectTrigger className="rounded-full h-11 bg-card"><SelectValue placeholder="Danh mục" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả danh mục</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.slug}>
-                  {c.name}
-                </SelectItem>
-              ))}
+              {categories.map((c) => <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select
-            value={level ?? "all"}
-            onValueChange={(v) =>
-              navigate({
-                search: (p: Record<string, string | undefined>) => ({
-                  ...p,
-                  level: v === "all" ? undefined : v,
-                }),
-              })
-            }
-          >
-            <SelectTrigger className="rounded-full h-11 bg-card">
-              <SelectValue placeholder="Trình độ" />
-            </SelectTrigger>
+          <Select value={level ?? "all"} onValueChange={(v) => navigate({ search: (p: Record<string, string | undefined>) => ({ ...p, level: v === "all" ? undefined : v }) })}>
+            <SelectTrigger className="rounded-full h-11 bg-card"><SelectValue placeholder="Trình độ" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả trình độ</SelectItem>
               <SelectItem value="co-ban">Cơ bản</SelectItem>
@@ -119,15 +75,8 @@ function CoursesPage() {
               <SelectItem value="nang-cao">Nâng cao</SelectItem>
             </SelectContent>
           </Select>
-          <Select
-            value={sort ?? "newest"}
-            onValueChange={(v) =>
-              navigate({ search: (p: Record<string, string | undefined>) => ({ ...p, sort: v }) })
-            }
-          >
-            <SelectTrigger className="rounded-full h-11 bg-card">
-              <SelectValue placeholder="Sắp xếp" />
-            </SelectTrigger>
+          <Select value={sort ?? "newest"} onValueChange={(v) => navigate({ search: (p: Record<string, string | undefined>) => ({ ...p, sort: v }) })}>
+            <SelectTrigger className="rounded-full h-11 bg-card"><SelectValue placeholder="Sắp xếp" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Mới nhất</SelectItem>
               <SelectItem value="popular">Phổ biến nhất</SelectItem>
@@ -136,18 +85,12 @@ function CoursesPage() {
           </Select>
         </div>
 
-        <div className="mt-4 text-sm text-muted-foreground">
-          Tìm thấy {filtered.length} khóa học
-        </div>
+        <div className="mt-4 text-sm text-muted-foreground">Tìm thấy {filtered.length} khóa học</div>
 
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 pb-16">
           {filtered.length === 0 ? (
             <div className="sm:col-span-2 lg:col-span-3">
-              <EmptyState
-                title="Không tìm thấy khóa học phù hợp"
-                description="Thử điều chỉnh bộ lọc hoặc tìm với từ khóa khác."
-                icon={<Search className="h-6 w-6" />}
-              />
+              <EmptyState title="Không tìm thấy khóa học phù hợp" description="Thử điều chỉnh bộ lọc hoặc tìm với từ khóa khác." icon={<Search className="h-6 w-6" />} />
             </div>
           ) : (
             filtered.map((c) => <CourseCard key={c.id} course={c} />)

@@ -78,10 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "DESEMBRE Academy — Học đúng kiến thức. Phát triển đúng hướng." },
-      {
-        name: "description",
-        content: "Nền tảng đào tạo trực tuyến dành cho khách hàng, đối tác và đội ngũ DESEMBRE.",
-      },
+      { name: "description", content: "Nền tảng đào tạo trực tuyến dành cho khách hàng, đối tác và đội ngũ DESEMBRE." },
       { property: "og:title", content: "DESEMBRE Academy" },
       { property: "og:description", content: "Học đúng kiến thức. Phát triển đúng hướng." },
       { property: "og:type", content: "website" },

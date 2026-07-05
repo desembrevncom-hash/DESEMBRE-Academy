@@ -1,12 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Enrollment, LessonProgress } from "@/types";
 import { courses } from "@/data/courses";
 import { mockStudent } from "@/data/student";
@@ -112,23 +104,20 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, isAuthed: false, phone: null }));
   }, []);
 
-  const enroll = useCallback(
-    (courseId: string): Enrollment => {
-      const existing = state.enrollments.find((e) => e.courseId === courseId);
-      if (existing) return existing;
-      const en: Enrollment = {
-        id: `e-${Date.now()}`,
-        courseId,
-        userId: "u1",
-        status: "pending",
-        enrolledAt: new Date().toISOString(),
-        progress: 0,
-      };
-      setState((s) => ({ ...s, enrollments: [...s.enrollments, en] }));
-      return en;
-    },
-    [state.enrollments],
-  );
+  const enroll = useCallback((courseId: string): Enrollment => {
+    const existing = state.enrollments.find((e) => e.courseId === courseId);
+    if (existing) return existing;
+    const en: Enrollment = {
+      id: `e-${Date.now()}`,
+      courseId,
+      userId: "u1",
+      status: "pending",
+      enrolledAt: new Date().toISOString(),
+      progress: 0,
+    };
+    setState((s) => ({ ...s, enrollments: [...s.enrollments, en] }));
+    return en;
+  }, [state.enrollments]);
 
   const isEnrolled = useCallback(
     (courseId: string) => state.enrollments.find((e) => e.courseId === courseId),
@@ -179,17 +168,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       isLessonCompleted,
       student: mockStudent,
     }),
-    [
-      state,
-      requestOtp,
-      verifyOtp,
-      logout,
-      enroll,
-      isEnrolled,
-      toggleLesson,
-      getCourseProgress,
-      isLessonCompleted,
-    ],
+    [state, requestOtp, verifyOtp, logout, enroll, isEnrolled, toggleLesson, getCourseProgress, isLessonCompleted],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
