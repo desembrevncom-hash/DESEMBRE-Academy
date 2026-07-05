@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import type { CourseCategory } from "@/types";
 
 export function CategoryCard({ category }: { category: CourseCategory }) {
-  const Icon = (Icons as unknown as Record<string, LucideIcon>)[category.icon] ?? Icons.BookOpen;
+  const Icon = ((Icons as unknown) as Record<string, LucideIcon>)[category.icon] ?? Icons.BookOpen;
   return (
     <Link
       to="/courses"

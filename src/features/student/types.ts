@@ -47,9 +47,9 @@ export interface StudentBootstrapPayload {
   latest_expired_membership: StudentMembership | null;
 }
 
-export function validateStudentBootstrapPayload(payload: any): StudentBootstrapPayload {
-  if (!payload || typeof payload !== "object") {
-    throw new Error("Payload must be an object");
+export function validateStudentBootstrapPayload(payload: unknown): StudentBootstrapPayload {
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Payload must be an object');
   }
 
   const validStates: StudentBootstrapState[] = [
