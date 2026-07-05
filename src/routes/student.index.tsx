@@ -5,6 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { courses } from "@/data/courses";
 import { useAppStore } from "@/lib/store";
 import { CourseCard } from "@/components/common/CourseCard";
+import { useStudent } from "@/features/student/useStudent";
+import { useAuth } from "@/features/auth/useAuth";
 
 export const Route = createFileRoute("/student/")({
   component: Dashboard,
@@ -18,7 +20,9 @@ function greeting() {
 }
 
 function Dashboard() {
-  const { student, enrollments, getCourseProgress, progress } = useAppStore();
+  const { enrollments, getCourseProgress, progress } = useAppStore();
+  const { customer } = useStudent();
+  const { session } = useAuth();
 
   const enrolledCourses = enrollments
     .filter((e) => e.status === "approved")
@@ -26,18 +30,29 @@ function Dashboard() {
     .filter((x) => x.course);
 
   const completedCount = enrollments.filter((e) => e.status === "completed").length;
-  const totalMinutes = enrolledCourses.reduce((sum, x) => sum + Math.round((x.course.durationMinutes * getCourseProgress(x.course.id)) / 100), 0);
+  const totalMinutes = enrolledCourses.reduce(
+    (sum, x) => sum + Math.round((x.course.durationMinutes * getCourseProgress(x.course.id)) / 100),
+    0,
+  );
   const completedLessons = progress.filter((p) => p.completed).length;
 
   const continueCourse = enrolledCourses[0];
-  const recommended = courses.filter((c) => !enrollments.some((e) => e.courseId === c.id)).slice(0, 3);
+  const recommended = courses
+    .filter((c) => !enrollments.some((e) => e.courseId === c.id))
+    .slice(0, 3);
+
+  const displayName = customer?.name || session?.user?.email || "Student";
 
   return (
     <div className="space-y-8">
       <div className="rounded-3xl hero-bg border border-border/60 p-8">
         <div className="text-xs text-primary-dark font-medium">Bảng điều khiển</div>
-        <h1 className="mt-1 text-2xl md:text-3xl font-bold">{greeting()}, {student.fullName}</h1>
-        <p className="mt-2 text-muted-foreground">Tiếp tục hành trình học tập cùng DESEMBRE Academy hôm nay.</p>
+        <h1 className="mt-1 text-2xl md:text-3xl font-bold">
+          {greeting()}, {displayName}
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          Tiếp tục hành trình học tập cùng DESEMBRE Academy hôm nay.
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -67,7 +82,12 @@ function Dashboard() {
           </div>
           <div className="mt-4 grid gap-6 md:grid-cols-[1.4fr_1fr] rounded-3xl border border-border/70 bg-card p-5">
             <div className="flex gap-4">
-              <img src={continueCourse.course.thumbnailUrl} alt="" className="h-32 w-48 rounded-2xl object-cover" loading="lazy" />
+              <img
+                src={continueCourse.course.thumbnailUrl}
+                alt=""
+                className="h-32 w-48 rounded-2xl object-cover"
+                loading="lazy"
+              />
               <div className="flex flex-col justify-between min-w-0">
                 <div>
                   <div className="text-xs text-muted-foreground">Đang học</div>
@@ -75,17 +95,24 @@ function Dashboard() {
                 </div>
                 <div>
                   <Progress value={getCourseProgress(continueCourse.course.id)} className="h-2" />
-                  <div className="mt-1 text-xs text-muted-foreground">{getCourseProgress(continueCourse.course.id)}% hoàn thành</div>
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {getCourseProgress(continueCourse.course.id)}% hoàn thành
+                  </div>
                 </div>
               </div>
             </div>
             <div className="flex items-end justify-end">
-              <Button asChild className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
+              <Button
+                asChild
+                className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground"
+              >
                 <Link
                   to="/student/courses/$slug/lessons/$lessonId"
                   params={{
                     slug: continueCourse.course.slug,
-                    lessonId: continueCourse.enrollment.lastAccessedLessonId ?? continueCourse.course.modules[0].lessons[0].id,
+                    lessonId:
+                      continueCourse.enrollment.lastAccessedLessonId ??
+                      continueCourse.course.modules[0].lessons[0].id,
                   }}
                 >
                   Tiếp tục học
@@ -97,21 +124,32 @@ function Dashboard() {
       )}
 
       <section id="progress">
-        <h2 className="text-xl font-semibold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary-dark" /> Khóa học của tôi</h2>
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary-dark" /> Khóa học của tôi
+        </h2>
         <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {enrolledCourses.length === 0 && (
             <div className="sm:col-span-2 lg:col-span-3 rounded-3xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-              Bạn chưa đăng ký khóa học nào. <Link to="/courses" className="text-primary-dark underline">Khám phá ngay</Link>
+              Bạn chưa đăng ký khóa học nào.{" "}
+              <Link to="/courses" className="text-primary-dark underline">
+                Khám phá ngay
+              </Link>
             </div>
           )}
-          {enrolledCourses.map((x) => <CourseCard key={x.course.id} course={x.course} />)}
+          {enrolledCourses.map((x) => (
+            <CourseCard key={x.course.id} course={x.course} />
+          ))}
         </div>
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary-dark" /> Đề xuất cho bạn</h2>
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary-dark" /> Đề xuất cho bạn
+        </h2>
         <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {recommended.map((c) => <CourseCard key={c.id} course={c} />)}
+          {recommended.map((c) => (
+            <CourseCard key={c.id} course={c} />
+          ))}
         </div>
       </section>
     </div>

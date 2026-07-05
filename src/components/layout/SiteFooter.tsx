@@ -11,7 +11,9 @@ export function SiteFooter() {
             </div>
             <div className="leading-tight">
               <div className="text-sm font-bold">DESEMBRE</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Academy</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Academy
+              </div>
             </div>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
@@ -21,19 +23,24 @@ export function SiteFooter() {
         <div>
           <div className="text-sm font-semibold mb-3">Sản phẩm</div>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>Khóa học</li><li>Lộ trình học</li><li>Chứng nhận</li>
+            <li>Khóa học</li>
+            <li>Lộ trình học</li>
+            <li>Chứng nhận</li>
           </ul>
         </div>
         <div>
           <div className="text-sm font-semibold mb-3">Hỗ trợ</div>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>Trung tâm trợ giúp</li><li>Liên hệ</li><li>Câu hỏi thường gặp</li>
+            <li>Trung tâm trợ giúp</li>
+            <li>Liên hệ</li>
+            <li>Câu hỏi thường gặp</li>
           </ul>
         </div>
         <div>
           <div className="text-sm font-semibold mb-3">Pháp lý</div>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>Điều khoản sử dụng</li><li>Chính sách bảo mật</li>
+            <li>Điều khoản sử dụng</li>
+            <li>Chính sách bảo mật</li>
           </ul>
         </div>
       </div>

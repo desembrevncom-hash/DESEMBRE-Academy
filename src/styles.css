@@ -54,12 +54,12 @@
 :root {
   --radius: 1rem;
   /* Brand */
-  --primary: oklch(0.72 0.09 200);         /* #39B9C3 */
+  --primary: oklch(0.72 0.09 200); /* #39B9C3 */
   --primary-foreground: oklch(0.99 0 0);
-  --primary-dark: oklch(0.55 0.09 200);    /* #168895 */
+  --primary-dark: oklch(0.55 0.09 200); /* #168895 */
 
   --background: oklch(0.99 0.006 210);
-  --foreground: oklch(0.22 0.03 220);      /* #102A33 */
+  --foreground: oklch(0.22 0.03 220); /* #102A33 */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.22 0.03 220);
   --popover: oklch(1 0 0);
@@ -68,16 +68,16 @@
   --secondary-foreground: oklch(0.25 0.04 220);
   --muted: oklch(0.97 0.015 205);
   --muted-foreground: oklch(0.5 0.02 220); /* #60757C */
-  --accent: oklch(0.95 0.03 200);          /* soft cyan tint */
+  --accent: oklch(0.95 0.03 200); /* soft cyan tint */
   --accent-foreground: oklch(0.25 0.05 220);
   --destructive: oklch(0.6 0.2 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.93 0.02 200);          /* #D9EEF1 */
+  --border: oklch(0.93 0.02 200); /* #D9EEF1 */
   --input: oklch(0.93 0.02 200);
   --ring: oklch(0.72 0.09 200);
 
-  --surface: oklch(0.985 0.012 205);       /* #F6FCFD */
-  --cyan-soft: oklch(0.97 0.03 200);       /* #EAFBFD */
+  --surface: oklch(0.985 0.012 205); /* #F6FCFD */
+  --cyan-soft: oklch(0.97 0.03 200); /* #EAFBFD */
   --success: oklch(0.65 0.15 155);
   --warning: oklch(0.75 0.14 75);
   --error: oklch(0.6 0.2 25);
@@ -96,13 +96,19 @@
   * {
     border-color: var(--color-border);
   }
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4 { letter-spacing: -0.01em; }
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.01em;
+  }
 }
 
 @utility glass {
@@ -114,12 +120,18 @@
 
 @utility hero-bg {
   background:
-    radial-gradient(1200px 500px at 80% 20%, color-mix(in oklab, var(--color-primary) 30%, transparent), transparent 60%),
+    radial-gradient(
+      1200px 500px at 80% 20%,
+      color-mix(in oklab, var(--color-primary) 30%, transparent),
+      transparent 60%
+    ),
     linear-gradient(180deg, var(--color-cyan-soft), var(--color-surface));
 }
 
 @utility card-hover {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
   &:hover {
     transform: translateY(-3px);
     box-shadow: var(--shadow-card);

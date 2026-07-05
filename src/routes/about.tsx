@@ -21,9 +21,16 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "Về chúng tôi — DESEMBRE Academy" },
-      { name: "description", content: "Tìm hiểu về DESEMBRE Academy, đội ngũ giảng viên và giá trị cốt lõi: Học đúng kiến thức. Phát triển đúng hướng." },
+      {
+        name: "description",
+        content:
+          "Tìm hiểu về DESEMBRE Academy, đội ngũ giảng viên và giá trị cốt lõi: Học đúng kiến thức. Phát triển đúng hướng.",
+      },
       { property: "og:title", content: "Về chúng tôi — DESEMBRE Academy" },
-      { property: "og:description", content: "Tìm hiểu về DESEMBRE Academy, đội ngũ giảng viên và giá trị cốt lõi." },
+      {
+        property: "og:description",
+        content: "Tìm hiểu về DESEMBRE Academy, đội ngũ giảng viên và giá trị cốt lõi.",
+      },
     ],
   }),
   component: AboutPage,
@@ -86,9 +93,9 @@ function AboutPage() {
               </p>
               <p className="mt-3 max-w-lg text-base text-muted-foreground">
                 DESEMBRE Academy là nền tảng đào tạo trực tuyến được xây dựng để trang bị kiến thức
-                chuyên sâu cho khách hàng, đối tác và đội ngũ DESEMBRE. Chúng tôi tin rằng
-                giáo dục đúng cách không chỉ là truyền đạt thông tin — mà là thay đổi hành vi và
-                tạo ra kết quả thực.
+                chuyên sâu cho khách hàng, đối tác và đội ngũ DESEMBRE. Chúng tôi tin rằng giáo dục
+                đúng cách không chỉ là truyền đạt thông tin — mà là thay đổi hành vi và tạo ra kết
+                quả thực.
               </p>
             </div>
 
@@ -105,7 +112,9 @@ function AboutPage() {
               </div>
               <div className="absolute -left-4 sm:left-6 bottom-6 rounded-2xl glass px-4 py-3 shadow-[var(--shadow-soft)]">
                 <div className="text-xs text-muted-foreground">Học viên đã tham gia</div>
-                <div className="text-lg font-bold text-primary-dark">{totalStudents.toLocaleString("vi-VN")}+</div>
+                <div className="text-lg font-bold text-primary-dark">
+                  {totalStudents.toLocaleString("vi-VN")}+
+                </div>
               </div>
               <div className="absolute -right-2 sm:right-6 top-8 rounded-2xl glass px-4 py-3 shadow-[var(--shadow-soft)]">
                 <div className="flex items-center gap-2 text-sm font-semibold">
@@ -150,9 +159,7 @@ function AboutPage() {
                 <v.icon className="h-5 w-5" />
               </div>
               <h3 className="mt-4 text-base font-bold">{v.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {v.description}
-              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{v.description}</p>
             </div>
           ))}
         </div>
@@ -205,19 +212,19 @@ function AboutPage() {
               <div className="mt-6 space-y-4 text-muted-foreground leading-relaxed">
                 <p>
                   DESEMBRE Academy ra đời từ nhu cầu thực tế: đội ngũ ngày càng lớn, đối tác ngày
-                  càng nhiều, và cách đào tạo truyền thống không đủ nhanh để đáp ứng. Chúng tôi
-                  cần một nền tảng có thể đào tạo hàng nghìn người cùng lúc — nhưng vẫn đảm bảo
-                  chất lượng và sự cá nhân hóa.
+                  càng nhiều, và cách đào tạo truyền thống không đủ nhanh để đáp ứng. Chúng tôi cần
+                  một nền tảng có thể đào tạo hàng nghìn người cùng lúc — nhưng vẫn đảm bảo chất
+                  lượng và sự cá nhân hóa.
                 </p>
                 <p>
                   Từ những buổi workshop offline đầu tiên, chúng tôi dần chuyển đổi nội dung thành
-                  các module học trực tuyến, có thể xem lại, đánh giá và cấp chứng nhận. Mỗi bài
-                  học đều được thiết kế dựa trên nguyên tắc: học xong phải làm được ngay.
+                  các module học trực tuyến, có thể xem lại, đánh giá và cấp chứng nhận. Mỗi bài học
+                  đều được thiết kế dựa trên nguyên tắc: học xong phải làm được ngay.
                 </p>
                 <p>
-                  Hôm nay, DESEMBRE Academy không chỉ phục vụ nội bộ — mà còn mở cửa cho khách
-                  hàng và đối tác muốn nâng cao năng lực trong lĩnh vực chăm sóc sắc đẹp, bán hàng
-                  và quản trị.
+                  Hôm nay, DESEMBRE Academy không chỉ phục vụ nội bộ — mà còn mở cửa cho khách hàng
+                  và đối tác muốn nâng cao năng lực trong lĩnh vực chăm sóc sắc đẹp, bán hàng và
+                  quản trị.
                 </p>
               </div>
             </div>
@@ -252,7 +259,8 @@ function AboutPage() {
             Sẵn sàng cùng chúng tôi phát triển?
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Tham gia cộng đồng học viên DESEMBRE Academy — nơi tri thức được truyền đạt bởi những chuyên gia hàng đầu.
+            Tham gia cộng đồng học viên DESEMBRE Academy — nơi tri thức được truyền đạt bởi những
+            chuyên gia hàng đầu.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button
@@ -264,12 +272,7 @@ function AboutPage() {
                 Khám phá khóa học <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="rounded-full bg-white/70"
-            >
+            <Button asChild size="lg" variant="outline" className="rounded-full bg-white/70">
               <Link to="/auth/phone">Đăng nhập để bắt đầu</Link>
             </Button>
           </div>
