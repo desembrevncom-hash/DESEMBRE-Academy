@@ -10,11 +10,11 @@ export function getSupabaseEnvironment() {
     throw new Error("Missing VITE_SUPABASE_PUBLISHABLE_KEY in environment variables.");
   }
 
-  if (!url.includes('ynmcoeapfycijblydyuw')) {
+  if (!url.includes("ynmcoeapfycijblydyuw")) {
     throw new Error("VITE_SUPABASE_URL must resolve to the correct staging project.");
   }
 
-  if (url.includes('wmhfvggbthyikqvlyqup') || url.includes('xhfqjupiidexvlltstal')) {
+  if (url.includes("wmhfvggbthyikqvlyqup") || url.includes("xhfqjupiidexvlltstal")) {
     throw new Error("VITE_SUPABASE_URL contains forbidden project references.");
   }
 
