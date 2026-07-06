@@ -20,10 +20,16 @@ function ProfilePage() {
   return (
     <div className="space-y-6">
       <div className="rounded-3xl hero-bg border border-border/60 p-8 flex items-center gap-5">
-        <Avatar className="h-20 w-20"><AvatarFallback className="bg-primary/20 text-primary-dark text-xl">{student.fullName.slice(0, 1)}</AvatarFallback></Avatar>
+        <Avatar className="h-20 w-20">
+          <AvatarFallback className="bg-primary/20 text-primary-dark text-xl">
+            {student.fullName.slice(0, 1)}
+          </AvatarFallback>
+        </Avatar>
         <div>
           <h1 className="text-2xl font-bold">{student.fullName}</h1>
-          <p className="text-muted-foreground text-sm">Tham gia từ {new Date(student.joinedAt).toLocaleDateString("vi-VN")}</p>
+          <p className="text-muted-foreground text-sm">
+            Tham gia từ {new Date(student.joinedAt).toLocaleDateString("vi-VN")}
+          </p>
         </div>
       </div>
 
@@ -37,7 +43,9 @@ function ProfilePage() {
           <div>
             <Label>Số điện thoại</Label>
             <Input value={student.phone} disabled className="mt-1.5 rounded-xl h-11 bg-muted" />
-            <p className="text-xs text-muted-foreground mt-1">Số điện thoại không thể chỉnh sửa trực tiếp.</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Số điện thoại không thể chỉnh sửa trực tiếp.
+            </p>
           </div>
           <div>
             <Label>Email</Label>
@@ -63,7 +71,9 @@ function ProfilePage() {
       </section>
 
       <section className="rounded-3xl border border-border/70 bg-card p-6">
-        <h2 className="text-lg font-semibold flex items-center gap-2"><Bell className="h-5 w-5 text-primary-dark" /> Thiết lập thông báo</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Bell className="h-5 w-5 text-primary-dark" /> Thiết lập thông báo
+        </h2>
         <div className="mt-5 space-y-4">
           {[
             { label: "Nhắc nhở học tập hằng ngày", d: true },
@@ -79,9 +89,12 @@ function ProfilePage() {
       </section>
 
       <section className="rounded-3xl border border-border/70 bg-card p-6">
-        <h2 className="text-lg font-semibold flex items-center gap-2"><Shield className="h-5 w-5 text-primary-dark" /> Chính sách bảo mật</h2>
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Shield className="h-5 w-5 text-primary-dark" /> Chính sách bảo mật
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Chúng tôi bảo vệ thông tin của bạn theo các tiêu chuẩn bảo mật cao nhất. Xem chi tiết tại trang chính sách bảo mật.
+          Chúng tôi bảo vệ thông tin của bạn theo các tiêu chuẩn bảo mật cao nhất. Xem chi tiết tại
+          trang chính sách bảo mật.
         </p>
       </section>
 

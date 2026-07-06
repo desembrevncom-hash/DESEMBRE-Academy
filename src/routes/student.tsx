@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StudentLayout } from "@/components/layout/StudentLayout";
 import { StudentProvider } from "@/features/student/StudentProvider";
+import { CourseRuntimeProvider } from "@/features/courses/CourseRuntimeProvider";
 
 export const Route = createFileRoute("/student")({
   component: () => (
     <StudentProvider>
-      <StudentLayout />
+      <CourseRuntimeProvider>
+        <StudentLayout />
+      </CourseRuntimeProvider>
     </StudentProvider>
   ),
 });

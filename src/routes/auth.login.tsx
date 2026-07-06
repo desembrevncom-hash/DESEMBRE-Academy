@@ -32,10 +32,26 @@ function Login() {
     defaultValues: { email: "", password: "" },
   });
 
+  // Securely resolve return path
+  const getReturnPath = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const returnTo = searchParams.get("returnTo");
+
+    if (!returnTo) return "/student";
+
+    // Only accept internal paths starting with a single '/'
+    // Reject '//' (protocol-relative), 'http://', 'https://', etc.
+    if (returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+      return returnTo;
+    }
+
+    return "/student";
+  };
+
   // Redirect if already authenticated
   useEffect(() => {
     if (initialized && session) {
-      navigate({ to: "/student", replace: true });
+      navigate({ to: getReturnPath() as never, replace: true });
     }
   }, [initialized, session, navigate]);
 
@@ -44,9 +60,9 @@ function Login() {
       setLoading(true);
       setAuthError(null);
       await authService.signInWithPassword(values.email, values.password);
-      navigate({ to: "/student" });
-    } catch (err: any) {
-      setAuthError(err.message || "Đăng nhập thất bại");
+      navigate({ to: getReturnPath() as never });
+    } catch (err: unknown) {
+      setAuthError((err as Error).message || "Đăng nhập thất bại");
     } finally {
       setLoading(false);
     }
@@ -65,8 +81,12 @@ function Login() {
               </div>
               <div className="relative flex h-full flex-col justify-end p-8 text-white">
                 <div className="text-xs uppercase tracking-widest opacity-90">DESEMBRE Academy</div>
-                <div className="mt-2 text-3xl font-bold leading-tight">Học đúng kiến thức. Phát triển đúng hướng.</div>
-                <p className="mt-3 max-w-sm text-white/85">Đăng nhập để tiếp tục hành trình học tập của bạn.</p>
+                <div className="mt-2 text-3xl font-bold leading-tight">
+                  Học đúng kiến thức. Phát triển đúng hướng.
+                </div>
+                <p className="mt-3 max-w-sm text-white/85">
+                  Đăng nhập để tiếp tục hành trình học tập của bạn.
+                </p>
               </div>
             </div>
           </div>
@@ -114,7 +134,9 @@ function Login() {
                     />
                   </div>
                   {form.formState.errors.password && (
-                    <p className="mt-1 text-xs text-error">{form.formState.errors.password.message}</p>
+                    <p className="mt-1 text-xs text-error">
+                      {form.formState.errors.password.message}
+                    </p>
                   )}
                 </div>
 
@@ -132,7 +154,9 @@ function Login() {
                 </div>
 
                 <div className="text-center text-sm text-muted-foreground">
-                  <Link to="/" className="text-primary-dark">Về trang chủ</Link>
+                  <Link to="/" className="text-primary-dark">
+                    Về trang chủ
+                  </Link>
                 </div>
               </form>
             </div>
