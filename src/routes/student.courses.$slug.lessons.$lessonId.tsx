@@ -47,6 +47,7 @@ function LessonPlayer() {
 
   useEffect(() => {
     fetchOutline();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const flat = useMemo(() => {

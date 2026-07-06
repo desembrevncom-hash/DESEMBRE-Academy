@@ -51,7 +51,7 @@ function Login() {
   // Redirect if already authenticated
   useEffect(() => {
     if (initialized && session) {
-      navigate({ to: getReturnPath() as any, replace: true });
+      navigate({ to: getReturnPath() as never, replace: true });
     }
   }, [initialized, session, navigate]);
 
@@ -60,7 +60,7 @@ function Login() {
       setLoading(true);
       setAuthError(null);
       await authService.signInWithPassword(values.email, values.password);
-      navigate({ to: getReturnPath() as any });
+      navigate({ to: getReturnPath() as never });
     } catch (err: unknown) {
       setAuthError((err as Error).message || "Đăng nhập thất bại");
     } finally {
