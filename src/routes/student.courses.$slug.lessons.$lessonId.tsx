@@ -59,8 +59,11 @@ function LessonPlayer() {
   }, [slug]);
 
   const flat = useMemo(() => {
-    if (!outline) return [];
-    return outline.modules.flatMap((m) => m.lessons.map((l) => ({ moduleId: m.id, lesson: l })));
+    if (!outline || !outline.modules) return [];
+    return outline.modules.flatMap((m) => {
+      if (!m || !m.lessons) return [];
+      return m.lessons.map((l) => ({ moduleId: m.id, lesson: l }));
+    });
   }, [outline]);
 
   const idx = flat.findIndex((f) => f.lesson.id === lessonId);
@@ -70,17 +73,23 @@ function LessonPlayer() {
   const next = idx < flat.length - 1 ? flat[idx + 1] : null;
 
   const isLocked = lesson?.is_locked ?? false;
+  const isReady = !loading && outline !== null && lesson !== undefined;
 
   const {
     data: contentData,
     isLoading: isContentLoading,
     error: contentError,
-  } = useLessonContent(slug, lessonId, isLocked);
+  } = useLessonContent({
+    courseSlug: slug,
+    lessonId,
+    enabled: isReady && !isLocked,
+  });
+
   const { saveProgress } = useLessonProgress(lessonId, lesson?.duration ?? null);
 
   const progressPct = useMemo(() => {
-    if (!outline) return 0;
-    const all = outline.modules.flatMap((m) => m.lessons);
+    if (!outline || !outline.modules) return 0;
+    const all = outline.modules.flatMap((m) => m.lessons || []);
     if (all.length === 0) return 0;
     const completed = all.filter((l) => l.progress?.status === "completed").length;
     return Math.round((completed / all.length) * 100);
