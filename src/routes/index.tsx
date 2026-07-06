@@ -2,7 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, PlayCircle, Search, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CategoryCard } from "@/components/common/CategoryCard";
@@ -37,21 +43,32 @@ function Home() {
                 <span className="text-primary-dark">Phát triển đúng hướng.</span>
               </h1>
               <p className="mt-5 max-w-lg text-base text-muted-foreground">
-                Nền tảng đào tạo dành cho khách hàng, đối tác và đội ngũ DESEMBRE. Xây dựng năng lực với các khóa
-                học thực chiến từ chuyên gia hàng đầu.
+                Nền tảng đào tạo dành cho khách hàng, đối tác và đội ngũ DESEMBRE. Xây dựng năng lực
+                với các khóa học thực chiến từ chuyên gia hàng đầu.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <Button asChild size="lg" className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground"
+                >
                   <Link to="/courses">
                     Khám phá khóa học <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full bg-white/60 backdrop-blur">
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full bg-white/60 backdrop-blur"
+                >
                   <Link to="/student">Khóa học của tôi</Link>
                 </Button>
               </div>
               <div className="mt-8 flex items-center gap-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1"><Star className="h-4 w-4 fill-warning text-warning" /> 4.9/5 đánh giá</div>
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-warning text-warning" /> 4.9/5 đánh giá
+                </div>
                 <div>10.000+ học viên</div>
               </div>
             </div>
@@ -87,16 +104,23 @@ function Home() {
                   <label className="text-xs text-muted-foreground">Tìm khóa học</label>
                   <div className="relative mt-1">
                     <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Ví dụ: chốt đơn, chăm sóc khách hàng…" className="pl-9 rounded-2xl bg-white/80" />
+                    <Input
+                      placeholder="Ví dụ: chốt đơn, chăm sóc khách hàng…"
+                      className="pl-9 rounded-2xl bg-white/80"
+                    />
                   </div>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">Danh mục</label>
                   <Select>
-                    <SelectTrigger className="mt-1 rounded-2xl bg-white/80"><SelectValue placeholder="Tất cả danh mục" /></SelectTrigger>
+                    <SelectTrigger className="mt-1 rounded-2xl bg-white/80">
+                      <SelectValue placeholder="Tất cả danh mục" />
+                    </SelectTrigger>
                     <SelectContent>
                       {categories.map((c) => (
-                        <SelectItem key={c.id} value={c.slug}>{c.name}</SelectItem>
+                        <SelectItem key={c.id} value={c.slug}>
+                          {c.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -104,7 +128,9 @@ function Home() {
                 <div>
                   <label className="text-xs text-muted-foreground">Trình độ</label>
                   <Select>
-                    <SelectTrigger className="mt-1 rounded-2xl bg-white/80"><SelectValue placeholder="Tất cả trình độ" /></SelectTrigger>
+                    <SelectTrigger className="mt-1 rounded-2xl bg-white/80">
+                      <SelectValue placeholder="Tất cả trình độ" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="co-ban">Cơ bản</SelectItem>
                       <SelectItem value="trung-cap">Trung cấp</SelectItem>
@@ -112,7 +138,10 @@ function Home() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button asChild className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground h-11">
+                <Button
+                  asChild
+                  className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground h-11"
+                >
                   <Link to="/courses">Tìm khóa học</Link>
                 </Button>
               </div>
@@ -123,7 +152,12 @@ function Home() {
 
       {/* Categories */}
       <section className="mx-auto max-w-6xl px-6 py-16">
-        <SectionHeading eyebrow="Danh mục" title="Danh mục đào tạo" description="Khám phá các chủ đề đào tạo trọng tâm của DESEMBRE." center />
+        <SectionHeading
+          eyebrow="Danh mục"
+          title="Danh mục đào tạo"
+          description="Khám phá các chủ đề đào tạo trọng tâm của DESEMBRE."
+          center
+        />
         <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {categories.map((c) => (
             <CategoryCard key={c.id} category={c} />
@@ -138,8 +172,14 @@ function Home() {
           title="Khóa học nổi bật"
           description="Được chọn lọc bởi đội ngũ đào tạo DESEMBRE."
           action={
-            <Button asChild variant="ghost" className="rounded-full text-primary-dark hover:bg-accent">
-              <Link to="/courses">Xem tất cả <ArrowRight className="ml-1 h-4 w-4" /></Link>
+            <Button
+              asChild
+              variant="ghost"
+              className="rounded-full text-primary-dark hover:bg-accent"
+            >
+              <Link to="/courses">
+                Xem tất cả <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
             </Button>
           }
         />
@@ -153,12 +193,19 @@ function Home() {
       {/* About / CTA */}
       <section id="about" className="mx-auto max-w-6xl px-6 py-20">
         <div className="rounded-[32px] hero-bg border border-border/60 p-10 md:p-14 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Sẵn sàng bắt đầu hành trình học tập?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+            Sẵn sàng bắt đầu hành trình học tập?
+          </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Tham gia cộng đồng học viên DESEMBRE Academy — nơi tri thức được truyền đạt bởi những chuyên gia hàng đầu.
+            Tham gia cộng đồng học viên DESEMBRE Academy — nơi tri thức được truyền đạt bởi những
+            chuyên gia hàng đầu.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
+            <Button
+              asChild
+              size="lg"
+              className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground"
+            >
               <Link to="/auth/phone">Đăng nhập để bắt đầu</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="rounded-full bg-white/70">
