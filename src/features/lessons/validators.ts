@@ -31,7 +31,9 @@ export const mediaContentSchema = z
         !("bucket" in data) &&
         !("path" in data) &&
         !("storage_bucket" in data) &&
-        !("storage_path" in data)
+        !("storage_path" in data) &&
+        !("service_role" in data) &&
+        !("service_role_key" in data)
       );
     },
     { message: "Payload contains protected storage attributes" },
@@ -112,7 +114,9 @@ export const edgeFunctionMediaResponseSchema = z
         !("bucket" in data) &&
         !("path" in data) &&
         !("storage_bucket" in data) &&
-        !("storage_path" in data)
+        !("storage_path" in data) &&
+        !("service_role" in data) &&
+        !("service_role_key" in data)
       );
     },
     { message: "Edge function response leaked bucket or path" },

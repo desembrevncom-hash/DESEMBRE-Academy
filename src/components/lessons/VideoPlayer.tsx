@@ -37,9 +37,9 @@ export function VideoPlayer({
       }
     };
 
-    const handlePause = () => saveProgress(video.currentTime, "in_progress", true);
-    const handleSeeked = () => saveProgress(video.currentTime, "in_progress", true);
-    const handleEnded = () => saveProgress(video.currentTime, "completed", true);
+    const handlePause = () => saveProgress(video.currentTime, "in_progress", true).catch(() => {});
+    const handleSeeked = () => saveProgress(video.currentTime, "in_progress", true).catch(() => {});
+    const handleEnded = () => saveProgress(video.currentTime, "completed", true).catch(() => {});
     const handleLoadedMetadata = () => {
       isMetadataLoaded.current = true;
       if (initialPosition && initialPosition > 0) {
@@ -59,7 +59,7 @@ export function VideoPlayer({
       video.removeEventListener("seeked", handleSeeked);
       video.removeEventListener("ended", handleEnded);
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      saveProgress(video.currentTime, "in_progress", true);
+      saveProgress(video.currentTime, "in_progress", true).catch(() => {});
     };
   }, [saveProgress, initialPosition]);
 

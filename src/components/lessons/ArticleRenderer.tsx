@@ -9,6 +9,18 @@ export function ArticleRenderer({ markdown }: ArticleRendererProps) {
   return (
     <div className="prose prose-slate max-w-none dark:prose-invert">
       <ReactMarkdown
+        skipHtml={true}
+        urlTransform={(url) => {
+          const lower = url.toLowerCase();
+          if (
+            lower.startsWith("javascript:") ||
+            lower.startsWith("vbscript:") ||
+            lower.startsWith("data:")
+          ) {
+            return "about:blank";
+          }
+          return url;
+        }}
         remarkPlugins={[remarkGfm]}
         components={{
           a: ({ node, ...props }) => {
