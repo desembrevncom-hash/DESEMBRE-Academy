@@ -2,12 +2,11 @@ import { createFileRoute, useNavigate, useRouterState } from "@tanstack/react-ro
 import { useEffect } from "react";
 import { useAuth } from "@/features/auth/useAuth";
 
-export const Route = createFileRoute("/courses/$slug")({
-  component: CourseSlugRedirect,
+export const Route = createFileRoute("/courses/")({
+  component: CoursesIndexRedirect,
 });
 
-function CourseSlugRedirect() {
-  const { slug } = Route.useParams();
+function CoursesIndexRedirect() {
   const { session, initialized } = useAuth();
   const navigate = useNavigate();
   const location = useRouterState({ select: (s) => s.location });
@@ -23,7 +22,7 @@ function CourseSlugRedirect() {
         replace: true,
       });
     }
-  }, [initialized, session, slug, navigate, location]);
+  }, [initialized, session, navigate, location]);
 
   return null;
 }

@@ -14,12 +14,14 @@ import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StudentIndexRouteImport } from './routes/student.index'
+import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as StudentProfileRouteImport } from './routes/student.profile'
 import { Route as StudentCoursesRouteImport } from './routes/student.courses'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthPhoneRouteImport } from './routes/auth.phone'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as StudentCoursesIndexRouteImport } from './routes/student.courses.index'
 import { Route as StudentCoursesSlugLessonsLessonIdRouteImport } from './routes/student.courses.$slug.lessons.$lessonId'
 
 const StudentRoute = StudentRouteImport.update({
@@ -46,6 +48,11 @@ const StudentIndexRoute = StudentIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => StudentRoute,
+} as any)
+const CoursesIndexRoute = CoursesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CoursesRoute,
 } as any)
 const StudentProfileRoute = StudentProfileRouteImport.update({
   id: '/profile',
@@ -77,6 +84,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudentCoursesIndexRoute = StudentCoursesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => StudentCoursesRoute,
+} as any)
 const StudentCoursesSlugLessonsLessonIdRoute =
   StudentCoursesSlugLessonsLessonIdRouteImport.update({
     id: '/$slug/lessons/$lessonId',
@@ -95,20 +107,22 @@ export interface FileRoutesByFullPath {
   '/courses/$slug': typeof CoursesSlugRoute
   '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
+  '/courses/': typeof CoursesIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/student/courses/': typeof StudentCoursesIndexRoute
   '/student/courses/$slug/lessons/$lessonId': typeof StudentCoursesSlugLessonsLessonIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/courses': typeof CoursesRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/courses/$slug': typeof CoursesSlugRoute
-  '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
+  '/courses': typeof CoursesIndexRoute
   '/student': typeof StudentIndexRoute
+  '/student/courses': typeof StudentCoursesIndexRoute
   '/student/courses/$slug/lessons/$lessonId': typeof StudentCoursesSlugLessonsLessonIdRoute
 }
 export interface FileRoutesById {
@@ -123,7 +137,9 @@ export interface FileRoutesById {
   '/courses/$slug': typeof CoursesSlugRoute
   '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
+  '/courses/': typeof CoursesIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/student/courses/': typeof StudentCoursesIndexRoute
   '/student/courses/$slug/lessons/$lessonId': typeof StudentCoursesSlugLessonsLessonIdRoute
 }
 export interface FileRouteTypes {
@@ -139,20 +155,22 @@ export interface FileRouteTypes {
     | '/courses/$slug'
     | '/student/courses'
     | '/student/profile'
+    | '/courses/'
     | '/student/'
+    | '/student/courses/'
     | '/student/courses/$slug/lessons/$lessonId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/courses'
     | '/auth/login'
     | '/auth/phone'
     | '/auth/verify-otp'
     | '/courses/$slug'
-    | '/student/courses'
     | '/student/profile'
+    | '/courses'
     | '/student'
+    | '/student/courses'
     | '/student/courses/$slug/lessons/$lessonId'
   id:
     | '__root__'
@@ -166,7 +184,9 @@ export interface FileRouteTypes {
     | '/courses/$slug'
     | '/student/courses'
     | '/student/profile'
+    | '/courses/'
     | '/student/'
+    | '/student/courses/'
     | '/student/courses/$slug/lessons/$lessonId'
   fileRoutesById: FileRoutesById
 }
@@ -217,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentIndexRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/courses/': {
+      id: '/courses/'
+      path: '/'
+      fullPath: '/courses/'
+      preLoaderRoute: typeof CoursesIndexRouteImport
+      parentRoute: typeof CoursesRoute
+    }
     '/student/profile': {
       id: '/student/profile'
       path: '/profile'
@@ -259,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/student/courses/': {
+      id: '/student/courses/'
+      path: '/'
+      fullPath: '/student/courses/'
+      preLoaderRoute: typeof StudentCoursesIndexRouteImport
+      parentRoute: typeof StudentCoursesRoute
+    }
     '/student/courses/$slug/lessons/$lessonId': {
       id: '/student/courses/$slug/lessons/$lessonId'
       path: '/$slug/lessons/$lessonId'
@@ -271,20 +305,24 @@ declare module '@tanstack/react-router' {
 
 interface CoursesRouteChildren {
   CoursesSlugRoute: typeof CoursesSlugRoute
+  CoursesIndexRoute: typeof CoursesIndexRoute
 }
 
 const CoursesRouteChildren: CoursesRouteChildren = {
   CoursesSlugRoute: CoursesSlugRoute,
+  CoursesIndexRoute: CoursesIndexRoute,
 }
 
 const CoursesRouteWithChildren =
   CoursesRoute._addFileChildren(CoursesRouteChildren)
 
 interface StudentCoursesRouteChildren {
+  StudentCoursesIndexRoute: typeof StudentCoursesIndexRoute
   StudentCoursesSlugLessonsLessonIdRoute: typeof StudentCoursesSlugLessonsLessonIdRoute
 }
 
 const StudentCoursesRouteChildren: StudentCoursesRouteChildren = {
+  StudentCoursesIndexRoute: StudentCoursesIndexRoute,
   StudentCoursesSlugLessonsLessonIdRoute:
     StudentCoursesSlugLessonsLessonIdRoute,
 }

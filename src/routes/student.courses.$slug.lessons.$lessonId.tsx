@@ -258,19 +258,21 @@ function LessonPlayer() {
     switch (content.kind) {
       case "article":
         return (
-          <div className="bg-white rounded-3xl border border-border/70 p-6 sm:p-10">
+          <div className="bg-white rounded-3xl border border-border/70 p-6 sm:p-10" data-testid="article-lesson-page">
             <ArticleRenderer markdown={content.markdown} />
           </div>
         );
       case "video":
         return (
-          <VideoPlayer
-            courseSlug={slug}
-            lessonId={lessonId}
-            mimeType={content.mime_type}
-            duration={lesson.duration}
-            initialPosition={contentData.progress?.last_position_seconds}
-          />
+          <div data-testid="video-lesson-page">
+            <VideoPlayer
+              courseSlug={slug}
+              lessonId={lessonId}
+              mimeType={content.mime_type}
+              duration={lesson.duration}
+              initialPosition={contentData.progress?.last_position_seconds}
+            />
+          </div>
         );
       case "document":
         return <DocumentViewer courseSlug={slug} lessonId={lessonId} />;
@@ -282,7 +284,7 @@ function LessonPlayer() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="lesson-content-page">
       <div className="flex items-center justify-between gap-3">
         <Link
           to="/student/courses"
