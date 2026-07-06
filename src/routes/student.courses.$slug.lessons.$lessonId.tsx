@@ -38,8 +38,8 @@ function LessonPlayer() {
       setLoading(true);
       const data = await getCourseOutline(slug);
       setOutline(data);
-    } catch (err: Error | unknown) {
-      setError(err.message || "Lỗi tải bài học");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Lỗi tải bài học");
     } finally {
       setLoading(false);
     }
@@ -47,7 +47,7 @@ function LessonPlayer() {
 
   useEffect(() => {
     fetchOutline();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   const flat = useMemo(() => {
@@ -80,8 +80,8 @@ function LessonPlayer() {
       toast.success(status === "completed" ? "Đã đánh dấu hoàn thành" : "Đã lưu tiến độ");
       await fetchOutline();
       await refreshCurrentCourses();
-    } catch (err: Error | unknown) {
-      toast.error(err.message || "Lỗi lưu tiến độ");
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Lỗi lưu tiến độ");
     } finally {
       setSaving(false);
     }

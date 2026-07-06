@@ -8,13 +8,14 @@ import {
 } from "../validators";
 import type { CourseRuntimeErrorKind } from "../types";
 
-function mapError(err: Error | unknown): CourseRuntimeErrorKind {
+function mapError(err: unknown): CourseRuntimeErrorKind {
   if (!err) return "UNKNOWN";
   const str = String(err).toLowerCase();
-  if (str.includes("not authenticated") || str.includes("jwt") || err.code === "PGRST301")
+  const code = (err as Record<string, unknown>).code;
+  if (str.includes("not authenticated") || str.includes("jwt") || code === "PGRST301")
     return "UNAUTHENTICATED";
   if (str.includes("network") || str.includes("fetch")) return "NETWORK";
-  if (str.includes("permission denied") || err.code === "42501") return "PERMISSION_DENIED";
+  if (str.includes("permission denied") || code === "42501") return "PERMISSION_DENIED";
   if (str.includes("cannot enroll")) return "ENROLLMENT_REJECTED";
   if (
     str.includes("invalid progress") ||
@@ -37,8 +38,8 @@ export async function getCatalog() {
     } catch (e) {
       throw new Error("INVALID_DATA");
     }
-  } catch (err: Error | unknown) {
-    if (err.message === "INVALID_DATA") throw "INVALID_DATA";
+  } catch (err: unknown) {
+    if ((err as Error).message === "INVALID_DATA") throw "INVALID_DATA";
     throw mapError(err);
   }
 }
@@ -55,8 +56,8 @@ export async function getCurrentStudentCourses() {
     } catch (e) {
       throw new Error("INVALID_DATA");
     }
-  } catch (err: Error | unknown) {
-    if (err.message === "INVALID_DATA") throw "INVALID_DATA";
+  } catch (err: unknown) {
+    if ((err as Error).message === "INVALID_DATA") throw "INVALID_DATA";
     throw mapError(err);
   }
 }
@@ -76,9 +77,9 @@ export async function getCourseOutline(slug: string) {
     } catch (e) {
       throw new Error("INVALID_DATA");
     }
-  } catch (err: Error | unknown) {
-    if (err.message === "INVALID_DATA") throw "INVALID_DATA";
-    if (err.message === "COURSE_NOT_FOUND") throw "COURSE_NOT_FOUND";
+  } catch (err: unknown) {
+    if ((err as Error).message === "INVALID_DATA") throw "INVALID_DATA";
+    if ((err as Error).message === "COURSE_NOT_FOUND") throw "COURSE_NOT_FOUND";
     throw mapError(err);
   }
 }
@@ -97,8 +98,8 @@ export async function enrollInCourse(slug: string) {
     } catch (e) {
       throw new Error("INVALID_DATA");
     }
-  } catch (err: Error | unknown) {
-    if (err.message === "INVALID_DATA") throw "INVALID_DATA";
+  } catch (err: unknown) {
+    if ((err as Error).message === "INVALID_DATA") throw "INVALID_DATA";
     throw mapError(err);
   }
 }
@@ -123,8 +124,8 @@ export async function saveLessonProgress(
     } catch (e) {
       throw new Error("INVALID_DATA");
     }
-  } catch (err: Error | unknown) {
-    if (err.message === "INVALID_DATA") throw "INVALID_DATA";
+  } catch (err: unknown) {
+    if ((err as Error).message === "INVALID_DATA") throw "INVALID_DATA";
     throw mapError(err);
   }
 }
