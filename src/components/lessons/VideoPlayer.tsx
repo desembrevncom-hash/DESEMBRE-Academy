@@ -21,7 +21,7 @@ export function VideoPlayer({
   const { signedUrl, isLoading, error } = useLessonMedia(courseSlug, lessonId, true);
   const { saveProgress } = useLessonProgress(lessonId, duration);
 
-  const isMetadataLoaded = useRef(false);
+  const previousUrl = useRef<string | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -40,37 +40,71 @@ export function VideoPlayer({
     const handlePause = () => saveProgress(video.currentTime, "in_progress", true).catch(() => {});
     const handleSeeked = () => saveProgress(video.currentTime, "in_progress", true).catch(() => {});
     const handleEnded = () => saveProgress(video.currentTime, "completed", true).catch(() => {});
-    const handleLoadedMetadata = () => {
-      isMetadataLoaded.current = true;
-      if (initialPosition && initialPosition > 0) {
-        video.currentTime = initialPosition;
-      }
-    };
 
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("pause", handlePause);
     video.addEventListener("seeked", handleSeeked);
     video.addEventListener("ended", handleEnded);
-    video.addEventListener("loadedmetadata", handleLoadedMetadata);
 
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("seeked", handleSeeked);
       video.removeEventListener("ended", handleEnded);
-      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       saveProgress(video.currentTime, "in_progress", true).catch(() => {});
     };
-  }, [saveProgress, initialPosition]);
+  }, [saveProgress]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !signedUrl || signedUrl === previousUrl.current) return;
+
+    const isFirstLoad = previousUrl.current === null;
+    previousUrl.current = signedUrl;
+
+    const wasPaused = video.paused;
+    const currentTime = video.currentTime;
+    const playbackRate = video.playbackRate;
+    const volume = video.volume;
+    const muted = video.muted;
+
+    video.src = signedUrl;
+    video.load();
+
+    const handleLoadedMetadata = () => {
+      if (isFirstLoad && initialPosition && initialPosition > 0) {
+        video.currentTime = initialPosition;
+      } else if (!isFirstLoad) {
+        video.currentTime = currentTime;
+        video.playbackRate = playbackRate;
+        video.volume = volume;
+        video.muted = muted;
+        if (!wasPaused) {
+          video.play().catch(() => {});
+        }
+      }
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+  }, [signedUrl, initialPosition]);
 
   if (error) {
     return <div className="p-4 bg-red-50 text-red-600 rounded">Video temporarily unavailable.</div>;
   }
 
-  if (isLoading || !signedUrl) {
+  // Only show loading state if we don't have a signedUrl at all
+  // If we are just renewing, signedUrl is still populated.
+  if (isLoading && !signedUrl) {
     return <div className="p-4 text-gray-500">Loading video...</div>;
   }
 
+  // We unconditionally render the video element if we have a signedUrl.
+  // We do NOT use signedUrl as the key. We rely on the ref to update the src.
   return (
     <video
       ref={videoRef}
@@ -79,7 +113,6 @@ export function VideoPlayer({
       className="w-full rounded-md shadow-sm bg-black"
       controlsList="nodownload"
     >
-      <source src={signedUrl} type={mimeType} />
       Trình duyệt của bạn không hỗ trợ video.
     </video>
   );
