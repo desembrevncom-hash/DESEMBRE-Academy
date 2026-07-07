@@ -3,6 +3,29 @@ import { lessonContentService } from "./services/lesson-content.service";
 import { LessonProgressStatus } from "./types";
 import { useAuth } from "@/features/auth/useAuth";
 
+export function normalizeLessonPositionSeconds(
+  positionSeconds: number,
+  durationSeconds?: number | null,
+): number {
+  if (
+    typeof positionSeconds !== "number" ||
+    isNaN(positionSeconds) ||
+    !isFinite(positionSeconds) ||
+    positionSeconds < 0
+  ) {
+    positionSeconds = 0;
+  }
+  let normalized = Math.floor(positionSeconds);
+
+  if (typeof durationSeconds === "number" && isFinite(durationSeconds) && durationSeconds > 0) {
+    const maxDuration = Math.floor(durationSeconds);
+    if (normalized > maxDuration) {
+      normalized = maxDuration;
+    }
+  }
+  return normalized;
+}
+
 export function useLessonProgress(lessonId: string, duration: number | null) {
   const { user } = useAuth();
   const lastSavedPosition = useRef<number>(-1);
@@ -13,30 +36,36 @@ export function useLessonProgress(lessonId: string, duration: number | null) {
     async (positionSeconds: number, status: LessonProgressStatus, force = false) => {
       if (!user || !lessonId || duration === null || duration === undefined) return;
 
-      let clampedPos = Math.max(0, positionSeconds);
-      if (duration > 0) {
-        clampedPos = Math.min(clampedPos, duration);
-      }
+      const normalizedPos = normalizeLessonPositionSeconds(positionSeconds, duration);
 
       let percent = 0;
       if (duration && duration > 0) {
-        percent = Math.min(100, Math.max(0, (clampedPos / duration) * 100));
+        percent = Math.min(99.99, Math.max(0, (normalizedPos / duration) * 100));
       }
-      if (status === "completed") percent = 100;
 
-      if (!force && lastSavedPosition.current === clampedPos && status !== "completed") {
+      if (status === "completed") {
+        percent = 100;
+        // If we complete, and there's a duration, ensure we reflect the full floored duration if possible
+        // But the user might complete manually early. The rule says:
+        // "last position must be the normalized media duration when available; otherwise use the latest normalized current position."
+      }
+
+      const finalPos =
+        status === "completed" && duration && duration > 0 ? Math.floor(duration) : normalizedPos;
+
+      if (!force && lastSavedPosition.current === finalPos && status !== "completed") {
         return;
       }
 
       if (isSaving.current) {
-        pendingSave.current = { position: clampedPos, status };
+        pendingSave.current = { position: finalPos, status };
         return;
       }
 
       isSaving.current = true;
       try {
-        await lessonContentService.saveLessonProgress(lessonId, status, percent, clampedPos);
-        lastSavedPosition.current = clampedPos;
+        await lessonContentService.saveLessonProgress(lessonId, status, percent, finalPos);
+        lastSavedPosition.current = finalPos;
         return true;
       } catch (err) {
         console.error("Failed to save progress", err);
@@ -46,7 +75,7 @@ export function useLessonProgress(lessonId: string, duration: number | null) {
         if (pendingSave.current) {
           const next = pendingSave.current;
           pendingSave.current = null;
-          saveProgress(next.position, next.status, force);
+          saveProgress(next.position, next.status, force).catch(() => {});
         }
       }
     },

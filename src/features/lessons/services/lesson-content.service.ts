@@ -6,6 +6,7 @@ import {
   LessonProgressPayload,
   LessonProgressStatus,
 } from "../types";
+import { normalizeLessonPositionSeconds } from "../useLessonProgress";
 
 export class LessonContentError extends Error {
   constructor(
@@ -18,15 +19,12 @@ export class LessonContentError extends Error {
   }
 }
 
-function normalizeError(
-  error: unknown,
-  fallbackMessage: string
-): LessonContentError {
+function normalizeError(error: unknown, fallbackMessage: string): LessonContentError {
   const err = error as Record<string, unknown>;
   return new LessonContentError(
-    typeof err?.message === 'string' ? err.message : fallbackMessage,
-    typeof err?.code === 'string' ? err.code : undefined,
-    typeof err?.status === 'number' ? err.status : undefined
+    typeof err?.message === "string" ? err.message : fallbackMessage,
+    typeof err?.code === "string" ? err.code : undefined,
+    typeof err?.status === "number" ? err.status : undefined,
   );
 }
 
@@ -95,24 +93,23 @@ export const lessonContentService = {
   ): Promise<LessonProgressPayload> {
     const client = getClientOrThrow();
 
-    // Explicit 4-argument overload usage for backwards compatibility and strict precision
+    const normalizedPos = normalizeLessonPositionSeconds(lastPositionSeconds);
+
     const { data, error } = await client.rpc("save_current_lesson_progress", {
       p_lesson_id: lessonId,
       p_status: status,
       p_progress_percent: progressPercent,
-      p_last_position_seconds: lastPositionSeconds,
+      p_last_position_seconds: normalizedPos,
     });
 
     if (error) {
       throw normalizeError(error, "Failed to save progress");
     }
 
-    // Rely on simple manual cast or zod parse for progress return type if desired
-    // The backend returns the updated row.
     return {
       status,
       progress_percent: progressPercent,
-      last_position_seconds: lastPositionSeconds,
+      last_position_seconds: normalizedPos,
     };
   },
 };

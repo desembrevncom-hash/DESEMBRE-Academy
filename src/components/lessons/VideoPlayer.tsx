@@ -32,7 +32,7 @@ export function VideoPlayer({
     const handleTimeUpdate = () => {
       const now = Date.now();
       if (now - lastThrottleTime > 5000) {
-        saveProgress(video.currentTime, "in_progress", false);
+        saveProgress(video.currentTime, "in_progress", false).catch(() => {});
         lastThrottleTime = now;
       }
     };
