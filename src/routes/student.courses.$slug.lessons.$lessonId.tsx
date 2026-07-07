@@ -100,12 +100,23 @@ function LessonPlayer() {
 
     try {
       setSaving(true);
-      await saveProgress(0, status, true);
-      toast.success(status === "completed" ? "Đã đánh dấu hoàn thành" : "Đã lưu tiến độ");
-      await fetchOutline();
-      await refreshCurrentCourses();
+      const persistedProgress = await saveProgress(0, status, true);
+
+      if (status === "completed") {
+        if (
+          persistedProgress?.status === "completed" &&
+          persistedProgress.progress_percent === 100
+        ) {
+          toast.success("Đã đánh dấu hoàn thành");
+          await Promise.all([fetchOutline(), refreshCurrentCourses()]);
+        } else {
+          toast.error("Lỗi xác nhận hoàn thành từ máy chủ.");
+        }
+      } else {
+        toast.success("Đã lưu tiến độ");
+      }
     } catch (err: unknown) {
-      toast.error("Lỗi lưu tiến độ");
+      toast.error("Lỗi lưu tiến độ. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
@@ -267,7 +278,10 @@ function LessonPlayer() {
     switch (content.kind) {
       case "article":
         return (
-          <div className="bg-white rounded-3xl border border-border/70 p-6 sm:p-10" data-testid="article-lesson-page">
+          <div
+            className="bg-white rounded-3xl border border-border/70 p-6 sm:p-10"
+            data-testid="article-lesson-page"
+          >
             <ArticleRenderer markdown={content.markdown} />
           </div>
         );
@@ -340,8 +354,16 @@ function LessonPlayer() {
                   handleSaveProgress(completed ? "in_progress" : "completed", completed ? 50 : 100)
                 }
               >
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                {completed ? "Đã hoàn thành" : "Đánh dấu hoàn thành"}
+                {saving && !completed ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                )}
+                {saving && !completed
+                  ? "Đang lưu tiến trình..."
+                  : completed
+                    ? "Đã hoàn thành"
+                    : "Đánh dấu hoàn thành"}
               </Button>
               {!completed && (
                 <Button

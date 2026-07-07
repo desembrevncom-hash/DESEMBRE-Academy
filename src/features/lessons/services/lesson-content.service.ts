@@ -19,15 +19,24 @@ export class LessonContentError extends Error {
   }
 }
 
-function normalizeError(
-  error: unknown,
-  fallbackMessage: string
-): LessonContentError {
+function normalizeError(error: unknown, fallbackMessage: string): LessonContentError {
   const err = error as Record<string, unknown>;
   return new LessonContentError(
-    typeof err?.message === 'string' ? err.message : fallbackMessage,
-    typeof err?.code === 'string' ? err.code : undefined,
-    typeof err?.status === 'number' ? err.status : undefined
+    typeof err?.message === "string" ? err.message : fallbackMessage,
+    typeof err?.code === "string" ? err.code : undefined,
+    typeof err?.status === "number" ? err.status : undefined,
+  );
+}
+
+export function isRetryableNetworkError(err: unknown): boolean {
+  const str = String(err).toLowerCase();
+  const msg = (err as any)?.message?.toLowerCase() || "";
+  return (
+    str.includes("networkerror") ||
+    str.includes("failed to fetch") ||
+    str.includes("request canceled") ||
+    msg.includes("networkerror") ||
+    msg.includes("failed to fetch")
   );
 }
 
@@ -115,10 +124,24 @@ export const lessonContentService = {
       throw normalizeError(error, "Có lỗi xảy ra khi lưu tiến trình học.");
     }
 
+    // Validate the exact response
+    const row = data as any;
+    if (status === "completed") {
+      if (
+        !row ||
+        row.status !== "completed" ||
+        row.progress_percent !== 100 ||
+        !Number.isInteger(row.last_position_seconds) ||
+        row.lesson_id !== lessonId
+      ) {
+        throw new LessonContentError("INVALID_DATA");
+      }
+    }
+
     return {
-      status,
-      progress_percent: progressPercent,
-      last_position_seconds: payload.p_last_position_seconds,
+      status: row?.status || status,
+      progress_percent: row?.progress_percent ?? progressPercent,
+      last_position_seconds: row?.last_position_seconds ?? payload.p_last_position_seconds,
     };
   },
 };
