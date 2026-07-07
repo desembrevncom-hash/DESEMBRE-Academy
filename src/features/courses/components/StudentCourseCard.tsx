@@ -1,16 +1,53 @@
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import type { CurrentStudentCourse } from "../types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import { getCourseOutline } from "../services/course.service";
+import { toast } from "sonner";
 
 export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
-  const { course, enrollment, progress_percent } = data;
+  const { course, enrollment, progress_percent, last_accessed_lesson } = data;
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const handleContinue = async () => {
+    try {
+      setLoading(true);
+      const outline = await getCourseOutline(course.slug);
+      
+      const flat = outline?.modules?.flatMap((m) => m.lessons) || [];
+      if (flat.length === 0) {
+        toast.info("Khóa học chưa có bài học nào khả dụng.");
+        return;
+      }
+
+      let targetId = last_accessed_lesson;
+      let targetLesson = targetId ? flat.find(l => l.id === targetId && !l.is_locked) : null;
+
+      if (!targetLesson) {
+        targetLesson = flat.find(l => !l.is_locked);
+      }
+
+      if (!targetLesson) {
+        toast.info("Không có bài học nào khả dụng.");
+        return;
+      }
+
+      navigate({
+        to: "/student/courses/$slug/lessons/$lessonId",
+        params: { slug: course.slug, lessonId: targetLesson.id },
+      });
+    } catch (err) {
+      toast.error("Không thể tải thông tin khóa học.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <Link
-      to="/courses/$slug"
-      params={{ slug: course.slug }}
-      className="group block rounded-3xl bg-card card-hover overflow-hidden border border-border/70"
-    >
+    <div className="group block rounded-3xl bg-card overflow-hidden border border-border/70 relative flex flex-col">
       <div className="relative aspect-[16/10] overflow-hidden bg-accent grid place-items-center">
         <span className="text-muted-foreground">[Khóa học]</span>
         {course.category && (
@@ -50,12 +87,23 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
                 style={{ width: `${progress_percent}%` }}
               />
             </div>
-            <div className="mt-1.5 text-xs text-muted-foreground">
-              Tiến độ {Math.round(progress_percent)}%
+            <div className="mt-1.5 text-xs text-muted-foreground flex justify-between items-center">
+              <span>Tiến độ {Math.round(progress_percent)}%</span>
             </div>
           </div>
         )}
+
+        <div className="mt-5 pt-5 border-t border-border/50 mt-auto">
+          <Button 
+            className="w-full rounded-full" 
+            onClick={handleContinue}
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Tiếp tục học
+          </Button>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 }

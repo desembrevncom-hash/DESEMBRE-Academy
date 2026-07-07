@@ -10,14 +10,22 @@ import {
   Lock,
   PlayCircle,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { getCourseOutline, saveLessonProgress } from "@/features/courses/services/course.service";
+import { getCourseOutline } from "@/features/courses/services/course.service";
 import { useCourseRuntime } from "@/features/courses/useCourseRuntime";
 import { toast } from "sonner";
 import type { CourseOutline, CourseLesson } from "@/features/courses/types";
+
+import { useLessonContent } from "@/features/lessons/useLessonContent";
+import { useLessonProgress } from "@/features/lessons/useLessonProgress";
+import { ArticleRenderer } from "@/components/lessons/ArticleRenderer";
+import { VideoPlayer } from "@/components/lessons/VideoPlayer";
+import { DocumentViewer } from "@/components/lessons/DocumentViewer";
+import { ExternalLinkViewer } from "@/components/lessons/ExternalLinkViewer";
 
 export const Route = createFileRoute("/student/courses/$slug/lessons/$lessonId")({
   component: LessonPlayer,
@@ -51,8 +59,11 @@ function LessonPlayer() {
   }, [slug]);
 
   const flat = useMemo(() => {
-    if (!outline) return [];
-    return outline.modules.flatMap((m) => m.lessons.map((l) => ({ moduleId: m.id, lesson: l })));
+    if (!outline || !outline.modules) return [];
+    return outline.modules.flatMap((m) => {
+      if (!m || !m.lessons) return [];
+      return m.lessons.map((l) => ({ moduleId: m.id, lesson: l }));
+    });
   }, [outline]);
 
   const idx = flat.findIndex((f) => f.lesson.id === lessonId);
@@ -61,27 +72,51 @@ function LessonPlayer() {
   const prev = idx > 0 ? flat[idx - 1] : null;
   const next = idx < flat.length - 1 ? flat[idx + 1] : null;
 
+  const isLocked = lesson?.is_locked ?? false;
+  const isReady = !loading && outline !== null && lesson !== undefined;
+
+  const {
+    data: contentData,
+    isLoading: isContentLoading,
+    error: contentError,
+  } = useLessonContent({
+    courseSlug: slug,
+    lessonId,
+    enabled: isReady && !isLocked,
+  });
+
+  const { saveProgress } = useLessonProgress(lessonId, lesson?.duration ?? null, lesson?.progress?.status);
+
   const progressPct = useMemo(() => {
-    if (!outline) return 0;
-    const all = outline.modules.flatMap((m) => m.lessons);
+    if (!outline || !outline.modules) return 0;
+    const all = outline.modules.flatMap((m) => m.lessons || []);
     if (all.length === 0) return 0;
     const completed = all.filter((l) => l.progress?.status === "completed").length;
     return Math.round((completed / all.length) * 100);
   }, [outline]);
 
-  const saveProgress = async (status: "in_progress" | "completed", percent: number) => {
-    if (!lesson) return;
-    if (lesson.is_locked) return;
-    if (!outline?.access_decision.can_learn) return;
+  const handleSaveProgress = async (status: "in_progress" | "completed", percent: number) => {
+    if (!lesson || isLocked || !outline?.access_decision.can_learn) return;
 
     try {
       setSaving(true);
-      await saveLessonProgress(lesson.id, status, percent);
-      toast.success(status === "completed" ? "Đã đánh dấu hoàn thành" : "Đã lưu tiến độ");
-      await fetchOutline();
-      await refreshCurrentCourses();
+      const persistedProgress = await saveProgress(0, status, true);
+
+      if (status === "completed") {
+        if (
+          persistedProgress?.status === "completed" &&
+          persistedProgress.progress_percent === 100
+        ) {
+          toast.success("Đã đánh dấu hoàn thành");
+          await Promise.all([fetchOutline(), refreshCurrentCourses()]);
+        } else {
+          toast.error("Lỗi xác nhận hoàn thành từ máy chủ.");
+        }
+      } else {
+        toast.success("Đã lưu tiến độ");
+      }
     } catch (err: unknown) {
-      toast.error((err as Error).message || "Lỗi lưu tiến độ");
+      toast.error("Lỗi lưu tiến độ. Vui lòng thử lại.");
     } finally {
       setSaving(false);
     }
@@ -165,8 +200,119 @@ function LessonPlayer() {
     </div>
   );
 
+  const renderContentState = () => {
+    if (isLocked) {
+      return (
+        <div className="aspect-video rounded-3xl border border-border/70 bg-accent grid place-items-center text-muted-foreground">
+          <div className="text-center">
+            <Lock className="mx-auto h-16 w-16 opacity-50" />
+            <div className="mt-3 text-sm">Bài học đã bị khóa</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (contentError) {
+      return (
+        <div className="aspect-video rounded-3xl border border-red-200 bg-red-50 grid place-items-center text-red-600">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto h-16 w-16 opacity-80 mb-3" />
+            <div className="font-semibold">Lỗi tải nội dung</div>
+            <div className="text-sm mt-1">Vui lòng thử lại sau.</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (isContentLoading || !contentData) {
+      return (
+        <div className="aspect-video rounded-3xl border border-border/70 bg-accent grid place-items-center text-muted-foreground">
+          <div className="text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin" />
+            <div className="mt-3 text-sm">Đang tải nội dung...</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (contentData.state === "ACCESS_DENIED") {
+      return (
+        <div className="aspect-video rounded-3xl border border-border/70 bg-accent grid place-items-center text-muted-foreground">
+          <div className="text-center">
+            <Lock className="mx-auto h-16 w-16 opacity-50 mb-3" />
+            <div className="font-semibold">Truy cập bị từ chối</div>
+            <div className="text-sm mt-1">
+              Bạn không có quyền xem nội dung này. Gói hội viên của bạn chưa kích hoạt hoặc đã hết
+              hạn.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (contentData.state === "NOT_FOUND") {
+      return (
+        <div className="aspect-video rounded-3xl border border-border/70 bg-accent grid place-items-center text-muted-foreground">
+          <div className="text-center">
+            <FileText className="mx-auto h-16 w-16 opacity-50 mb-3" />
+            <div className="font-semibold">Không tìm thấy bài học</div>
+          </div>
+        </div>
+      );
+    }
+
+    if (contentData.state === "CONTENT_NOT_CONFIGURED" || !contentData.content) {
+      return (
+        <div className="aspect-video rounded-3xl border border-border/70 bg-accent grid place-items-center text-muted-foreground">
+          <div className="text-center">
+            <AlertTriangle className="mx-auto h-16 w-16 opacity-50 mb-3" />
+            <div className="font-semibold">Nội dung chưa được chuẩn bị</div>
+            <div className="text-sm mt-1">Bài học này chưa có nội dung.</div>
+          </div>
+        </div>
+      );
+    }
+
+    const { content } = contentData;
+
+    switch (content.kind) {
+      case "article":
+        return (
+          <div
+            className="bg-white rounded-3xl border border-border/70 p-6 sm:p-10"
+            data-testid="article-lesson-page"
+          >
+            <ArticleRenderer markdown={content.markdown} />
+          </div>
+        );
+      case "video":
+        return (
+          <div data-testid="video-lesson-page">
+            <VideoPlayer
+              courseSlug={slug}
+              lessonId={lessonId}
+              mimeType={content.mime_type}
+              duration={lesson.duration}
+              initialPosition={contentData.progress?.last_position_seconds}
+              initialProgressStatus={contentData.progress?.status ?? lesson.progress?.status}
+              onProgressComplete={() => {
+                fetchOutline();
+                refreshCurrentCourses();
+              }}
+            />
+          </div>
+        );
+      case "document":
+        return <DocumentViewer courseSlug={slug} lessonId={lessonId} />;
+      case "external_link":
+        return <ExternalLinkViewer url={content.url} />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-testid="lesson-content-page">
       <div className="flex items-center justify-between gap-3">
         <Link
           to="/student/courses"
@@ -189,21 +335,7 @@ function LessonPlayer() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div>
-          {lesson.is_locked ? (
-            <div className="aspect-video rounded-3xl border border-border/70 bg-accent grid place-items-center text-muted-foreground">
-              <div className="text-center">
-                <Lock className="mx-auto h-16 w-16 opacity-50" />
-                <div className="mt-3 text-sm">Bài học đã bị khóa</div>
-              </div>
-            </div>
-          ) : (
-            <div className="aspect-video rounded-3xl border border-border/70 bg-gradient-to-br from-primary-dark to-primary grid place-items-center text-white">
-              <div className="text-center">
-                <PlayCircle className="mx-auto h-16 w-16 opacity-90" />
-                <div className="mt-3 text-sm opacity-80">Trình phát video (demo)</div>
-              </div>
-            </div>
-          )}
+          {renderContentState()}
 
           <div className="mt-6">
             <div className="text-xs text-muted-foreground">{outline.course.title}</div>
@@ -218,20 +350,28 @@ function LessonPlayer() {
               <Button
                 variant={completed ? "default" : "outline"}
                 className="rounded-full"
-                disabled={saving || lesson.is_locked || !outline.access_decision.can_learn}
+                disabled={saving || isLocked || !outline.access_decision.can_learn}
                 onClick={() =>
-                  saveProgress(completed ? "in_progress" : "completed", completed ? 50 : 100)
+                  handleSaveProgress(completed ? "in_progress" : "completed", completed ? 50 : 100)
                 }
               >
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                {completed ? "Đã hoàn thành" : "Đánh dấu hoàn thành"}
+                {saving && !completed ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                )}
+                {saving && !completed
+                  ? "Đang lưu tiến trình..."
+                  : completed
+                    ? "Đã hoàn thành"
+                    : "Đánh dấu hoàn thành"}
               </Button>
               {!completed && (
                 <Button
                   variant="ghost"
                   className="rounded-full"
-                  disabled={saving || lesson.is_locked || !outline.access_decision.can_learn}
-                  onClick={() => saveProgress("in_progress", 50)}
+                  disabled={saving || isLocked || !outline.access_decision.can_learn}
+                  onClick={() => handleSaveProgress("in_progress", 50)}
                 >
                   Đánh dấu đang học (50%)
                 </Button>
