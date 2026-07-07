@@ -8,6 +8,7 @@ interface VideoPlayerProps {
   mimeType: string;
   duration: number | null;
   initialPosition?: number;
+  onProgressComplete?: () => void;
 }
 
 export function VideoPlayer({
@@ -16,10 +17,18 @@ export function VideoPlayer({
   mimeType,
   duration,
   initialPosition,
+  onProgressComplete,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { signedUrl, isLoading, error } = useLessonMedia(courseSlug, lessonId, true);
-  const { saveProgress } = useLessonProgress(lessonId, duration);
+  
+  const { saveProgress } = useLessonProgress(lessonId, duration, {
+    onSuccess: (status) => {
+      if (status === "completed" && onProgressComplete) {
+        onProgressComplete();
+      }
+    }
+  });
 
   const previousUrl = useRef<string | null>(null);
 
@@ -39,7 +48,7 @@ export function VideoPlayer({
 
     const handlePause = () => saveProgress(video.currentTime, "in_progress", true).catch(() => {});
     const handleSeeked = () => saveProgress(video.currentTime, "in_progress", true).catch(() => {});
-    const handleEnded = () => saveProgress(video.currentTime, "completed", true).catch(() => {});
+    const handleEnded = () => saveProgress(video.currentTime, "completed", true, video.duration).catch(() => {});
 
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("pause", handlePause);

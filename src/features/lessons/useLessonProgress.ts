@@ -4,34 +4,61 @@ import { LessonProgressStatus } from "./types";
 import { useAuth } from "@/features/auth/useAuth";
 import { normalizeLessonPositionSeconds, normalizeLessonProgressPercent } from "./progress-utils";
 
-export function useLessonProgress(lessonId: string, duration: number | null) {
+export interface UseLessonProgressOptions {
+  onSuccess?: (status: LessonProgressStatus) => void;
+}
+
+export function useLessonProgress(
+  lessonId: string,
+  duration: number | null,
+  options?: UseLessonProgressOptions
+) {
   const { user } = useAuth();
   const lastSavedPosition = useRef<number>(-1);
   const isSaving = useRef(false);
-  const pendingSave = useRef<{ position: number; status: LessonProgressStatus } | null>(null);
+  const pendingSave = useRef<{ position: number; status: LessonProgressStatus; actualMediaDuration?: number | null } | null>(null);
+  
+  // Explicit completion latch scoped to userId + lessonId
+  const completionCommittedRef = useRef<string | null>(null);
 
   const saveProgress = useCallback(
-    async (positionSeconds: number, status: LessonProgressStatus, force = false) => {
+    async (
+      positionSeconds: number,
+      status: LessonProgressStatus,
+      force = false,
+      actualMediaDuration?: number | null
+    ) => {
       if (!user || !lessonId || duration === null || duration === undefined) return;
 
-      const normalizedPos = normalizeLessonPositionSeconds(positionSeconds, duration);
-      const percent = normalizeLessonProgressPercent(positionSeconds, duration, status);
+      const currentLatch = `${user.id}-${lessonId}`;
+      if (completionCommittedRef.current === currentLatch && status !== "completed") {
+        // Ignore stale in_progress events if we already committed completion for this lesson session
+        return;
+      }
 
-      const finalPos =
-        status === "completed" && duration && duration > 0 ? Math.floor(duration) : normalizedPos;
+      if (status === "completed") {
+        completionCommittedRef.current = currentLatch;
+      }
+
+      const effectiveDuration = (status === "completed" && typeof actualMediaDuration === "number" && isFinite(actualMediaDuration) && actualMediaDuration > 0)
+        ? actualMediaDuration
+        : duration;
+
+      const normalizedPos = normalizeLessonPositionSeconds(positionSeconds, effectiveDuration);
+      const percent = normalizeLessonProgressPercent(positionSeconds, effectiveDuration, status);
+      
+      const finalPos = (status === "completed" && effectiveDuration > 0) 
+        ? Math.floor(effectiveDuration) 
+        : normalizedPos;
 
       if (!force && lastSavedPosition.current === finalPos && status !== "completed") {
         return;
       }
 
       if (isSaving.current) {
-        // A completed/100 snapshot must take precedence over queued in_progress snapshots.
-        if (
-          status === "completed" ||
-          !pendingSave.current ||
-          pendingSave.current.status !== "completed"
-        ) {
-          pendingSave.current = { position: finalPos, status };
+        // A completed snapshot takes precedence over older pending in_progress snapshots
+        if (status === "completed" || !pendingSave.current || pendingSave.current.status !== "completed") {
+          pendingSave.current = { position: finalPos, status, actualMediaDuration };
         }
         return;
       }
@@ -40,6 +67,9 @@ export function useLessonProgress(lessonId: string, duration: number | null) {
       try {
         await lessonContentService.saveLessonProgress(lessonId, status, percent, finalPos);
         lastSavedPosition.current = finalPos;
+        if (options?.onSuccess) {
+          options.onSuccess(status);
+        }
         return true;
       } catch (err) {
         console.error("Failed to save progress", err);
@@ -49,17 +79,19 @@ export function useLessonProgress(lessonId: string, duration: number | null) {
         if (pendingSave.current) {
           const next = pendingSave.current;
           pendingSave.current = null;
-          saveProgress(next.position, next.status, force).catch(() => {});
+          saveProgress(next.position, next.status, force, next.actualMediaDuration).catch(() => {});
         }
       }
     },
-    [lessonId, duration, user],
+    [lessonId, duration, user, options]
   );
 
   useEffect(() => {
     lastSavedPosition.current = -1;
     pendingSave.current = null;
     isSaving.current = false;
+    // Do not reset the latch on every render, only when lessonId or user changes (handled by deps)
+    completionCommittedRef.current = null;
   }, [lessonId, user]);
 
   return { saveProgress };

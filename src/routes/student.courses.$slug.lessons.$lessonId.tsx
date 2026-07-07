@@ -280,6 +280,10 @@ function LessonPlayer() {
               mimeType={content.mime_type}
               duration={lesson.duration}
               initialPosition={contentData.progress?.last_position_seconds}
+              onProgressComplete={() => {
+                fetchOutline();
+                refreshCurrentCourses();
+              }}
             />
           </div>
         );
