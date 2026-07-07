@@ -52,7 +52,12 @@ mock.module("@/features/auth/useAuth", () => ({
 }));
 
 import { lessonContentService } from "./services/lesson-content.service";
-import { useLessonProgress } from "./useLessonProgress";
+import { useLessonProgress, resetGlobalCompletionLatchForTesting } from "./useLessonProgress";
+import { afterEach } from "bun:test";
+
+afterEach(() => {
+  resetGlobalCompletionLatchForTesting();
+});
 
 test("Service RPC payload uses integer last_position_seconds and no numeric strings", async () => {
   let capturedPayload: any = null;
@@ -263,4 +268,105 @@ test("NetworkError is retryable", () => {
   expect(isRetryableNetworkError(new Error("request canceled"))).toBe(true);
   expect(isRetryableNetworkError(new Error("PGRST301"))).toBe(false);
   expect(isRetryableNetworkError(new Error("INVALID_DATA"))).toBe(false);
+});
+
+test("unmount after completion cannot save in_progress", async () => {
+  const mockSave = mock<any>(async () => ({
+    status: "completed",
+    progress_percent: 100,
+    last_position_seconds: 600,
+  }));
+  const originalSave = lessonContentService.saveLessonProgress;
+  lessonContentService.saveLessonProgress = mockSave as any;
+
+  const { saveProgress } = useLessonProgress("lesson-unmount-test", 600);
+
+  // Simulate video end
+  await saveProgress(600, "completed", true, 600);
+
+  // Simulate another useLessonProgress instance created by remounting VideoPlayer
+  const newInstance = useLessonProgress("lesson-unmount-test", 600);
+
+  // Simulate unmount cleanup of the remounted VideoPlayer
+  await newInstance.saveProgress(0, "in_progress", true);
+
+  expect((mockSave as any).mock.calls.length).toBe(1);
+  expect((mockSave as any).mock.calls[0][1]).toBe("completed");
+
+  lessonContentService.saveLessonProgress = originalSave;
+});
+
+test("refresh after completion cannot trigger cleanup overwrite", async () => {
+  const mockSave = mock<any>(async () => ({
+    status: "completed",
+    progress_percent: 100,
+    last_position_seconds: 600,
+  }));
+  const originalSave = lessonContentService.saveLessonProgress;
+  lessonContentService.saveLessonProgress = mockSave as any;
+
+  const { saveProgress } = useLessonProgress("lesson-refresh-test", 600);
+
+  // Simulate VideoPlayer completing
+  await saveProgress(600, "completed", true, 600);
+
+  // Simulate LessonPlayer refreshing and running unmount cleanup of VideoPlayer
+  await saveProgress(600, "in_progress", true);
+
+  expect((mockSave as any).mock.calls.length).toBe(1);
+  expect((mockSave as any).mock.calls[0][1]).toBe("completed");
+
+  lessonContentService.saveLessonProgress = originalSave;
+});
+
+test("failed completed save leaves UI pending, not 100", async () => {
+  const mockSave = mock<any>(async () => {
+    throw new Error("Network error");
+  });
+  const originalSave = lessonContentService.saveLessonProgress;
+  lessonContentService.saveLessonProgress = mockSave as any;
+
+  let successCalled = false;
+  const { saveProgress } = useLessonProgress("lesson-fail-test", 600, {
+    onSuccess: () => {
+      successCalled = true;
+    },
+  });
+
+  let threw = false;
+  try {
+    await saveProgress(600, "completed", true, 600);
+  } catch {
+    threw = true;
+  }
+
+  expect(threw).toBe(true);
+  expect(successCalled).toBe(false);
+
+  lessonContentService.saveLessonProgress = originalSave;
+});
+
+test("successful response persists completed/100", async () => {
+  const mockSave = mock<any>(async () => ({
+    status: "completed",
+    progress_percent: 100,
+    last_position_seconds: 600,
+  }));
+  const originalSave = lessonContentService.saveLessonProgress;
+  lessonContentService.saveLessonProgress = mockSave as any;
+
+  let successCalled = false;
+  const { saveProgress } = useLessonProgress("lesson-success-test", 600, {
+    onSuccess: (status) => {
+      if (status === "completed") successCalled = true;
+    },
+  });
+
+  const res = await saveProgress(600, "completed", true, 600);
+
+  expect(res?.status).toBe("completed");
+  expect(res?.progress_percent).toBe(100);
+  expect(successCalled).toBe(true);
+
+  lessonContentService.saveLessonProgress = originalSave;
 });

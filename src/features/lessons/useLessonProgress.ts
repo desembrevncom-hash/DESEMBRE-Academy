@@ -4,6 +4,12 @@ import { LessonProgressStatus, LessonProgressPayload } from "./types";
 import { useAuth } from "@/features/auth/useAuth";
 import { normalizeLessonPositionSeconds, normalizeLessonProgressPercent } from "./progress-utils";
 
+const globalCompletionLatch = new Set<string>();
+
+export function resetGlobalCompletionLatchForTesting() {
+  globalCompletionLatch.clear();
+}
+
 export interface UseLessonProgressOptions {
   onSuccess?: (status: LessonProgressStatus) => void;
 }
@@ -23,7 +29,7 @@ export function useLessonProgress(
   } | null>(null);
 
   // Explicit completion latch scoped to userId + lessonId
-  const completionCommittedRef = useRef<string | null>(null);
+  // Used to prevent unmount/remount cleanups from overwriting completion with in_progress
 
   const saveProgress = useCallback(
     async (
@@ -35,12 +41,12 @@ export function useLessonProgress(
       if (!user || !lessonId || duration === null || duration === undefined) return undefined;
 
       const currentLatch = `${user.id}-${lessonId}`;
-      if (completionCommittedRef.current === currentLatch && status !== "completed") {
+      if (globalCompletionLatch.has(currentLatch) && status !== "completed") {
         return undefined;
       }
 
       if (status === "completed") {
-        completionCommittedRef.current = currentLatch;
+        globalCompletionLatch.add(currentLatch);
       }
 
       const effectiveDuration =
@@ -145,7 +151,6 @@ export function useLessonProgress(
     lastSavedPosition.current = -1;
     pendingSave.current = null;
     isSaving.current = false;
-    completionCommittedRef.current = null;
   }, [lessonId, user]);
 
   return { saveProgress };
