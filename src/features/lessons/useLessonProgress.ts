@@ -2,29 +2,7 @@ import { useRef, useCallback, useEffect } from "react";
 import { lessonContentService } from "./services/lesson-content.service";
 import { LessonProgressStatus } from "./types";
 import { useAuth } from "@/features/auth/useAuth";
-
-export function normalizeLessonPositionSeconds(
-  positionSeconds: number,
-  durationSeconds?: number | null,
-): number {
-  if (
-    typeof positionSeconds !== "number" ||
-    isNaN(positionSeconds) ||
-    !isFinite(positionSeconds) ||
-    positionSeconds < 0
-  ) {
-    positionSeconds = 0;
-  }
-  let normalized = Math.floor(positionSeconds);
-
-  if (typeof durationSeconds === "number" && isFinite(durationSeconds) && durationSeconds > 0) {
-    const maxDuration = Math.floor(durationSeconds);
-    if (normalized > maxDuration) {
-      normalized = maxDuration;
-    }
-  }
-  return normalized;
-}
+import { normalizeLessonPositionSeconds, normalizeLessonProgressPercent } from "./progress-utils";
 
 export function useLessonProgress(lessonId: string, duration: number | null) {
   const { user } = useAuth();
@@ -37,18 +15,7 @@ export function useLessonProgress(lessonId: string, duration: number | null) {
       if (!user || !lessonId || duration === null || duration === undefined) return;
 
       const normalizedPos = normalizeLessonPositionSeconds(positionSeconds, duration);
-
-      let percent = 0;
-      if (duration && duration > 0) {
-        percent = Math.min(99.99, Math.max(0, (normalizedPos / duration) * 100));
-      }
-
-      if (status === "completed") {
-        percent = 100;
-        // If we complete, and there's a duration, ensure we reflect the full floored duration if possible
-        // But the user might complete manually early. The rule says:
-        // "last position must be the normalized media duration when available; otherwise use the latest normalized current position."
-      }
+      const percent = normalizeLessonProgressPercent(positionSeconds, duration, status);
 
       const finalPos =
         status === "completed" && duration && duration > 0 ? Math.floor(duration) : normalizedPos;
@@ -58,7 +25,14 @@ export function useLessonProgress(lessonId: string, duration: number | null) {
       }
 
       if (isSaving.current) {
-        pendingSave.current = { position: finalPos, status };
+        // A completed/100 snapshot must take precedence over queued in_progress snapshots.
+        if (
+          status === "completed" ||
+          !pendingSave.current ||
+          pendingSave.current.status !== "completed"
+        ) {
+          pendingSave.current = { position: finalPos, status };
+        }
         return;
       }
 

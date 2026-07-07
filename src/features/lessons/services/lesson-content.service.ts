@@ -6,7 +6,7 @@ import {
   LessonProgressPayload,
   LessonProgressStatus,
 } from "../types";
-import { normalizeLessonPositionSeconds } from "../useLessonProgress";
+import { normalizeLessonPositionSeconds } from "../progress-utils";
 
 export class LessonContentError extends Error {
   constructor(
@@ -19,12 +19,15 @@ export class LessonContentError extends Error {
   }
 }
 
-function normalizeError(error: unknown, fallbackMessage: string): LessonContentError {
+function normalizeError(
+  error: unknown,
+  fallbackMessage: string
+): LessonContentError {
   const err = error as Record<string, unknown>;
   return new LessonContentError(
-    typeof err?.message === "string" ? err.message : fallbackMessage,
-    typeof err?.code === "string" ? err.code : undefined,
-    typeof err?.status === "number" ? err.status : undefined,
+    typeof err?.message === 'string' ? err.message : fallbackMessage,
+    typeof err?.code === 'string' ? err.code : undefined,
+    typeof err?.status === 'number' ? err.status : undefined
   );
 }
 
@@ -95,21 +98,27 @@ export const lessonContentService = {
 
     const normalizedPos = normalizeLessonPositionSeconds(lastPositionSeconds);
 
-    const { data, error } = await client.rpc("save_current_lesson_progress", {
+    const payload = {
       p_lesson_id: lessonId,
       p_status: status,
       p_progress_percent: progressPercent,
       p_last_position_seconds: normalizedPos,
-    });
+    };
+
+    if (!Number.isInteger(payload.p_last_position_seconds)) {
+      payload.p_last_position_seconds = 0;
+    }
+
+    const { data, error } = await client.rpc("save_current_lesson_progress", payload);
 
     if (error) {
-      throw normalizeError(error, "Failed to save progress");
+      throw normalizeError(error, "Có lỗi xảy ra khi lưu tiến trình học.");
     }
 
     return {
       status,
       progress_percent: progressPercent,
-      last_position_seconds: normalizedPos,
+      last_position_seconds: payload.p_last_position_seconds,
     };
   },
 };
