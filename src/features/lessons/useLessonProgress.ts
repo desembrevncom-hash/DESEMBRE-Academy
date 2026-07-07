@@ -4,10 +4,28 @@ import { LessonProgressStatus, LessonProgressPayload } from "./types";
 import { useAuth } from "@/features/auth/useAuth";
 import { normalizeLessonPositionSeconds, normalizeLessonProgressPercent } from "./progress-utils";
 
-const globalCompletionLatch = new Set<string>();
+class CompletionRegistry {
+  private latch = new Set<string>();
+
+  markCompleted(userId: string, lessonId: string) {
+    if (typeof window === "undefined" && process.env.NODE_ENV !== "test") return;
+    this.latch.add(`${userId}-${lessonId}`);
+  }
+
+  isCompleted(userId: string, lessonId: string): boolean {
+    if (typeof window === "undefined" && process.env.NODE_ENV !== "test") return false;
+    return this.latch.has(`${userId}-${lessonId}`);
+  }
+
+  clearForTesting() {
+    this.latch.clear();
+  }
+}
+
+export const completionRegistry = new CompletionRegistry();
 
 export function resetGlobalCompletionLatchForTesting() {
-  globalCompletionLatch.clear();
+  completionRegistry.clearForTesting();
 }
 
 export interface UseLessonProgressOptions {
@@ -17,9 +35,15 @@ export interface UseLessonProgressOptions {
 export function useLessonProgress(
   lessonId: string,
   duration: number | null,
+  initialStatus?: LessonProgressStatus | null,
   options?: UseLessonProgressOptions,
 ) {
   const { user } = useAuth();
+
+  if (user && lessonId && initialStatus === "completed") {
+    completionRegistry.markCompleted(user.id, lessonId);
+  }
+
   const lastSavedPosition = useRef<number>(-1);
   const isSaving = useRef(false);
   const pendingSave = useRef<{
@@ -40,13 +64,12 @@ export function useLessonProgress(
     ): Promise<LessonProgressPayload | undefined> => {
       if (!user || !lessonId || duration === null || duration === undefined) return undefined;
 
-      const currentLatch = `${user.id}-${lessonId}`;
-      if (globalCompletionLatch.has(currentLatch) && status !== "completed") {
+      if (completionRegistry.isCompleted(user.id, lessonId) && status !== "completed") {
         return undefined;
       }
 
       if (status === "completed") {
-        globalCompletionLatch.add(currentLatch);
+        completionRegistry.markCompleted(user.id, lessonId);
       }
 
       const effectiveDuration =

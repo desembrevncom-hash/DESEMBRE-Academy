@@ -105,7 +105,7 @@ test("Queue concurrency: one active request prevents concurrent save, keeps newe
   const originalSave = lessonContentService.saveLessonProgress;
   lessonContentService.saveLessonProgress = mockSave as any;
 
-  const { saveProgress } = useLessonProgress("lesson-1", 600);
+  const { saveProgress } = useLessonProgress("lesson-1", 600, null);
 
   const p1 = saveProgress(10, "in_progress");
   saveProgress(20, "in_progress");
@@ -135,7 +135,7 @@ test("Queue precedence: completed pending snapshot is not replaced by stale in_p
   const originalSave = lessonContentService.saveLessonProgress;
   lessonContentService.saveLessonProgress = mockSave as any;
 
-  const { saveProgress } = useLessonProgress("lesson-1", 600);
+  const { saveProgress } = useLessonProgress("lesson-1", 600, null);
 
   saveProgress(10, "in_progress");
   saveProgress(600, "completed");
@@ -160,7 +160,7 @@ test("ended uses actual media duration, not lesson metadata duration", async () 
   lessonContentService.saveLessonProgress = mockSave as any;
 
   // Metadata duration is 600, but actual media duration is 26
-  const { saveProgress } = useLessonProgress("lesson-1", 600);
+  const { saveProgress } = useLessonProgress("lesson-1", 600, null);
 
   await saveProgress(26, "completed", true, 26);
 
@@ -181,7 +181,7 @@ test("pause or timeupdate fired after ended does not queue in_progress", async (
   const originalSave = lessonContentService.saveLessonProgress;
   lessonContentService.saveLessonProgress = mockSave as any;
 
-  const { saveProgress } = useLessonProgress("lesson-2", 600);
+  const { saveProgress } = useLessonProgress("lesson-2", 600, null);
 
   // ended fires
   await saveProgress(26, "completed", true, 26);
@@ -210,7 +210,7 @@ test("completed success invokes options.onSuccess only once, periodic does not",
   let successCount = 0;
   let lastStatus = "";
 
-  const { saveProgress } = useLessonProgress("lesson-3", 600, {
+  const { saveProgress } = useLessonProgress("lesson-3", 600, null, {
     onSuccess: (status) => {
       successCount++;
       lastStatus = status;
@@ -279,13 +279,13 @@ test("unmount after completion cannot save in_progress", async () => {
   const originalSave = lessonContentService.saveLessonProgress;
   lessonContentService.saveLessonProgress = mockSave as any;
 
-  const { saveProgress } = useLessonProgress("lesson-unmount-test", 600);
+  const { saveProgress } = useLessonProgress("lesson-unmount-test", 600, null);
 
   // Simulate video end
   await saveProgress(600, "completed", true, 600);
 
   // Simulate another useLessonProgress instance created by remounting VideoPlayer
-  const newInstance = useLessonProgress("lesson-unmount-test", 600);
+  const newInstance = useLessonProgress("lesson-unmount-test", 600, null);
 
   // Simulate unmount cleanup of the remounted VideoPlayer
   await newInstance.saveProgress(0, "in_progress", true);
@@ -305,7 +305,7 @@ test("refresh after completion cannot trigger cleanup overwrite", async () => {
   const originalSave = lessonContentService.saveLessonProgress;
   lessonContentService.saveLessonProgress = mockSave as any;
 
-  const { saveProgress } = useLessonProgress("lesson-refresh-test", 600);
+  const { saveProgress } = useLessonProgress("lesson-refresh-test", 600, null);
 
   // Simulate VideoPlayer completing
   await saveProgress(600, "completed", true, 600);
@@ -327,7 +327,7 @@ test("failed completed save leaves UI pending, not 100", async () => {
   lessonContentService.saveLessonProgress = mockSave as any;
 
   let successCalled = false;
-  const { saveProgress } = useLessonProgress("lesson-fail-test", 600, {
+  const { saveProgress } = useLessonProgress("lesson-fail-test", 600, null, {
     onSuccess: () => {
       successCalled = true;
     },
@@ -356,7 +356,7 @@ test("successful response persists completed/100", async () => {
   lessonContentService.saveLessonProgress = mockSave as any;
 
   let successCalled = false;
-  const { saveProgress } = useLessonProgress("lesson-success-test", 600, {
+  const { saveProgress } = useLessonProgress("lesson-success-test", 600, null, {
     onSuccess: (status) => {
       if (status === "completed") successCalled = true;
     },
@@ -367,6 +367,81 @@ test("successful response persists completed/100", async () => {
   expect(res?.status).toBe("completed");
   expect(res?.progress_percent).toBe(100);
   expect(successCalled).toBe(true);
+
+  lessonContentService.saveLessonProgress = originalSave;
+});
+
+test("completed backend state initializes the latch", async () => {
+  const { saveProgress } = useLessonProgress("lesson-init-test", 600, "completed");
+  const mockSave = mock<any>(async () => ({}));
+  const originalSave = lessonContentService.saveLessonProgress;
+  lessonContentService.saveLessonProgress = mockSave as any;
+
+  await saveProgress(0, "in_progress");
+
+  expect((mockSave as any).mock.calls.length).toBe(0);
+  lessonContentService.saveLessonProgress = originalSave;
+});
+
+test("switching lessons uses independent keys", async () => {
+  const { saveProgress: save1 } = useLessonProgress("lesson-A", 600, "completed");
+  const { saveProgress: save2 } = useLessonProgress("lesson-B", 600, "in_progress");
+
+  const mockSave = mock<any>(async () => ({
+    status: "in_progress",
+    progress_percent: 10,
+    last_position_seconds: 60,
+  }));
+  const originalSave = lessonContentService.saveLessonProgress;
+  lessonContentService.saveLessonProgress = mockSave as any;
+
+  await save1(10, "in_progress"); // blocked by lesson-A latch
+  await save2(60, "in_progress"); // allowed because lesson-B is not latched
+
+  expect((mockSave as any).mock.calls.length).toBe(1);
+  expect((mockSave as any).mock.calls[0][0]).toBe("lesson-B");
+
+  lessonContentService.saveLessonProgress = originalSave;
+});
+
+test("in_progress lessons still save normally", async () => {
+  const { saveProgress } = useLessonProgress("lesson-normal", 600, "in_progress");
+  const mockSave = mock<any>(async () => ({
+    status: "in_progress",
+    progress_percent: 50,
+    last_position_seconds: 300,
+  }));
+  const originalSave = lessonContentService.saveLessonProgress;
+  lessonContentService.saveLessonProgress = mockSave as any;
+
+  await saveProgress(300, "in_progress");
+
+  expect((mockSave as any).mock.calls.length).toBe(1);
+  expect((mockSave as any).mock.calls[0][1]).toBe("in_progress");
+
+  lessonContentService.saveLessonProgress = originalSave;
+});
+
+test("completed retry remains possible when persistence has not yet succeeded", async () => {
+  const { saveProgress } = useLessonProgress("lesson-retry", 600, "in_progress");
+  let attempts = 0;
+  const mockSave = mock<any>(async () => {
+    attempts++;
+    if (attempts === 1) throw new Error("Network error");
+    return { status: "completed", progress_percent: 100, last_position_seconds: 600 };
+  });
+  const originalSave = lessonContentService.saveLessonProgress;
+  lessonContentService.saveLessonProgress = mockSave as any;
+
+  // First completed call fails
+  try {
+    await saveProgress(600, "completed");
+  } catch (e) {}
+
+  // Second completed call should still be allowed, because we don't block "completed" writes!
+  await saveProgress(600, "completed");
+
+  expect(attempts).toBeGreaterThan(1);
 
   lessonContentService.saveLessonProgress = originalSave;
 });

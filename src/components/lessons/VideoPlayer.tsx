@@ -8,6 +8,7 @@ interface VideoPlayerProps {
   mimeType: string;
   duration: number | null;
   initialPosition?: number;
+  initialProgressStatus?: string | null;
   onProgressComplete?: () => void;
 }
 
@@ -17,12 +18,13 @@ export function VideoPlayer({
   mimeType,
   duration,
   initialPosition,
+  initialProgressStatus,
   onProgressComplete,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const { signedUrl, isLoading, error } = useLessonMedia(courseSlug, lessonId, true);
 
-  const { saveProgress } = useLessonProgress(lessonId, duration);
+  const { saveProgress } = useLessonProgress(lessonId, duration, initialProgressStatus as any);
 
   const previousUrl = useRef<string | null>(null);
 
