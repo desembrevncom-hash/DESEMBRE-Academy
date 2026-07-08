@@ -85,7 +85,11 @@ function LessonPlayer() {
     enabled: isReady && !isLocked,
   });
 
-  const { saveProgress } = useLessonProgress(lessonId, lesson?.duration ?? null, lesson?.progress?.status);
+  const { saveProgress } = useLessonProgress(
+    lessonId,
+    lesson?.duration ?? null,
+    lesson?.progress?.status,
+  );
 
   const progressPct = useMemo(() => {
     if (!outline || !outline.modules) return 0;

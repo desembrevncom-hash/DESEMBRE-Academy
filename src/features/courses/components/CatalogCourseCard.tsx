@@ -103,7 +103,11 @@ export function CatalogCourseCard({ course }: { course: CourseCatalogItem }) {
 
         <div className="mt-5 pt-5 border-t border-border/50 mt-auto">
           {enrollment ? (
-            <Button className="w-full rounded-full" onClick={handleNavigateToFirstLesson} disabled={isLoading}>
+            <Button
+              className="w-full rounded-full"
+              onClick={handleNavigateToFirstLesson}
+              disabled={isLoading}
+            >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Tiếp tục học
             </Button>

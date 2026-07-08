@@ -1,5 +1,5 @@
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import type { Session, User } from '@supabase/supabase-js';
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { Session, User } from "@supabase/supabase-js";
 
 export type AuthErrorInfo = {
   code?: string;
@@ -10,15 +10,15 @@ export type AuthErrorInfo = {
 function normalizeError(error: any): AuthErrorInfo {
   return {
     code: error?.code,
-    message: error?.message || 'Unknown authentication error',
-    status: error?.status
+    message: error?.message || "Unknown authentication error",
+    status: error?.status,
   };
 }
 
 function getClientOrThrow() {
   const client = getSupabaseBrowserClient();
   if (!client) {
-    throw new Error('Supabase client is not available in this environment.');
+    throw new Error("Supabase client is not available in this environment.");
   }
   return client;
 }
@@ -55,5 +55,5 @@ export const authService = {
     const client = getClientOrThrow();
     const { data } = client.auth.onAuthStateChange(callback);
     return data.subscription;
-  }
+  },
 };
