@@ -1,5 +1,9 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { requestUploadResponseSchema, mediaActionResponseSchema, safeMediaErrorResponseSchema } from "../validators";
+import {
+  requestUploadResponseSchema,
+  mediaActionResponseSchema,
+  safeMediaErrorResponseSchema,
+} from "../validators";
 
 export class AdminMediaApiError extends Error {
   constructor(
@@ -67,7 +71,10 @@ export const academyAdminMediaUploadApi = {
       const rawData = await response.json();
       return requestUploadResponseSchema.parse(rawData);
     } catch {
-      throw new AdminMediaApiError("INVALID_RESPONSE", "Invalid request upload response from server");
+      throw new AdminMediaApiError(
+        "INVALID_RESPONSE",
+        "Invalid request upload response from server",
+      );
     }
   },
 

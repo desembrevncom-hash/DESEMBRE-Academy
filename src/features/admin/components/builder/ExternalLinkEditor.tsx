@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useBlocker } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useSetAcademyExternalLinkContent } from "../../hooks/useAcademyAdminCourses";
+import { useCourseEditorRegistry } from "../../contexts/CourseEditorRegistry";
 
 interface ExternalLinkEditorProps {
   courseId: string;
@@ -11,6 +12,7 @@ interface ExternalLinkEditorProps {
 
 export function ExternalLinkEditor({ courseId, lessonId, initialUrl }: ExternalLinkEditorProps) {
   const [url, setUrl] = useState(initialUrl);
+  const { setContentDirty, setActiveMutation, isReadOnly } = useCourseEditorRegistry();
 
   const setExternalLink = useSetAcademyExternalLinkContent(courseId);
 
@@ -20,9 +22,17 @@ export function ExternalLinkEditor({ courseId, lessonId, initialUrl }: ExternalL
 
   const isDirty = url !== initialUrl;
 
+  useEffect(() => {
+    setContentDirty(isDirty);
+  }, [isDirty, setContentDirty]);
+
+  useEffect(() => {
+    setActiveMutation(setExternalLink.isPending);
+  }, [setExternalLink.isPending, setActiveMutation]);
+
   useBlocker({
     shouldBlockFn: () => {
-      if (isDirty && !setExternalLink.isPending) {
+      if (isDirty && !setExternalLink.isPending && !isReadOnly) {
         return !window.confirm(
           "You have unsaved changes to the external link. Are you sure you want to leave?",
         );
@@ -93,8 +103,9 @@ export function ExternalLinkEditor({ courseId, lessonId, initialUrl }: ExternalL
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              disabled={isReadOnly}
               placeholder="https://example.com/resource"
-              className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
               required
             />
             {isValidUrl && (
@@ -114,26 +125,28 @@ export function ExternalLinkEditor({ courseId, lessonId, initialUrl }: ExternalL
           )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={!isDirty || !isValidUrl || setExternalLink.isPending}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 disabled:opacity-50"
-          >
-            {setExternalLink.isPending ? "Saving..." : "Save Link"}
-          </button>
-
-          {isDirty && (
+        {!isReadOnly && (
+          <div className="flex items-center gap-3">
             <button
-              type="button"
-              onClick={handleCancel}
-              disabled={setExternalLink.isPending}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium border hover:bg-muted px-4 py-2 disabled:opacity-50"
+              type="submit"
+              disabled={!isDirty || !isValidUrl || setExternalLink.isPending}
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 disabled:opacity-50"
             >
-              Cancel
+              {setExternalLink.isPending ? "Saving..." : "Save Link"}
             </button>
-          )}
-        </div>
+
+            {isDirty && (
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={setExternalLink.isPending}
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium border hover:bg-muted px-4 py-2 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );

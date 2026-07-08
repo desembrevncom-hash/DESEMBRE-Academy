@@ -11,11 +11,13 @@ import {
 } from "../../hooks/useAcademyAdminCourses";
 import { moduleSchema, type ModuleFormData } from "../../validators";
 import { ModuleCard } from "./ModuleCard";
+import { useCourseEditorRegistry } from "../../contexts/CourseEditorRegistry";
 
 export function ModuleLessonBuilder({ courseId }: { courseId: string }) {
   const { data, isLoading, isError, error, refetch } = useAcademyAdminCourseEditor(courseId);
   const createModule = useCreateAcademyModule();
   const [isCreating, setIsCreating] = useState(false);
+  const { isReadOnly } = useCourseEditorRegistry();
 
   const {
     register,
@@ -145,7 +147,7 @@ export function ModuleLessonBuilder({ courseId }: { courseId: string }) {
               </button>
             </div>
           </form>
-        ) : (
+        ) : !isReadOnly ? (
           <button
             onClick={() => setIsCreating(true)}
             className="w-full flex items-center justify-center gap-2 p-4 border rounded-lg border-dashed text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors text-sm font-medium"
@@ -153,7 +155,7 @@ export function ModuleLessonBuilder({ courseId }: { courseId: string }) {
             <Plus className="w-4 h-4" />
             Add New Module
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

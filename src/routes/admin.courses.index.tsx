@@ -146,7 +146,7 @@ function AdminCourseList() {
                         params={{ courseId: course.id }}
                         className="text-primary hover:underline font-medium"
                       >
-                        Edit
+                        {course.status === "archived" ? "View" : "Edit"}
                       </Link>
                     </td>
                   </tr>

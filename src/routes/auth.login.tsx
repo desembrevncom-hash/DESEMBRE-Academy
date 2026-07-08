@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import heroImg from "@/assets/hero-instructor.jpg";
 import { authService } from "@/features/auth/services/auth.service";
 import { useAuth } from "@/features/auth/useAuth";
+import { useAdminAccess, resolveAcademyDestination } from "@/features/admin/hooks/useAdminAccess";
 
 export const Route = createFileRoute("/auth/login")({
   component: Login,
@@ -23,7 +24,8 @@ type FormValues = z.infer<typeof schema>;
 
 function Login() {
   const navigate = useNavigate();
-  const { session, loading: authLoading, initialized } = useAuth();
+  const { session, loading: authLoading, initialized: authInitialized } = useAuth();
+  const { role, roleQueryStatus } = useAdminAccess();
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -32,38 +34,45 @@ function Login() {
     defaultValues: { email: "", password: "" },
   });
 
-  // Securely resolve return path
+  // Securely resolve return path based on exact role from backend
   const getReturnPath = () => {
+    const destination = resolveAcademyDestination({
+      authenticated: !!session,
+      roleQueryStatus,
+      role,
+    });
+
+    if (!destination) return null; // Still loading
+    if (destination === "forbidden") return "/"; // Handle safe landing
+
     const searchParams = new URLSearchParams(window.location.search);
     const returnTo = searchParams.get("returnTo");
 
-    if (!returnTo) return "/student";
-
-    // Only accept internal paths starting with a single '/'
-    // Reject '//' (protocol-relative), 'http://', 'https://', etc.
-    if (returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+    if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
       return returnTo;
     }
 
-    return "/student";
+    return destination;
   };
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated and role is resolved
   useEffect(() => {
-    if (initialized && session) {
-      navigate({ to: getReturnPath() as never, replace: true });
+    if (authInitialized && session) {
+      const destination = getReturnPath();
+      if (destination) {
+        navigate({ to: destination as never, replace: true });
+      }
     }
-  }, [initialized, session, navigate]);
+  }, [authInitialized, session, roleQueryStatus, role, navigate]);
 
   const onSubmit = async (values: FormValues) => {
     try {
       setLoading(true);
       setAuthError(null);
       await authService.signInWithPassword(values.email, values.password);
-      navigate({ to: getReturnPath() as never });
+      // Let the useEffect handle the redirect once role is loaded
     } catch (err: unknown) {
       setAuthError((err as Error).message || "Đăng nhập thất bại");
-    } finally {
       setLoading(false);
     }
   };

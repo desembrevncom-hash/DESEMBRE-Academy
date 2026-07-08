@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
 import { useAcademyAdminCourseEditor } from "@/features/admin/hooks/useAcademyAdminCourses";
+import { CourseEditorRegistryProvider } from "@/features/admin/contexts/CourseEditorRegistry";
+import { CourseActionPanel } from "@/features/admin/components/publish/CourseActionPanel";
 
 export const Route = createFileRoute("/admin/courses/$courseId")({
   component: CourseEditorLayout,
@@ -78,47 +80,51 @@ function CourseEditorLayout() {
               {course.status}
             </span>
           </div>
-        </div>
-
-        {/* Placeholder for publish actions in the future */}
-        <div className="text-sm text-muted-foreground">
-          ID: <span className="font-mono">{course.id.substring(0, 8)}</span>
+          <div className="text-sm text-muted-foreground">
+            ID: <span className="font-mono">{course.id.substring(0, 8)}</span>
+          </div>
         </div>
       </div>
 
-      <div className="border-b mb-6">
-        <nav className="flex space-x-8" aria-label="Tabs">
-          <Link
-            to="/admin/courses/$courseId/settings"
-            params={{ courseId }}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              isSettingsActive
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
-            }`}
-          >
-            Settings
-          </Link>
-          <Link
-            to="/admin/courses/$courseId/content"
-            params={{ courseId }}
-            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              isContentActive
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
-            }`}
-          >
-            Content & Modules
-            <span className="ml-2 bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs">
-              {editorData.modules.length}
-            </span>
-          </Link>
-        </nav>
-      </div>
+      <CourseEditorRegistryProvider editorData={editorData}>
+        <div className="mb-6">
+          <CourseActionPanel />
+        </div>
 
-      <div className="bg-card text-card-foreground">
-        <Outlet />
-      </div>
+        <div className="border-b mb-6">
+          <nav className="flex space-x-8" aria-label="Tabs">
+            <Link
+              to="/admin/courses/$courseId/settings"
+              params={{ courseId }}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                isSettingsActive
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+              }`}
+            >
+              Settings
+            </Link>
+            <Link
+              to="/admin/courses/$courseId/content"
+              params={{ courseId }}
+              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                isContentActive
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+              }`}
+            >
+              Content & Modules
+              <span className="ml-2 bg-muted text-muted-foreground px-2 py-0.5 rounded-full text-xs">
+                {editorData.modules.length}
+              </span>
+            </Link>
+          </nav>
+        </div>
+
+        <div className="bg-card text-card-foreground">
+          <Outlet />
+        </div>
+      </CourseEditorRegistryProvider>
     </div>
   );
 }

@@ -74,9 +74,9 @@ describe("Academy Admin M6B.3 Lesson Content Editors Tests", () => {
       // and state to "idle". So a retry ALWAYS calls requestUpload again.
       // We can assert this by checking the hook behavior abstractly.
       const resetBehavior = () => {
-        let state = { uploadUrl: "https://example.com" };
+        const state: { uploadUrl: string | null } = { uploadUrl: "https://example.com" };
         const reset = () => {
-          state.uploadUrl = null as any;
+          state.uploadUrl = null;
         };
         reset();
         return state;

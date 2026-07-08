@@ -8,6 +8,7 @@ import {
 } from "@/features/admin/hooks/useAcademyAdminCourses";
 import { updateCourseSchema, type UpdateCourseFormData } from "@/features/admin/validators";
 import { toast } from "sonner";
+import { useCourseEditorRegistry } from "@/features/admin/contexts/CourseEditorRegistry";
 
 export const Route = createFileRoute("/admin/courses/$courseId/settings")({
   component: CourseSettingsPage,
@@ -19,6 +20,7 @@ function CourseSettingsPage() {
   // We already fetch this in the layout, so it should hit the cache immediately
   const { data: editorData } = useAcademyAdminCourseEditor(courseId);
   const updateMutation = useUpdateAcademyCourse();
+  const { setSettingsDirty, setActiveMutation, isReadOnly } = useCourseEditorRegistry();
 
   const {
     register,
@@ -46,11 +48,18 @@ function CourseSettingsPage() {
     }
   }, [editorData, reset]);
 
+  // Track dirty state and mutations in registry
+  useEffect(() => {
+    setSettingsDirty(isDirty);
+  }, [isDirty, setSettingsDirty]);
+
+  useEffect(() => {
+    setActiveMutation(updateMutation.isPending || isSubmitting);
+  }, [updateMutation.isPending, isSubmitting, setActiveMutation]);
+
   if (!editorData) {
     return null; // Handled by layout loading/error state
   }
-
-  const isArchived = editorData.course.status === "archived";
 
   const onSubmit = async (data: UpdateCourseFormData) => {
     try {
@@ -80,9 +89,9 @@ function CourseSettingsPage() {
     <div className="bg-card text-card-foreground border rounded-lg shadow-sm p-6">
       <h2 className="text-xl font-semibold mb-6">Course Metadata</h2>
 
-      {isArchived && (
+      {isReadOnly && (
         <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md mb-6 border border-yellow-200">
-          This course is archived. Changes are discouraged but still technically possible.
+          This course is archived. Changes are disabled.
         </div>
       )}
 
@@ -94,7 +103,8 @@ function CourseSettingsPage() {
           <input
             id="title"
             {...register("title")}
-            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+            disabled={isReadOnly}
+            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
           />
           {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
         </div>
@@ -110,7 +120,8 @@ function CourseSettingsPage() {
             <input
               id="slug"
               {...register("slug")}
-              className="w-full border rounded-r-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+              disabled={isReadOnly}
+              className="w-full border rounded-r-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
             />
           </div>
           {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
@@ -124,7 +135,8 @@ function CourseSettingsPage() {
             id="description"
             {...register("description")}
             rows={4}
-            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y"
+            disabled={isReadOnly}
+            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y disabled:opacity-50"
           />
           {errors.description && (
             <p className="text-sm text-destructive">{errors.description.message}</p>
@@ -139,7 +151,8 @@ function CourseSettingsPage() {
             <select
               id="catalog_visibility"
               {...register("catalog_visibility")}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+              disabled={isReadOnly}
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
             >
               <option value="private">Private (Hidden from catalog)</option>
               <option value="unlisted">Unlisted (Direct link only)</option>
@@ -157,7 +170,8 @@ function CourseSettingsPage() {
             <select
               id="enrollment_policy"
               {...register("enrollment_policy")}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+              disabled={isReadOnly}
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
             >
               <option value="closed">Closed (Admin invites only)</option>
               <option value="approval_required">Approval Required</option>
@@ -175,7 +189,8 @@ function CourseSettingsPage() {
             <select
               id="access_policy"
               {...register("access_policy")}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+              disabled={isReadOnly}
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
             >
               <option value="dynamic">Dynamic (Based on user role/entitlements)</option>
               <option value="free">Free (Open to all enrolled)</option>
@@ -193,7 +208,8 @@ function CourseSettingsPage() {
             <select
               id="pricing_model"
               {...register("pricing_model")}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+              disabled={isReadOnly}
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
             >
               <option value="included">Included (in subscription/membership)</option>
               <option value="free">Free</option>
@@ -206,18 +222,20 @@ function CourseSettingsPage() {
           </div>
         </div>
 
-        <div className="pt-6 border-t flex justify-end">
-          <button
-            type="submit"
-            disabled={!isDirty || isSubmitting || updateMutation.isPending}
-            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {(isSubmitting || updateMutation.isPending) && (
-              <div className="w-4 h-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"></div>
-            )}
-            Save Changes
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="pt-6 border-t flex justify-end">
+            <button
+              type="submit"
+              disabled={!isDirty || isSubmitting || updateMutation.isPending}
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {(isSubmitting || updateMutation.isPending) && (
+                <div className="w-4 h-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"></div>
+              )}
+              Save Changes
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );
