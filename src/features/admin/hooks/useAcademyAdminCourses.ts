@@ -4,6 +4,12 @@ import type {
   AcademyCourseStatus,
   CreateAcademyCourseInput,
   UpdateAcademyCourseInput,
+  CreateAcademyModuleInput,
+  UpdateAcademyModuleInput,
+  ReorderAcademyModulesInput,
+  CreateAcademyLessonInput,
+  UpdateAcademyLessonInput,
+  ReorderAcademyLessonsInput,
 } from "../types";
 
 export const academyAdminKeys = {
@@ -55,6 +61,72 @@ export function useUpdateAcademyCourse() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: academyAdminKeys.lists() });
       queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(variables.p_course_id) });
+    },
+  });
+}
+
+export function useCreateAcademyModule() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateAcademyModuleInput) => academyAdminCoursesApi.createModule(input),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(variables.p_course_id) });
+    },
+  });
+}
+
+export function useUpdateAcademyModule(courseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpdateAcademyModuleInput) => academyAdminCoursesApi.updateModule(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}
+
+export function useReorderAcademyModules() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: ReorderAcademyModulesInput) => academyAdminCoursesApi.reorderModules(input),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(variables.p_course_id) });
+    },
+  });
+}
+
+export function useCreateAcademyLesson(courseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateAcademyLessonInput) => academyAdminCoursesApi.createLesson(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}
+
+export function useUpdateAcademyLesson(courseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpdateAcademyLessonInput) => academyAdminCoursesApi.updateLesson(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}
+
+export function useReorderAcademyLessons(courseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: ReorderAcademyLessonsInput) => academyAdminCoursesApi.reorderLessons(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
     },
   });
 }

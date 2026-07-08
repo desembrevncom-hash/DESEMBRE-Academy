@@ -1,10 +1,20 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { createCourseResponseSchema } from "../validators";
+import {
+  createCourseResponseSchema,
+  createModuleResponseSchema,
+  createLessonResponseSchema,
+} from "../validators";
 import type {
   AcademyAdminCourseListItem,
   AcademyAdminCourseEditor,
   CreateAcademyCourseInput,
   UpdateAcademyCourseInput,
+  CreateAcademyModuleInput,
+  UpdateAcademyModuleInput,
+  ReorderAcademyModulesInput,
+  CreateAcademyLessonInput,
+  UpdateAcademyLessonInput,
+  ReorderAcademyLessonsInput,
   AcademyCourseStatus,
 } from "../types";
 
@@ -135,6 +145,87 @@ export const academyAdminCoursesApi = {
       handleRpcError(error);
     }
 
+    return { success: true };
+  },
+
+  async createModule(input: CreateAcademyModuleInput): Promise<{ id: string; position: number }> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_create_academy_module", {
+      p_course_id: input.p_course_id,
+      p_title: input.p_title,
+    });
+
+    if (error) handleRpcError(error);
+
+    try {
+      return createModuleResponseSchema.parse(data);
+    } catch (e) {
+      throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid module creation response format.");
+    }
+  },
+
+  async updateModule(input: UpdateAcademyModuleInput): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { error } = await client.rpc("admin_update_academy_module", {
+      p_module_id: input.p_module_id,
+      p_title: input.p_title,
+    });
+
+    if (error) handleRpcError(error);
+    return { success: true };
+  },
+
+  async reorderModules(input: ReorderAcademyModulesInput): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { error } = await client.rpc("admin_reorder_academy_modules", {
+      p_course_id: input.p_course_id,
+      p_module_ids: input.p_module_ids,
+    });
+
+    if (error) handleRpcError(error);
+    return { success: true };
+  },
+
+  async createLesson(input: CreateAcademyLessonInput): Promise<{ id: string; position: number }> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_create_academy_lesson", {
+      p_module_id: input.p_module_id,
+      p_title: input.p_title,
+      p_type: input.p_type,
+      p_description: input.p_description || null,
+      p_is_preview: input.p_is_preview ?? false,
+    });
+
+    if (error) handleRpcError(error);
+
+    try {
+      return createLessonResponseSchema.parse(data);
+    } catch (e) {
+      throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid lesson creation response format.");
+    }
+  },
+
+  async updateLesson(input: UpdateAcademyLessonInput): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { error } = await client.rpc("admin_update_academy_lesson", {
+      p_lesson_id: input.p_lesson_id,
+      p_title: input.p_title,
+      p_description: input.p_description || null,
+      p_is_preview: input.p_is_preview,
+    });
+
+    if (error) handleRpcError(error);
+    return { success: true };
+  },
+
+  async reorderLessons(input: ReorderAcademyLessonsInput): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { error } = await client.rpc("admin_reorder_academy_lessons", {
+      p_module_id: input.p_module_id,
+      p_lesson_ids: input.p_lesson_ids,
+    });
+
+    if (error) handleRpcError(error);
     return { success: true };
   },
 };
