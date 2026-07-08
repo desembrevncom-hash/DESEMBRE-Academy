@@ -10,6 +10,7 @@ import {
   Link2,
   Eye,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Resolver } from "react-hook-form";
@@ -242,12 +243,14 @@ export function LessonCard({
       <div className="px-12 pb-3">
         <ContentTypeStatus type={lessonData.type} status={lessonData.content_status} />
 
-        {/* Placeholder for M6B.3 editor links */}
-        <div className="mt-2 text-xs text-muted-foreground border-l-2 border-primary/20 pl-3 py-1">
-          {lessonData.type === "article" && "Article editor comes in M6B.3"}
-          {(lessonData.type === "video" || lessonData.type === "document") &&
-            "Media upload comes in M6B.3"}
-          {lessonData.type === "external_link" && "External-link editor comes in M6B.3"}
+        <div className="mt-3 flex items-center justify-between border-t pt-3">
+          <Link
+            to={`/admin/courses/${courseId}/content`}
+            search={{ lessonId: lessonData.id }}
+            className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+          >
+            Open Editor
+          </Link>
         </div>
       </div>
     </div>

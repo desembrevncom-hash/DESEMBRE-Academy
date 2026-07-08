@@ -11,6 +11,10 @@ import type {
   UpdateAcademyLessonInput,
   ReorderAcademyLessonsInput,
 } from "../types";
+import {
+  SetAcademyArticleContentInput,
+  SetAcademyExternalLinkContentInput,
+} from "../services/academyAdminCoursesApi";
 
 export const academyAdminKeys = {
   all: ["admin", "courses"] as const,
@@ -125,6 +129,30 @@ export function useReorderAcademyLessons(courseId: string) {
 
   return useMutation({
     mutationFn: (input: ReorderAcademyLessonsInput) => academyAdminCoursesApi.reorderLessons(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}
+
+export function useSetAcademyArticleContent(courseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: SetAcademyArticleContentInput) =>
+      academyAdminCoursesApi.setArticleContent(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}
+
+export function useSetAcademyExternalLinkContent(courseId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: SetAcademyExternalLinkContentInput) =>
+      academyAdminCoursesApi.setExternalLinkContent(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
     },

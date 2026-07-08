@@ -18,6 +18,16 @@ import type {
   AcademyCourseStatus,
 } from "../types";
 
+export interface SetAcademyArticleContentInput {
+  p_lesson_id: string;
+  p_markdown: string;
+}
+
+export interface SetAcademyExternalLinkContentInput {
+  p_lesson_id: string;
+  p_url: string;
+}
+
 export class AdminCourseApiError extends Error {
   constructor(
     public code: string,
@@ -223,6 +233,30 @@ export const academyAdminCoursesApi = {
     const { error } = await client.rpc("admin_reorder_academy_lessons", {
       p_module_id: input.p_module_id,
       p_lesson_ids: input.p_lesson_ids,
+    });
+
+    if (error) handleRpcError(error);
+    return { success: true };
+  },
+
+  async setArticleContent(input: SetAcademyArticleContentInput): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { error } = await client.rpc("admin_set_academy_article_content", {
+      p_lesson_id: input.p_lesson_id,
+      p_markdown: input.p_markdown,
+    });
+
+    if (error) handleRpcError(error);
+    return { success: true };
+  },
+
+  async setExternalLinkContent(
+    input: SetAcademyExternalLinkContentInput,
+  ): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { error } = await client.rpc("admin_set_academy_external_link_content", {
+      p_lesson_id: input.p_lesson_id,
+      p_url: input.p_url,
     });
 
     if (error) handleRpcError(error);
