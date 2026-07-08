@@ -94,6 +94,7 @@ export function MediaContentEditor({
     uploadFile({
       lessonId,
       contentType,
+      mimeType: selectedFile.type,
       file: selectedFile,
     });
   };

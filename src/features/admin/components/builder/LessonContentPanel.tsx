@@ -34,7 +34,7 @@ export function LessonContentPanel({ courseEditor, lessonId }: LessonContentPane
 
   // Common properties
   const status = activeLesson.content_status || "missing";
-  const courseId = courseEditor.id;
+  const courseId = courseEditor.course.id;
 
   switch (activeLesson.type) {
     case "article":
@@ -42,7 +42,7 @@ export function LessonContentPanel({ courseEditor, lessonId }: LessonContentPane
         <ArticleContentEditor
           courseId={courseId}
           lessonId={lessonId}
-          initialContent={activeLesson.markdown_content || ""}
+          initialContent={activeLesson.content?.markdown || ""}
         />
       );
     case "external_link":
@@ -50,7 +50,7 @@ export function LessonContentPanel({ courseEditor, lessonId }: LessonContentPane
         <ExternalLinkEditor
           courseId={courseId}
           lessonId={lessonId}
-          initialUrl={activeLesson.external_url || ""}
+          initialUrl={activeLesson.content?.url || ""}
         />
       );
     case "video":

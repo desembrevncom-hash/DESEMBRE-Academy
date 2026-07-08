@@ -249,7 +249,8 @@ export function LessonCard({
 
         <div className="mt-3 flex items-center justify-between border-t pt-3">
           <Link
-            to={`/admin/courses/${courseId}/content`}
+            to="/admin/courses/$courseId/content"
+            params={{ courseId }}
             search={{ lessonId: lessonData.id }}
             className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
           >
