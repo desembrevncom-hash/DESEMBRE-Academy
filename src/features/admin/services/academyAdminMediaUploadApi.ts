@@ -1,4 +1,5 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { requestUploadResponseSchema, mediaActionResponseSchema, safeMediaErrorResponseSchema } from "../validators";
 
 export class AdminMediaApiError extends Error {
   constructor(
@@ -54,17 +55,20 @@ export const academyAdminMediaUploadApi = {
     if (!response.ok) {
       let errorData;
       try {
-        errorData = await response.json();
+        const rawJson = await response.json();
+        errorData = safeMediaErrorResponseSchema.parse(rawJson);
       } catch {
         throw new AdminMediaApiError("NETWORK_ERROR", "Failed to request upload");
       }
-      throw new AdminMediaApiError(
-        errorData?.error?.code || "UNKNOWN",
-        errorData?.error?.message || "Failed to request upload",
-      );
+      throw new AdminMediaApiError(errorData.error.code, errorData.error.message);
     }
 
-    return await response.json();
+    try {
+      const rawData = await response.json();
+      return requestUploadResponseSchema.parse(rawData);
+    } catch {
+      throw new AdminMediaApiError("INVALID_RESPONSE", "Invalid request upload response from server");
+    }
   },
 
   async finalizeUpload(uploadSessionId: string): Promise<{ success: boolean }> {
@@ -94,17 +98,20 @@ export const academyAdminMediaUploadApi = {
     if (!response.ok) {
       let errorData;
       try {
-        errorData = await response.json();
+        const rawJson = await response.json();
+        errorData = safeMediaErrorResponseSchema.parse(rawJson);
       } catch {
         throw new AdminMediaApiError("NETWORK_ERROR", "Failed to finalize upload");
       }
-      throw new AdminMediaApiError(
-        errorData?.error?.code || "UNKNOWN",
-        errorData?.error?.message || "Failed to finalize upload",
-      );
+      throw new AdminMediaApiError(errorData.error.code, errorData.error.message);
     }
 
-    return { success: true };
+    try {
+      const rawData = await response.json();
+      return mediaActionResponseSchema.parse(rawData);
+    } catch {
+      throw new AdminMediaApiError("INVALID_RESPONSE", "Invalid finalize upload response");
+    }
   },
 
   async cancelUpload(uploadSessionId: string): Promise<{ success: boolean }> {
@@ -134,17 +141,20 @@ export const academyAdminMediaUploadApi = {
     if (!response.ok) {
       let errorData;
       try {
-        errorData = await response.json();
+        const rawJson = await response.json();
+        errorData = safeMediaErrorResponseSchema.parse(rawJson);
       } catch {
         throw new AdminMediaApiError("NETWORK_ERROR", "Failed to cancel upload");
       }
-      throw new AdminMediaApiError(
-        errorData?.error?.code || "UNKNOWN",
-        errorData?.error?.message || "Failed to cancel upload",
-      );
+      throw new AdminMediaApiError(errorData.error.code, errorData.error.message);
     }
 
-    return { success: true };
+    try {
+      const rawData = await response.json();
+      return mediaActionResponseSchema.parse(rawData);
+    } catch {
+      throw new AdminMediaApiError("INVALID_RESPONSE", "Invalid cancel upload response");
+    }
   },
 
   async uploadBytes(
