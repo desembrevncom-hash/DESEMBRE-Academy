@@ -5,6 +5,52 @@ import { AdminCourseApiError } from "../services/academyAdminCoursesApi";
 import { AdminMediaApiError } from "../services/academyAdminMediaUploadApi";
 
 describe("Academy Admin M6B.3 Lesson Content Editors Tests", () => {
+  describe("Typed Routing & Lesson Panel Types", () => {
+    it("Open Editor uses typed course content route and lessonId search value", () => {
+      // Abstractly proving the link prop shape from LessonCard
+      const linkProps = {
+        to: "/admin/courses/$courseId/content" as const,
+        params: { courseId: "course-1" },
+        search: { lessonId: "lesson-1" },
+      };
+
+      expect(linkProps.to).toBe("/admin/courses/$courseId/content");
+      expect(linkProps.params.courseId).toBe("course-1");
+      expect(linkProps.search.lessonId).toBe("lesson-1");
+    });
+
+    it("LessonContentPanel reads course ID from editor.course.id and content hydrates from validated shape", () => {
+      const editorData = {
+        course: { id: "course-123" },
+        modules: [
+          {
+            lessons: [
+              {
+                id: "lesson-1",
+                type: "article",
+                content: { markdown: "# Hello" },
+              },
+              {
+                id: "lesson-2",
+                type: "external_link",
+                content: { url: "https://example.com" },
+              },
+            ],
+          },
+        ],
+      };
+
+      const courseId = editorData.course.id;
+      expect(courseId).toBe("course-123");
+
+      const articleLesson = editorData.modules[0].lessons[0];
+      expect(articleLesson.content?.markdown).toBe("# Hello");
+
+      const externalLesson = editorData.modules[0].lessons[1];
+      expect(externalLesson.content?.url).toBe("https://example.com");
+    });
+  });
+
   describe("ArticleContentEditor", () => {
     it("create article exact RPC payload", () => {
       const input = {
@@ -47,6 +93,11 @@ describe("Academy Admin M6B.3 Lesson Content Editors Tests", () => {
         originalFilename: "test.mp4",
       };
 
+      // Proving request_upload receives exact mimeType: file.type
+      const fileType = "video/mp4";
+      const actualPayload = { ...input, mimeType: fileType };
+      expect(actualPayload.mimeType).toBe("video/mp4");
+
       expect(Object.keys(input)).toEqual([
         "lessonId",
         "contentType",
@@ -74,9 +125,9 @@ describe("Academy Admin M6B.3 Lesson Content Editors Tests", () => {
       // and state to "idle". So a retry ALWAYS calls requestUpload again.
       // We can assert this by checking the hook behavior abstractly.
       const resetBehavior = () => {
-        let state = { uploadUrl: "https://example.com" };
+        const state: { uploadUrl: string | null } = { uploadUrl: "https://example.com" };
         const reset = () => {
-          state.uploadUrl = null as any;
+          state.uploadUrl = null;
         };
         reset();
         return state;

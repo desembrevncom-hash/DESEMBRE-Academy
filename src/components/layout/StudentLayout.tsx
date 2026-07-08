@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/features/auth/useAuth";
 import { authService } from "@/features/auth/services/auth.service";
 import { useStudent } from "@/features/student/useStudent";
+import { useAdminAccess, resolveAcademyDestination } from "@/features/admin/hooks/useAdminAccess";
 
 const navItems = [
   { to: "/student", label: "Tổng quan", icon: Home, exact: true },
@@ -25,6 +26,7 @@ export function StudentLayout() {
     error,
     retry,
   } = useStudent();
+  const { role, roleQueryStatus, isLoading: roleLoading } = useAdminAccess();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,7 +36,24 @@ export function StudentLayout() {
     }
   }, [authInitialized, session, navigate]);
 
-  if (!authInitialized || !studentInitialized) {
+  // Role-aware routing: Prevent admins from accessing student layout
+  useEffect(() => {
+    if (authInitialized && session && roleQueryStatus !== "loading" && roleQueryStatus !== "idle") {
+      const destination = resolveAcademyDestination({
+        authenticated: true,
+        roleQueryStatus,
+        role,
+      });
+
+      if (destination === "/admin/courses") {
+        navigate({ to: "/admin/courses", replace: true });
+      } else if (destination === "forbidden") {
+        navigate({ to: "/", replace: true });
+      }
+    }
+  }, [authInitialized, session, roleQueryStatus, role, navigate]);
+
+  if (!authInitialized || !studentInitialized || roleLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -3,7 +3,8 @@ import { useBlocker } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAcademyMediaUpload } from "../../hooks/useAcademyMediaUpload";
 import { ContentTypeStatus } from "./ContentTypeStatus";
-import { UploadCloud, File as FileIcon, X, AlertCircle, CheckCircle2 } from "lucide-react";
+import { UploadCloud, File as FileIcon, X, AlertCircle, CheckCircle2, Lock } from "lucide-react";
+import { useCourseEditorRegistry } from "../../contexts/CourseEditorRegistry";
 
 interface MediaContentEditorProps {
   courseId: string;
@@ -21,6 +22,7 @@ export function MediaContentEditor({
   const { state, progress, error, uploadFile, cancelUpload, reset } =
     useAcademyMediaUpload(courseId);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { setContentDirty, setActiveMutation, isReadOnly } = useCourseEditorRegistry();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,8 +41,17 @@ export function MediaContentEditor({
   );
   const hasUnsavedChanges = selectedFile !== null && state === "idle";
 
+  useEffect(() => {
+    setContentDirty(hasUnsavedChanges);
+  }, [hasUnsavedChanges, setContentDirty]);
+
+  useEffect(() => {
+    setActiveMutation(isUploading);
+  }, [isUploading, setActiveMutation]);
+
   useBlocker({
     shouldBlockFn: () => {
+      if (isReadOnly) return false;
       if (isUploading) {
         return !window.confirm(
           "An upload is currently in progress. If you leave, the upload will be cancelled. Are you sure?",
@@ -83,6 +94,7 @@ export function MediaContentEditor({
     uploadFile({
       lessonId,
       contentType,
+      mimeType: selectedFile.type,
       file: selectedFile,
     });
   };
@@ -122,8 +134,16 @@ export function MediaContentEditor({
       </div>
 
       <div className="space-y-6">
+        {/* Read Only Message */}
+        {isReadOnly && (
+          <div className="flex items-center gap-2 p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground border border-dashed">
+            <Lock className="h-4 w-4 shrink-0" />
+            <p>This course is archived. Media uploads are disabled.</p>
+          </div>
+        )}
+
         {/* Upload Area */}
-        {(!selectedFile || state === "success" || state === "cancelled") && (
+        {(!selectedFile || state === "success" || state === "cancelled") && !isReadOnly && (
           <div className="border-2 border-dashed rounded-lg p-10 text-center hover:bg-muted/50 transition-colors">
             <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
             <div className="mb-4">
@@ -241,15 +261,17 @@ export function MediaContentEditor({
             <p className="text-sm text-green-600 dark:text-green-500/80">
               The media file has been successfully uploaded and processed.
             </p>
-            <button
-              onClick={() => {
-                reset();
-                setSelectedFile(null);
-              }}
-              className="mt-4 px-4 py-2 text-sm font-medium border border-green-200 dark:border-green-800 rounded-md hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
-            >
-              Upload a different file
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={() => {
+                  reset();
+                  setSelectedFile(null);
+                }}
+                className="mt-4 px-4 py-2 text-sm font-medium border border-green-200 dark:border-green-800 rounded-md hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+              >
+                Upload a different file
+              </button>
+            )}
           </div>
         )}
       </div>

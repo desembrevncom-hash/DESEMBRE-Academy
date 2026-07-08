@@ -61,6 +61,11 @@ export interface AcademyPublishValidation {
   errors: unknown[];
 }
 
+export interface PublishValidationError {
+  code: string;
+  message: string;
+}
+
 export interface AcademyAdminCourseEditor {
   course: AcademyAdminCourseDetails;
   modules: AcademyAdminModule[];

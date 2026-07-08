@@ -73,7 +73,7 @@ export const requestUploadResponseSchema = z
   .strict()
   .refine(
     (data) => {
-      const keys = Object.keys(data as any);
+      const keys = Object.keys(data as Record<string, unknown>);
       const forbidden = [
         "storage_path",
         "storage_bucket",
@@ -84,7 +84,7 @@ export const requestUploadResponseSchema = z
       ];
       return !forbidden.some((f) => keys.includes(f));
     },
-    { message: "Response contains forbidden private fields" }
+    { message: "Response contains forbidden private fields" },
   );
 
 export const mediaActionResponseSchema = z.any().transform(() => ({ success: true }));
@@ -95,3 +95,10 @@ export const safeMediaErrorResponseSchema = z.object({
     message: z.string(),
   }),
 });
+
+// M6B.4 Response Schemas
+export const courseStatusMutationResponseSchema = z
+  .object({
+    success: z.literal(true),
+  })
+  .strict();

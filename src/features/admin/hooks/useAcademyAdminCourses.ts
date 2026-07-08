@@ -158,3 +158,39 @@ export function useSetAcademyExternalLinkContent(courseId: string) {
     },
   });
 }
+
+export function usePublishAcademyCourse() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (courseId: string) => academyAdminCoursesApi.publishCourse(courseId),
+    onSuccess: (_, courseId) => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}
+
+export function useUnpublishAcademyCourse() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (courseId: string) => academyAdminCoursesApi.unpublishCourse(courseId),
+    onSuccess: (_, courseId) => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}
+
+export function useArchiveAcademyCourse() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (courseId: string) => academyAdminCoursesApi.archiveCourse(courseId),
+    onSuccess: (_, courseId) => {
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}

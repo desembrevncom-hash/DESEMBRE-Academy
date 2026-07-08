@@ -17,6 +17,7 @@ import {
 } from "../../validators";
 import type { AcademyAdminModule } from "../../types";
 import { LessonCard } from "./LessonCard";
+import { useCourseEditorRegistry } from "../../contexts/CourseEditorRegistry";
 
 interface ModuleCardProps {
   courseId: string;
@@ -35,6 +36,7 @@ export function ModuleCard({
 }: ModuleCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingLesson, setIsAddingLesson] = useState(false);
+  const { isReadOnly } = useCourseEditorRegistry();
 
   const updateModule = useUpdateAcademyModule(courseId);
   const reorderModules = useReorderAcademyModules();
@@ -118,7 +120,7 @@ export function ModuleCard({
           <div className="flex flex-col gap-1 items-center justify-center p-1 bg-muted rounded text-muted-foreground">
             <button
               onClick={() => handleReorder("up")}
-              disabled={isFirst || reorderModules.isPending}
+              disabled={isFirst || reorderModules.isPending || isReadOnly}
               className="hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors"
               aria-label="Move module up"
             >
@@ -126,7 +128,7 @@ export function ModuleCard({
             </button>
             <button
               onClick={() => handleReorder("down")}
-              disabled={isLast || reorderModules.isPending}
+              disabled={isLast || reorderModules.isPending || isReadOnly}
               className="hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors"
               aria-label="Move module down"
             >
@@ -165,13 +167,15 @@ export function ModuleCard({
                 <span className="font-semibold text-lg truncate">
                   Module {moduleData.position}: {moduleData.title}
                 </span>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label="Edit module title"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
+                {!isReadOnly && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Edit module title"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             )}
             {!isEditing && editErrors.title && (
@@ -184,13 +188,15 @@ export function ModuleCard({
           <span className="text-muted-foreground">
             {moduleData.lessons.length} {moduleData.lessons.length === 1 ? "lesson" : "lessons"}
           </span>
-          <button
-            onClick={() => setIsAddingLesson(true)}
-            className="flex items-center gap-1.5 text-primary hover:text-primary/80 font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add Lesson
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={() => setIsAddingLesson(true)}
+              className="flex items-center gap-1.5 text-primary hover:text-primary/80 font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Lesson
+            </button>
+          )}
         </div>
       </div>
 

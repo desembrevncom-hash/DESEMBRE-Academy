@@ -4,6 +4,7 @@ import {
   createModuleResponseSchema,
   createLessonResponseSchema,
   basicSuccessResponseSchema,
+  courseStatusMutationResponseSchema,
 } from "../validators";
 import type {
   AcademyAdminCourseListItem,
@@ -42,6 +43,11 @@ export class AdminCourseApiError extends Error {
 function handleRpcError(error: unknown): never {
   const err = error as Record<string, unknown>;
   if (err?.code) {
+    // Safely normalize publish validation failure without parsing raw PostgreSQL details
+    if (typeof err.message === "string" && err.message.startsWith("PUBLISH_VALIDATION_FAILED")) {
+      throw new AdminCourseApiError("PUBLISH_VALIDATION_FAILED", "Course is not ready to publish.");
+    }
+
     // Normalizing specific known errors from the DB
     switch (err.message) {
       case "INVALID_TITLE":
@@ -256,7 +262,9 @@ export const academyAdminCoursesApi = {
     }
   },
 
-  async setExternalLinkContent(input: SetAcademyExternalLinkContentInput): Promise<{ success: boolean }> {
+  async setExternalLinkContent(
+    input: SetAcademyExternalLinkContentInput,
+  ): Promise<{ success: boolean }> {
     const client = getClientOrThrow();
     const { data, error } = await client.rpc("admin_set_academy_external_link_content", {
       p_lesson_id: input.p_lesson_id,
@@ -269,6 +277,51 @@ export const academyAdminCoursesApi = {
       return basicSuccessResponseSchema.parse(data);
     } catch {
       throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid external link save response");
+    }
+  },
+
+  async publishCourse(courseId: string): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_publish_academy_course", {
+      p_course_id: courseId,
+    });
+
+    if (error) handleRpcError(error);
+
+    try {
+      return courseStatusMutationResponseSchema.parse(data);
+    } catch {
+      throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid publish response format.");
+    }
+  },
+
+  async unpublishCourse(courseId: string): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_unpublish_academy_course", {
+      p_course_id: courseId,
+    });
+
+    if (error) handleRpcError(error);
+
+    try {
+      return courseStatusMutationResponseSchema.parse(data);
+    } catch {
+      throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid unpublish response format.");
+    }
+  },
+
+  async archiveCourse(courseId: string): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_archive_academy_course", {
+      p_course_id: courseId,
+    });
+
+    if (error) handleRpcError(error);
+
+    try {
+      return courseStatusMutationResponseSchema.parse(data);
+    } catch {
+      throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid archive response format.");
     }
   },
 };

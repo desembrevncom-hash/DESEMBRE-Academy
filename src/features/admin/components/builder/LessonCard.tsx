@@ -22,6 +22,7 @@ import {
 import { lessonSchema, type LessonFormData } from "../../validators";
 import type { AcademyAdminLesson } from "../../types";
 import { ContentTypeStatus } from "./ContentTypeStatus";
+import { useCourseEditorRegistry } from "../../contexts/CourseEditorRegistry";
 
 interface LessonCardProps {
   courseId: string;
@@ -41,6 +42,7 @@ export function LessonCard({
   allLessonIds,
 }: LessonCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const { isReadOnly } = useCourseEditorRegistry();
 
   const updateLesson = useUpdateAcademyLesson(courseId);
   const reorderLessons = useReorderAcademyLessons(courseId);
@@ -194,7 +196,7 @@ export function LessonCard({
         <div className="flex flex-col gap-1 items-center justify-center text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => handleReorder("up")}
-            disabled={isFirst || reorderLessons.isPending}
+            disabled={isFirst || reorderLessons.isPending || isReadOnly}
             className="hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors p-0.5"
             aria-label="Move lesson up"
           >
@@ -202,7 +204,7 @@ export function LessonCard({
           </button>
           <button
             onClick={() => handleReorder("down")}
-            disabled={isLast || reorderLessons.isPending}
+            disabled={isLast || reorderLessons.isPending || isReadOnly}
             className="hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors p-0.5"
             aria-label="Move lesson down"
           >
@@ -231,13 +233,15 @@ export function LessonCard({
           )}
         </div>
 
-        <button
-          onClick={() => setIsEditing(true)}
-          className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-          aria-label="Edit lesson details"
-        >
-          <Edit2 className="w-4 h-4" />
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+            aria-label="Edit lesson details"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <div className="px-12 pb-3">
@@ -245,7 +249,8 @@ export function LessonCard({
 
         <div className="mt-3 flex items-center justify-between border-t pt-3">
           <Link
-            to={`/admin/courses/${courseId}/content`}
+            to="/admin/courses/$courseId/content"
+            params={{ courseId }}
             search={{ lessonId: lessonData.id }}
             className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
           >
