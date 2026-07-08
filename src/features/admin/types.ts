@@ -89,3 +89,38 @@ export interface UpdateAcademyCourseInput {
   p_access_policy: AcademyAccessPolicy;
   p_pricing_model: AcademyPricingModel;
 }
+
+export interface CreateAcademyModuleInput {
+  p_course_id: string;
+  p_title: string;
+}
+
+export interface UpdateAcademyModuleInput {
+  p_module_id: string;
+  p_title: string;
+}
+
+export interface ReorderAcademyModulesInput {
+  p_course_id: string;
+  p_module_ids: string[];
+}
+
+export interface CreateAcademyLessonInput {
+  p_module_id: string;
+  p_title: string;
+  p_type: "article" | "video" | "document" | "external_link";
+  p_description?: string | null;
+  p_is_preview?: boolean;
+}
+
+export interface UpdateAcademyLessonInput {
+  p_lesson_id: string;
+  p_title: string;
+  p_description?: string | null;
+  p_is_preview: boolean;
+}
+
+export interface ReorderAcademyLessonsInput {
+  p_module_id: string;
+  p_lesson_ids: string[];
+}

@@ -32,3 +32,28 @@ export const updateCourseSchema = createCourseSchema.extend({
 });
 
 export type UpdateCourseFormData = z.infer<typeof updateCourseSchema>;
+
+export const createModuleResponseSchema = z.object({
+  id: z.string().uuid(),
+  position: z.number(),
+});
+
+export const createLessonResponseSchema = z.object({
+  id: z.string().uuid(),
+  position: z.number(),
+});
+
+export const moduleSchema = z.object({
+  title: z.string().min(1, "Title is required").max(255, "Title is too long").trim(),
+});
+
+export type ModuleFormData = z.infer<typeof moduleSchema>;
+
+export const lessonSchema = z.object({
+  title: z.string().min(1, "Title is required").max(255, "Title is too long").trim(),
+  type: z.enum(["article", "video", "document", "external_link"]),
+  description: z.string().max(2000, "Description is too long").trim().optional().nullable(),
+  is_preview: z.boolean().default(false),
+});
+
+export type LessonFormData = z.infer<typeof lessonSchema>;
