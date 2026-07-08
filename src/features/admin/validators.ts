@@ -15,10 +15,10 @@ export const createCourseSchema = z.object({
     .regex(slugRegex, "Slug must contain only lowercase letters, numbers, and single hyphens"),
   description: z.string().max(2000, "Description is too long").trim().optional().nullable(),
   category_id: z.string().uuid("Invalid category").optional().nullable(),
-  catalog_visibility: z.enum(["public", "unlisted", "private"]).default("private"),
-  enrollment_policy: z.enum(["open", "approval_required", "closed"]).default("closed"),
-  access_policy: z.enum(["free", "paid", "dynamic"]).default("dynamic"),
-  pricing_model: z.enum(["free", "one_time", "subscription", "included"]).default("included"),
+  catalog_visibility: z.enum(["public", "unlisted", "private"]),
+  enrollment_policy: z.enum(["open", "approval_required", "closed"]),
+  access_policy: z.enum(["free", "paid", "dynamic"]),
+  pricing_model: z.enum(["free", "one_time", "subscription", "included"]),
 });
 
 export type CreateCourseFormData = z.infer<typeof createCourseSchema>;

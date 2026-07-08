@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useForm } from "react-hook-form";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateAcademyCourse } from "@/features/admin/hooks/useAcademyAdminCourses";
 import { createCourseSchema, type CreateCourseFormData } from "@/features/admin/validators";
@@ -22,7 +22,7 @@ function CreateCoursePage() {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateCourseFormData>({
-    resolver: zodResolver(createCourseSchema),
+    resolver: zodResolver(createCourseSchema) as any,
     defaultValues: {
       catalog_visibility: "private",
       enrollment_policy: "closed",
@@ -51,7 +51,7 @@ function CreateCoursePage() {
     }
   }
 
-  const onSubmit = async (data: CreateCourseFormData) => {
+  const onSubmit: SubmitHandler<CreateCourseFormData> = async (data) => {
     try {
       const response = await createMutation.mutateAsync({
         p_title: data.title,

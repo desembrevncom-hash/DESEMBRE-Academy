@@ -1,6 +1,5 @@
 import { describe, test, expect, mock, beforeEach } from "bun:test";
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
 // These imports might be fake for unit testing logic if standard testing-library isn't fully set up, but we can test logic and hooks.
 
 // We will mock the API module
@@ -73,7 +72,7 @@ describe("Academy Admin M6B.1 Tests", () => {
 
   test("auth loading behavior does not early redirect", () => {
     // If we test useAdminAccess with loading auth state
-    const useAuthMock = useAuth as jest.Mock;
+    const useAuthMock = useAuth as unknown as ReturnType<typeof mock>;
     useAuthMock.mockReturnValue({
       user: null,
       initialized: false,

@@ -70,7 +70,7 @@ export interface AcademyAdminCourseEditor {
 export interface CreateAcademyCourseInput {
   p_title: string;
   p_slug: string;
-  p_description?: string;
+  p_description?: string | null;
   p_category_id?: string | null;
   p_catalog_visibility?: AcademyCatalogVisibility;
   p_enrollment_policy?: AcademyEnrollmentPolicy;
