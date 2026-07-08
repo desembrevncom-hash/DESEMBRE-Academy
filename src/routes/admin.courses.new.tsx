@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateAcademyCourse } from "@/features/admin/hooks/useAcademyAdminCourses";
 import { createCourseSchema, type CreateCourseFormData } from "@/features/admin/validators";
@@ -22,7 +22,7 @@ function CreateCoursePage() {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateCourseFormData>({
-    resolver: zodResolver(createCourseSchema) as any,
+    resolver: zodResolver(createCourseSchema) as unknown as Resolver<CreateCourseFormData>,
     defaultValues: {
       catalog_visibility: "private",
       enrollment_policy: "closed",
@@ -73,7 +73,7 @@ function CreateCoursePage() {
       });
     } catch (error: unknown) {
       const err = error as Record<string, unknown>;
-      const msg = typeof err.message === 'string' ? err.message : "Failed to create course";
+      const msg = typeof err.message === "string" ? err.message : "Failed to create course";
       toast.error(msg);
       // Duplicate slug error handled specifically
       if (err.code === "DUPLICATE_SLUG") {

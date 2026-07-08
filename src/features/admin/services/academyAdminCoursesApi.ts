@@ -24,22 +24,13 @@ function handleRpcError(error: unknown): never {
     // Normalizing specific known errors from the DB
     switch (err.message) {
       case "INVALID_TITLE":
-        throw new AdminCourseApiError(
-          "INVALID_TITLE",
-          "The title provided is invalid.",
-        );
+        throw new AdminCourseApiError("INVALID_TITLE", "The title provided is invalid.");
       case "DUPLICATE_SLUG":
-        throw new AdminCourseApiError(
-          "DUPLICATE_SLUG",
-          "This URL slug is already in use.",
-        );
+        throw new AdminCourseApiError("DUPLICATE_SLUG", "This URL slug is already in use.");
       case "COURSE_NOT_FOUND":
         throw new AdminCourseApiError("COURSE_NOT_FOUND", "Course not found.");
       case "UNAUTHORIZED":
-        throw new AdminCourseApiError(
-          "UNAUTHORIZED",
-          "Authentication required.",
-        );
+        throw new AdminCourseApiError("UNAUTHORIZED", "Authentication required.");
       case "FORBIDDEN":
         throw new AdminCourseApiError(
           "FORBIDDEN",
@@ -48,7 +39,7 @@ function handleRpcError(error: unknown): never {
       default:
         throw new AdminCourseApiError(
           String(err.code),
-          typeof err.message === 'string' ? err.message : "An unexpected database error occurred.",
+          typeof err.message === "string" ? err.message : "An unexpected database error occurred.",
         );
     }
   }
@@ -58,7 +49,7 @@ function handleRpcError(error: unknown): never {
 function getClientOrThrow() {
   const client = getSupabaseBrowserClient();
   if (!client) {
-    throw new Error('Supabase client is not available in this environment.');
+    throw new Error("Supabase client is not available in this environment.");
   }
   return client;
 }

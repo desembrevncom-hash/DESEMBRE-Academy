@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function useAdminAccess() {
   const { user, initialized: authInitialized } = useAuth();

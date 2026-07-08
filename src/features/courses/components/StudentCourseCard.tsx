@@ -16,7 +16,7 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
     try {
       setLoading(true);
       const outline = await getCourseOutline(course.slug);
-
+      
       const flat = outline?.modules?.flatMap((m) => m.lessons) || [];
       if (flat.length === 0) {
         toast.info("Khóa học chưa có bài học nào khả dụng.");
@@ -24,10 +24,10 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
       }
 
       let targetId = last_accessed_lesson;
-      let targetLesson = targetId ? flat.find((l) => l.id === targetId && !l.is_locked) : null;
+      let targetLesson = targetId ? flat.find(l => l.id === targetId && !l.is_locked) : null;
 
       if (!targetLesson) {
-        targetLesson = flat.find((l) => !l.is_locked);
+        targetLesson = flat.find(l => !l.is_locked);
       }
 
       if (!targetLesson) {
@@ -94,7 +94,11 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
         )}
 
         <div className="mt-5 pt-5 border-t border-border/50 mt-auto">
-          <Button className="w-full rounded-full" onClick={handleContinue} disabled={loading}>
+          <Button 
+            className="w-full rounded-full" 
+            onClick={handleContinue}
+            disabled={loading}
+          >
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             Tiếp tục học
           </Button>

@@ -70,7 +70,9 @@ function CourseSettingsPage() {
       // React Query handles invalidation automatically through the hook
     } catch (error: unknown) {
       const err = error as Record<string, unknown>;
-      toast.error(typeof err.message === 'string' ? err.message : "Failed to update course settings");
+      toast.error(
+        typeof err.message === "string" ? err.message : "Failed to update course settings",
+      );
     }
   };
 

@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { authService, AuthErrorInfo } from "./services/auth.service";
-import type { Session, User } from "@supabase/supabase-js";
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { authService, AuthErrorInfo } from './services/auth.service';
+import type { Session, User } from '@supabase/supabase-js';
 
 type AuthContextType = {
   session: Session | null;
@@ -43,9 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (err: any) {
         if (mounted) {
           setError({
-            message: err.message || "Failed to initialize authentication",
+            message: err.message || 'Failed to initialize authentication',
             code: err.code,
-            status: err.status,
+            status: err.status
           });
         }
       } finally {
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

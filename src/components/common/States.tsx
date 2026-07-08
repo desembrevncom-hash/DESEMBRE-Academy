@@ -13,22 +13,10 @@ export function CourseCardSkeleton() {
   );
 }
 
-export function EmptyState({
-  title,
-  description,
-  icon,
-}: {
-  title: string;
-  description?: string;
-  icon?: React.ReactNode;
-}) {
+export function EmptyState({ title, description, icon }: { title: string; description?: string; icon?: React.ReactNode }) {
   return (
     <div className="rounded-3xl border border-dashed border-border bg-surface/60 p-12 text-center">
-      {icon && (
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-accent text-primary-dark">
-          {icon}
-        </div>
-      )}
+      {icon && <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-accent text-primary-dark">{icon}</div>}
       <div className="text-base font-semibold">{title}</div>
       {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
     </div>
