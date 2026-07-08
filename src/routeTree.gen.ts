@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StudentRouteImport } from './routes/student'
+import { Route as PendingReviewRouteImport } from './routes/pending-review'
 import { Route as CoursesRouteImport } from './routes/courses'
+import { Route as BlockedRouteImport } from './routes/blocked'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -36,9 +38,19 @@ const StudentRoute = StudentRouteImport.update({
   path: '/student',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PendingReviewRoute = PendingReviewRouteImport.update({
+  id: '/pending-review',
+  path: '/pending-review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CoursesRoute = CoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlockedRoute = BlockedRouteImport.update({
+  id: '/blocked',
+  path: '/blocked',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -145,7 +157,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/blocked': typeof BlockedRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/pending-review': typeof PendingReviewRoute
   '/student': typeof StudentRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
@@ -168,6 +182,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/blocked': typeof BlockedRoute
+  '/pending-review': typeof PendingReviewRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
@@ -188,7 +204,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
+  '/blocked': typeof BlockedRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/pending-review': typeof PendingReviewRoute
   '/student': typeof StudentRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
@@ -213,7 +231,9 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/blocked'
     | '/courses'
+    | '/pending-review'
     | '/student'
     | '/auth/login'
     | '/auth/phone'
@@ -236,6 +256,8 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/blocked'
+    | '/pending-review'
     | '/auth/login'
     | '/auth/phone'
     | '/auth/verify-otp'
@@ -255,7 +277,9 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/blocked'
     | '/courses'
+    | '/pending-review'
     | '/student'
     | '/auth/login'
     | '/auth/phone'
@@ -279,7 +303,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
+  BlockedRoute: typeof BlockedRoute
   CoursesRoute: typeof CoursesRouteWithChildren
+  PendingReviewRoute: typeof PendingReviewRoute
   StudentRoute: typeof StudentRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthPhoneRoute: typeof AuthPhoneRoute
@@ -295,11 +321,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pending-review': {
+      id: '/pending-review'
+      path: '/pending-review'
+      fullPath: '/pending-review'
+      preLoaderRoute: typeof PendingReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/courses': {
       id: '/courses'
       path: '/courses'
       fullPath: '/courses'
       preLoaderRoute: typeof CoursesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blocked': {
+      id: '/blocked'
+      path: '/blocked'
+      fullPath: '/blocked'
+      preLoaderRoute: typeof BlockedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -514,7 +554,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
+  BlockedRoute: BlockedRoute,
   CoursesRoute: CoursesRouteWithChildren,
+  PendingReviewRoute: PendingReviewRoute,
   StudentRoute: StudentRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthPhoneRoute: AuthPhoneRoute,

@@ -67,9 +67,9 @@ function VerifyOtp() {
 
       // 3. Navigate based on status
       if (linkResponse.status === 'blocked') {
-        navigate({ to: "/blocked" as never }); // Assuming this route exists or we handle it safely
+        navigate({ to: "/blocked" }); // Assuming this route exists or we handle it safely
       } else if (linkResponse.status === 'pending_review') {
-        navigate({ to: "/pending-review" as never }); // Safe landing
+        navigate({ to: "/pending-review" }); // Safe landing
       } else {
         // Linked successfully -> goes to /student.
         // Or if they are admin, useAuth/useAdminAccess will naturally redirect them to /admin/courses
