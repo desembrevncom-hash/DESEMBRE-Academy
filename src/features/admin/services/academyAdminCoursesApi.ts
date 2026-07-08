@@ -3,6 +3,7 @@ import {
   createCourseResponseSchema,
   createModuleResponseSchema,
   createLessonResponseSchema,
+  basicSuccessResponseSchema,
 } from "../validators";
 import type {
   AcademyAdminCourseListItem,
@@ -17,6 +18,16 @@ import type {
   ReorderAcademyLessonsInput,
   AcademyCourseStatus,
 } from "../types";
+
+export interface SetAcademyArticleContentInput {
+  p_lesson_id: string;
+  p_markdown: string;
+}
+
+export interface SetAcademyExternalLinkContentInput {
+  p_lesson_id: string;
+  p_url: string;
+}
 
 export class AdminCourseApiError extends Error {
   constructor(
@@ -227,5 +238,37 @@ export const academyAdminCoursesApi = {
 
     if (error) handleRpcError(error);
     return { success: true };
+  },
+
+  async setArticleContent(input: SetAcademyArticleContentInput): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_set_academy_article_content", {
+      p_lesson_id: input.p_lesson_id,
+      p_markdown: input.p_markdown,
+    });
+
+    if (error) handleRpcError(error);
+
+    try {
+      return basicSuccessResponseSchema.parse(data);
+    } catch {
+      throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid article save response");
+    }
+  },
+
+  async setExternalLinkContent(input: SetAcademyExternalLinkContentInput): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_set_academy_external_link_content", {
+      p_lesson_id: input.p_lesson_id,
+      p_url: input.p_url,
+    });
+
+    if (error) handleRpcError(error);
+
+    try {
+      return basicSuccessResponseSchema.parse(data);
+    } catch {
+      throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid external link save response");
+    }
   },
 };

@@ -57,3 +57,41 @@ export const lessonSchema = z.object({
 });
 
 export type LessonFormData = z.infer<typeof lessonSchema>;
+
+// M6B.3 Response Schemas
+
+export const basicSuccessResponseSchema = z.any().transform(() => ({ success: true }));
+
+export const requestUploadResponseSchema = z
+  .object({
+    uploadSessionId: z.string().uuid(),
+    uploadUrl: z.string().url(),
+    expiresIn: z.number().positive(),
+    mimeType: z.string(),
+    maxSizeBytes: z.number().positive(),
+  })
+  .strict()
+  .refine(
+    (data) => {
+      const keys = Object.keys(data as any);
+      const forbidden = [
+        "storage_path",
+        "storage_bucket",
+        "object_path",
+        "access_token",
+        "refresh_token",
+        "service_role",
+      ];
+      return !forbidden.some((f) => keys.includes(f));
+    },
+    { message: "Response contains forbidden private fields" }
+  );
+
+export const mediaActionResponseSchema = z.any().transform(() => ({ success: true }));
+
+export const safeMediaErrorResponseSchema = z.object({
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+  }),
+});
