@@ -34,7 +34,7 @@ export const Route = createFileRoute("/student/courses/$slug/lessons/$lessonId")
 function LessonPlayer() {
   const { slug, lessonId } = Route.useParams();
   const navigate = useNavigate();
-  const { refreshCurrentCourses } = useCourseRuntime();
+  const { refreshCurrentCourses, enroll } = useCourseRuntime();
 
   const [outline, setOutline] = useState<CourseOutline | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,7 +85,11 @@ function LessonPlayer() {
     enabled: isReady && !isLocked,
   });
 
-  const { saveProgress } = useLessonProgress(lessonId, lesson?.duration ?? null, lesson?.progress?.status);
+  const { saveProgress } = useLessonProgress(
+    lessonId,
+    lesson?.duration ?? null,
+    lesson?.progress?.status,
+  );
 
   const progressPct = useMemo(() => {
     if (!outline || !outline.modules) return 0;
@@ -205,8 +209,49 @@ function LessonPlayer() {
       return (
         <div className="aspect-video rounded-3xl border border-border/70 bg-accent grid place-items-center text-muted-foreground">
           <div className="text-center">
-            <Lock className="mx-auto h-16 w-16 opacity-50" />
-            <div className="mt-3 text-sm">Bài học đã bị khóa</div>
+            <Lock className="mx-auto h-16 w-16 opacity-50 mb-3" />
+            <div className="font-semibold text-lg">Bài học đã bị khóa</div>
+            <div className="mt-2 mb-4 text-sm max-w-md mx-auto">
+              Bạn cần đăng ký khóa học này để xem được toàn bộ nội dung bài học.
+            </div>
+
+            {outline.access_decision.can_enroll ? (
+              <Button
+                size="lg"
+                className="rounded-full shadow-lg"
+                disabled={saving}
+                onClick={async () => {
+                  try {
+                    setSaving(true);
+                    await enroll(outline.course.slug);
+                    toast.success("Đăng ký thành công!");
+                    await Promise.all([fetchOutline(), refreshCurrentCourses()]);
+                  } catch (err) {
+                    toast.error("Lỗi đăng ký khóa học.");
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+              >
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Đăng ký khóa học ngay
+              </Button>
+            ) : (
+              <div className="inline-flex items-center gap-2 text-sm bg-background p-3 rounded-2xl border border-border">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+                <span>
+                  {outline.access_decision.required_tier
+                    ? `Yêu cầu hạng ${outline.access_decision.required_tier.name} để tham gia`
+                    : outline.access_decision.reason === "ENROLLMENT_CLOSED"
+                      ? "Khóa học đã đóng đăng ký"
+                      : outline.access_decision.reason === "ENROLLMENT_APPROVAL_REQUIRED"
+                        ? "Khóa học yêu cầu phê duyệt"
+                        : outline.access_decision.reason === "ASSIGNMENT_REQUIRED"
+                          ? "Khóa học yêu cầu được chỉ định"
+                          : "Bạn không đủ điều kiện tham gia"}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       );
