@@ -125,9 +125,9 @@ function AdminGuard() {
               </Link>
               <Link
                 to="/admin/academy-enrollments"
-                className="transition-colors hover:text-foreground/80 text-foreground"
+                className="transition-colors hover:text-foreground/80 text-foreground font-semibold text-indigo-700"
               >
-                Enrollments
+                Đăng ký khóa học
               </Link>
               <Link
                 to="/admin/academy-access"

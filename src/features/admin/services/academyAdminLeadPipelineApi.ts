@@ -20,12 +20,15 @@ export type BatchRegistrationLead = {
   participant_role?: string | null;
   source?: string | null;
   note?: string | null;
+  notes?: string | null;
   status: RegistrationStatus;
   admin_note?: string | null;
   contacted_at?: string | null;
   confirmed_at?: string | null;
   created_at: string;
   updated_at?: string | null;
+  training_format?: string | null;
+  start_date?: string | null;
 };
 
 export type LeadInsightData = {
@@ -55,6 +58,58 @@ export type LeadInsightData = {
   }>;
 };
 
+export async function getAllCourseRegistrations(filters?: {
+  status?: string | null;
+  search?: string | null;
+  batchId?: string | null;
+  source?: string | null;
+}): Promise<BatchRegistrationLead[]> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) throw new Error("UNAUTHENTICATED");
+
+  const { data, error } = await supabase.rpc("admin_get_all_course_registrations", {
+    p_status: filters?.status || null,
+    p_search: filters?.search || null,
+    p_batch_id: filters?.batchId || null,
+    p_source: filters?.source || null,
+  });
+
+  if (error) {
+    console.warn("[getAllCourseRegistrations RPC error, fallback to direct query]", error);
+    let query = supabase
+      .from("course_registrations")
+      .select("*, batch:course_batches(id, title, slug, training_format, start_date, course:courses(id, title))")
+      .order("created_at", { ascending: false });
+
+    if (filters?.status && filters.status !== "all") {
+      query = query.eq("status", filters.status);
+    }
+    if (filters?.batchId) {
+      query = query.eq("batch_id", filters.batchId);
+    }
+    if (filters?.source && filters.source !== "all") {
+      query = query.eq("source", filters.source);
+    }
+    if (filters?.search) {
+      query = query.or(`full_name.ilike.%${filters.search}%,phone.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+    }
+
+    const { data: fallbackData, error: fallbackErr } = await query;
+    if (fallbackErr) throw fallbackErr;
+    return (fallbackData || []).map((r: any) => ({
+      ...r,
+      batch_title: r.batch?.title,
+      batch_slug: r.batch?.slug,
+      training_format: r.batch?.training_format,
+      start_date: r.batch?.start_date,
+      course_title: r.batch?.course?.title,
+      note: r.note || r.notes,
+    }));
+  }
+
+  return (data || []) as BatchRegistrationLead[];
+}
+
 export async function getBatchRegistrations(batchId: string): Promise<BatchRegistrationLead[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
@@ -73,19 +128,26 @@ export async function getBatchRegistrations(batchId: string): Promise<BatchRegis
 export async function updateRegistrationStatus(
   registrationId: string,
   status: RegistrationStatus,
-  adminNote: string | null
+  adminNote?: string | null
 ): Promise<{ ok: boolean; status?: string; error?: string }> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
 
-  const { data, error } = await supabase.rpc("admin_update_registration_status", {
+  const { data, error } = await supabase.rpc("admin_update_course_registration_status", {
     p_registration_id: registrationId,
     p_status: status,
     p_admin_note: adminNote || null,
   });
 
   if (error) {
-    throw new Error(error.message || "Lỗi khi cập nhật trạng thái.");
+    console.warn("[updateRegistrationStatus primary RPC error, trying alias]", error);
+    const { data: aliasData, error: aliasErr } = await supabase.rpc("admin_update_registration_status", {
+      p_registration_id: registrationId,
+      p_status: status,
+      p_admin_note: adminNote || null,
+    });
+    if (aliasErr) throw new Error(aliasErr.message || "Lỗi khi cập nhật trạng thái.");
+    return aliasData;
   }
 
   if (data && !data.ok) {
@@ -114,7 +176,7 @@ export function exportRegistrationsToCsv(leads: BatchRegistrationLead[], batchTi
   if (!leads.length) return;
 
   const headers = [
-    "Họ tên", "Số điện thoại", "Email", "Công ty", "Vai trò", "Nguồn", "Ghi chú học viên",
+    "Họ tên", "Số điện thoại", "Email", "Khóa học", "Lớp / Batch", "Nguồn", "Ghi chú khách",
     "Trạng thái", "Ghi chú admin", "Ngày đăng ký", "Ngày liên hệ", "Ngày xác nhận"
   ];
 
@@ -125,10 +187,7 @@ export function exportRegistrationsToCsv(leads: BatchRegistrationLead[], batchTi
 
   const formatPhoneForCsv = (phone: string | null | undefined) => {
     const value = String(phone ?? "").trim();
-    if (!value) {
-      return "";
-    }
-    // Giữ số 0 đầu khi mở bằng Excel
+    if (!value) return "";
     return `="${value.replace(/"/g, '""')}"`;
   };
 
@@ -136,10 +195,10 @@ export function exportRegistrationsToCsv(leads: BatchRegistrationLead[], batchTi
     escapeCsvCell(lead.full_name),
     formatPhoneForCsv(lead.phone),
     escapeCsvCell(lead.email),
-    escapeCsvCell(lead.company),
-    escapeCsvCell(lead.participant_role),
+    escapeCsvCell(lead.course_title),
+    escapeCsvCell(lead.batch_title),
     escapeCsvCell(lead.source),
-    escapeCsvCell(lead.note),
+    escapeCsvCell(lead.note || lead.notes),
     escapeCsvCell(lead.status),
     escapeCsvCell(lead.admin_note),
     escapeCsvCell(lead.created_at),
@@ -148,8 +207,6 @@ export function exportRegistrationsToCsv(leads: BatchRegistrationLead[], batchTi
   ].join(","));
 
   const csvContent = [headers.join(","), ...rows].join("\n");
-  
-  // Add BOM for Excel UTF-8 support
   const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
   
   const link = document.createElement("a");
@@ -159,7 +216,7 @@ export function exportRegistrationsToCsv(leads: BatchRegistrationLead[], batchTi
   const safeName = batchTitleOrId.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   
   link.setAttribute("href", url);
-  link.setAttribute("download", `batch-leads-${safeName}-${dateStr}.csv`);
+  link.setAttribute("download", `registrations-${safeName}-${dateStr}.csv`);
   link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
