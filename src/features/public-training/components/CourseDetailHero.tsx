@@ -91,7 +91,7 @@ export function CourseDetailHero({ title, summary, coverUrl, batchCount }: Cours
                   <BookOpen className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-xs text-indigo-300 font-semibold uppercase tracking-wider mb-1">Khoá đào tạo chuẩn Y Khoa</div>
+                  <div className="text-xs text-indigo-300 font-semibold uppercase tracking-wider mb-1">Chương trình đào tạo chuyên sâu</div>
                   <div className="text-lg font-bold text-white leading-snug">{title}</div>
                 </div>
               </div>

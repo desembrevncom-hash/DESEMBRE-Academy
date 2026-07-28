@@ -11,7 +11,7 @@ export function PublicInstructorCard({ instructor }: PublicInstructorCardProps) 
   if (!instructor) {
     return (
       <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
-        <div className="w-16 h-16 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-700 to-slate-900 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md">
           DA
         </div>
         <div className="space-y-1">
@@ -74,7 +74,7 @@ export function PublicInstructorCard({ instructor }: PublicInstructorCardProps) 
           <Link
             to="/giang-vien/$slug"
             params={{ slug: instructorSlug }}
-            className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3.5 py-2 rounded-xl transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition-colors shadow-md shadow-indigo-600/20"
           >
             <span>Hồ sơ giảng viên</span>
             <ArrowRight className="w-3.5 h-3.5" />

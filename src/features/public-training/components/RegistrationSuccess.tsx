@@ -39,13 +39,13 @@ export function RegistrationSuccess({ batchTitle, isDuplicate, onClose }: Regist
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-1">
             {isDuplicate ? (
               <>
-                Hệ thống ghi nhận bạn đã đăng ký tham gia lớp{" "}
-                <span className="font-bold text-slate-900">{batchTitle}</span>. DESEMBRE Academy sẽ liên hệ xác nhận trong thời gian sớm nhất.
+                Bạn đã đăng ký lớp <span className="font-bold text-slate-900">{batchTitle}</span> trước đó. DESEMBRE Academy sẽ liên hệ xác nhận trong thời gian sớm nhất. Vui lòng theo dõi Zalo/SĐT đã đăng ký.
               </>
             ) : (
               <>
                 Cảm ơn bạn đã đăng ký tham gia lớp học{" "}
-                <span className="font-bold text-slate-900">{batchTitle}</span>.
+                <span className="font-bold text-slate-900">{batchTitle}</span>.{" "}
+                Tư vấn viên DESEMBRE Academy sẽ liên hệ xác nhận qua Zalo/SĐT trong thời gian sớm nhất.
               </>
             )}
           </p>
@@ -71,7 +71,7 @@ export function RegistrationSuccess({ batchTitle, isDuplicate, onClose }: Regist
             onClick={onClose}
             className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-600/20"
           >
-            <span>Xem lịch khai giảng khác</span>
+            <span>Quay lại lịch khai giảng</span>
             <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
 

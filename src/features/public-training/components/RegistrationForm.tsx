@@ -77,7 +77,7 @@ export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationForm
       />
 
       {/* Drawer / Bottom sheet */}
-      <div className="relative w-full max-w-lg bg-white shadow-2xl flex flex-col h-[92vh] sm:h-full rounded-t-3xl sm:rounded-none overflow-hidden animate-in slide-in-from-bottom sm:slide-in-from-right duration-300">
+      <div className="relative w-full max-w-lg bg-white shadow-2xl flex flex-col h-full rounded-t-3xl sm:rounded-none overflow-hidden animate-in slide-in-from-bottom sm:slide-in-from-right duration-300">
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-900 text-white">
           <div>
@@ -147,7 +147,7 @@ export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationForm
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   {...register("fullName")}
-                  className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                   placeholder="VD: Nguyễn Văn A"
                 />
               </div>
@@ -165,12 +165,12 @@ export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationForm
                 <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   {...register("phone")}
-                  className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
                   placeholder="0912345678"
                 />
               </div>
               <p className="text-[11px] text-slate-400 mt-1">
-                Số Zalo để nhận thông báo xác nhận và lịch học chi tiết.
+                Nhập số Zalo để nhận thông báo xác nhận đăng ký.
               </p>
               {errors.phone && (
                 <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone.message}</p>
@@ -186,7 +186,7 @@ export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationForm
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   {...register("email")}
-                  className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   placeholder="example@gmail.com"
                 />
               </div>
@@ -202,7 +202,7 @@ export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationForm
               </label>
               <textarea
                 {...register("notes")}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 rows={3}
                 placeholder="Ghi rõ câu hỏi hoặc mong muốn tư vấn thêm..."
               />
@@ -230,7 +230,7 @@ export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationForm
           <button
             type="submit"
             form="publicRegistrationForm"
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center min-w-[150px]"
+            className="flex-1 sm:flex-none h-12 sm:h-11 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm sm:font-semibold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center min-w-[150px]"
             disabled={isSubmitting}
           >
             {isSubmitting ? (

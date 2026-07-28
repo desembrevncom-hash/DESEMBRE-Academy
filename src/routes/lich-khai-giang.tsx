@@ -96,10 +96,11 @@ function PublicCalendarPage() {
     setRegisteringBatch(null);
   };
 
-  const handleSuccess = () => {
+  const handleSuccess = (isDuplicate?: boolean) => {
     if (registeringBatch) {
       setSuccessBatchTitle(registeringBatch.course?.title || registeringBatch.title);
     }
+    setIsDuplicateRegistration(!!isDuplicate);
     setRegisteringBatch(null);
     fetchSchedule(); // Refresh counts
   };
@@ -124,11 +125,20 @@ function PublicCalendarPage() {
           totalResults={filteredBatches.length}
         />
 
-        {/* Loading State */}
+        {/* Loading State — Skeleton Cards */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-24 bg-white border border-slate-200/70 rounded-3xl shadow-sm">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mb-4" />
-            <p className="text-sm font-medium text-slate-500">Đang tải danh sách lịch khai giảng...</p>
+          <div className="space-y-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4 animate-pulse">
+                <div className="flex gap-2">
+                  <div className="h-7 w-28 rounded-full bg-slate-100" />
+                  <div className="h-7 w-20 rounded-full bg-slate-100" />
+                </div>
+                <div className="h-8 w-3/4 rounded-xl bg-slate-100" />
+                <div className="h-4 w-1/2 rounded-lg bg-slate-100" />
+                <div className="h-28 rounded-2xl bg-slate-50 border border-slate-100" />
+              </div>
+            ))}
           </div>
         )}
 

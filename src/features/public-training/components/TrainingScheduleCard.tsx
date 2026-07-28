@@ -220,13 +220,13 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
         </div>
 
         {/* Right Panel Actions & Deadline */}
-        <div className="lg:w-64 flex flex-col justify-end gap-3.5 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+        <div className="lg:w-64 flex flex-col justify-between gap-3.5 shrink-0 pt-5 lg:pt-0 border-t lg:border-t-0 border-slate-100/80">
           {batch.registration_closes_at && (
-            <div className="text-xs text-center text-slate-500 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+            <div className="text-xs text-center bg-rose-50 border border-rose-100 p-3 rounded-2xl">
               <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5">
                 Hạn chót đăng ký
               </span>
-              <span className="font-bold text-rose-600 text-xs">
+              <span className="font-bold text-rose-700 text-sm">
                 {formatDateSafe(batch.registration_closes_at, "dd/MM/yyyy HH:mm")}
               </span>
             </div>
@@ -235,17 +235,17 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
           {isFull ? (
             <Button
               disabled
-              className="w-full h-12 rounded-xl text-sm font-semibold bg-slate-200 text-slate-500 cursor-not-allowed"
+              className="w-full h-14 rounded-2xl text-sm font-semibold bg-slate-200 text-slate-500 cursor-not-allowed"
             >
-              Đã đủ chỗ
+              Đã đủ chỗ — Liên hệ chờ lớp mới
             </Button>
           ) : (
             <Button
               onClick={() => onRegister(batch)}
-              className="w-full h-12 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 transition-all duration-200"
+              className="w-full h-14 rounded-2xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/25 transition-all duration-200 gap-2"
             >
               <span>Đăng ký tham gia</span>
-              <ArrowRight className="ml-2 w-4 h-4" />
+              <ArrowRight className="ml-1 w-4 h-4" />
             </Button>
           )}
 

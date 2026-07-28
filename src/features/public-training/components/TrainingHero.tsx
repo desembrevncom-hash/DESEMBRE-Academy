@@ -10,7 +10,7 @@ export function TrainingHero() {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white py-16 sm:py-20 md:py-24">
+    <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white py-12 sm:py-16 md:py-20">
       {/* Background glow & aesthetic lights */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-indigo-500/20 blur-[130px]" />
@@ -27,7 +27,7 @@ export function TrainingHero() {
         </div>
 
         {/* Main Headings */}
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-5 leading-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-200 bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-5 leading-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-200 bg-clip-text text-transparent">
           Lịch Đào Tạo Chuyên Sâu
         </h1>
 
@@ -36,7 +36,7 @@ export function TrainingHero() {
         </p>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10 max-w-md mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-10 max-w-sm mx-auto sm:max-w-md">
           <Button
             onClick={scrollToSchedule}
             className="w-full sm:w-auto h-12 px-7 rounded-xl font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/30 transition-all duration-200"
