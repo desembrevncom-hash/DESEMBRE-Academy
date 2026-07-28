@@ -26,7 +26,7 @@ function AdminBatchesIndexPage() {
         }
       } catch (err: any) {
         if (mounted) {
-          setError(err.message || "Failed to load batches");
+          setError(err.message || "Không thể tải danh sách lớp học");
         }
       } finally {
         if (mounted) {
@@ -42,12 +42,12 @@ function AdminBatchesIndexPage() {
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Batches Management</h1>
-          <p className="text-muted-foreground mt-2">Manage monthly funnel course batches and registrations</p>
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý Lớp đào tạo</h1>
+          <p className="text-muted-foreground mt-2">Quản lý lớp đào tạo và theo dõi đăng ký học viên.</p>
         </div>
         <Button asChild>
           <Link to="/admin/batches/new">
-            <Plus className="mr-2 h-4 w-4" /> Create Batch
+            <Plus className="mr-2 h-4 w-4" /> Tạo lớp mới
           </Link>
         </Button>
       </div>
@@ -67,7 +67,7 @@ function AdminBatchesIndexPage() {
 
       {!loading && !error && batches.length === 0 && (
         <div className="text-center py-12 border rounded-lg bg-card text-muted-foreground">
-          No batches found. Create your first batch to get started.
+          Chưa có lớp nào. Tạo lớp đầu tiên để bắt đầu.
         </div>
       )}
 
@@ -82,7 +82,7 @@ function AdminBatchesIndexPage() {
                 <th className="px-5 py-3.5 font-semibold">Trạng thái</th>
                 <th className="px-5 py-3.5 font-semibold">Số chỗ</th>
                 <th className="px-5 py-3.5 font-semibold">Thời gian</th>
-                <th className="px-5 py-3.5 font-semibold text-right">Actions</th>
+                <th className="px-5 py-3.5 font-semibold text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -157,7 +157,7 @@ function AdminBatchesIndexPage() {
                         params={{ batchId: batch.id }}
                         className="inline-flex items-center justify-center gap-1 text-xs font-medium bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-8 px-2.5 rounded-md"
                       >
-                        <Edit className="h-3.5 w-3.5" /> Edit
+                        <Edit className="h-3.5 w-3.5" /> Sửa
                       </Link>
                     </td>
                   </tr>

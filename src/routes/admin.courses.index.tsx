@@ -33,13 +33,13 @@ function AdminCourseList() {
   return (
     <div className="container mx-auto py-8 max-w-5xl px-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <h1 className="text-3xl font-bold">Courses</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Quản lý Khóa học</h1>
         <Link
           to="/admin/courses/new"
           className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
         >
           <Plus size={16} />
-          Create Course
+          Tạo khóa học
         </Link>
       </div>
 
@@ -51,7 +51,7 @@ function AdminCourseList() {
           />
           <input
             type="text"
-            placeholder="Search courses..."
+            placeholder="Tìm khóa học..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
@@ -62,10 +62,10 @@ function AdminCourseList() {
           onChange={(e) => setStatusFilter(e.target.value as AcademyCourseStatus | "all")}
           className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
         >
-          <option value="all">All Statuses</option>
-          <option value="draft">Draft</option>
-          <option value="published">Published</option>
-          <option value="archived">Archived</option>
+          <option value="all">Tất cả</option>
+          <option value="draft">Bản nháp</option>
+          <option value="published">Công khai</option>
+          <option value="archived">Lưu trữ</option>
         </select>
       </div>
 
@@ -77,21 +77,21 @@ function AdminCourseList() {
         </div>
       ) : error ? (
         <div className="bg-destructive/10 text-destructive p-4 rounded-lg flex flex-col items-center justify-center py-12">
-          <p className="mb-4">{(error as Error).message || "Failed to load courses"}</p>
+          <p className="mb-4">{(error as Error).message || "Không thể tải danh sách khóa học"}</p>
           <button
             onClick={() => refetch()}
             className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90"
           >
-            Retry
+            Thử lại
           </button>
         </div>
       ) : courses?.length === 0 ? (
         <div className="text-center py-16 border rounded-lg bg-card text-card-foreground shadow-sm">
-          <h3 className="text-lg font-semibold mb-2">No courses found</h3>
+          <h3 className="text-lg font-semibold mb-2">Chưa có khóa học</h3>
           <p className="text-muted-foreground mb-4">
             {searchQuery || statusFilter !== "all"
-              ? "Try adjusting your search or filters."
-              : "Get started by creating your first course."}
+              ? "Thử thay đổi từ khóa hoặc bộ lọc."
+              : "Bắt đầu bằng cách tạo khóa học đầu tiên."}
           </p>
           {!searchQuery && statusFilter === "all" && (
             <Link
@@ -99,7 +99,7 @@ function AdminCourseList() {
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
             >
               <Plus size={16} />
-              Create Course
+              Tạo khóa học
             </Link>
           )}
         </div>
@@ -109,11 +109,11 @@ function AdminCourseList() {
             <table className="w-full text-sm text-left">
               <thead className="bg-muted text-muted-foreground uppercase text-xs">
                 <tr>
-                  <th className="px-6 py-3">Title</th>
+                  <th className="px-6 py-3">Tên khóa học</th>
                   <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Visibility</th>
-                  <th className="px-6 py-3">Updated</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-6 py-3">Hiển thị</th>
+                  <th className="px-6 py-3">Cập nhật</th>
+                  <th className="px-6 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -133,7 +133,7 @@ function AdminCourseList() {
                               : "bg-gray-100 text-gray-800"
                         }`}
                       >
-                        {course.status}
+                        {{ published: "Công khai", draft: "Bản nháp", archived: "Lưu trữ" }[course.status] ?? course.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 capitalize">{course.catalog_visibility}</td>
@@ -156,7 +156,7 @@ function AdminCourseList() {
                         params={{ courseId: course.id }}
                         className="text-primary hover:underline font-medium"
                       >
-                        {course.status === "archived" ? "View" : "Edit"}
+                        {course.status === "archived" ? "Xem" : "Sửa"}
                       </Link>
                     </td>
                   </tr>

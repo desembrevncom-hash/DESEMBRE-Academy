@@ -315,7 +315,7 @@ function AcademyRegistrationsCrmAdmin() {
   };
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 font-sans antialiased text-slate-900">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 font-sans antialiased text-slate-900">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
@@ -345,11 +345,11 @@ function AcademyRegistrationsCrmAdmin() {
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
         {[
           { key: "all", label: `Tất cả (${registrations.length})` },
-          { key: "today", label: "📞 Cần gọi hôm nay" },
-          { key: "overdue", label: "⚠️ Quá hạn follow-up" },
-          { key: "unassigned", label: "👤 Chưa phân công" },
-          { key: "hot", label: "🔥 Hot Lead" },
-          { key: "confirmed", label: "✅ Đã xác nhận" },
+          { key: "today", label: "Cần gọi hôm nay" },
+          { key: "overdue", label: "Quá hạn follow-up" },
+          { key: "unassigned", label: "Chưa phân công" },
+          { key: "hot", label: "Hot Lead" },
+          { key: "confirmed", label: "Đã xác nhận" },
         ].map((f) => (
           <button
             key={f.key}
@@ -385,10 +385,10 @@ function AcademyRegistrationsCrmAdmin() {
             className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           >
             <option value="all">Tất cả trạng thái hệ thống</option>
-            <option value="pending">Mới đăng ký (Pending)</option>
-            <option value="contacted">Đã liên hệ (Contacted)</option>
-            <option value="confirmed">Đã xác nhận (Confirmed)</option>
-            <option value="cancelled">Đã hủy (Cancelled)</option>
+            <option value="pending">Mới đăng ký</option>
+            <option value="contacted">Đã liên hệ</option>
+            <option value="confirmed">Đã xác nhận</option>
+            <option value="cancelled">Đã hủy</option>
           </select>
 
           <select

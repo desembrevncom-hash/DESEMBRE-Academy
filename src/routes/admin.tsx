@@ -1,5 +1,5 @@
-import { Outlet, createFileRoute, Navigate, useRouter, Link } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { Outlet, createFileRoute, Navigate, useRouter, Link, useMatchRoute } from "@tanstack/react-router";
+import { LogOut, GraduationCap } from "lucide-react";
 import { authService } from "@/features/auth/services/auth.service";
 import { useAuth } from "@/features/auth/AuthProvider";
 
@@ -11,7 +11,6 @@ function AdminLayout() {
   const { user, loading, initialized } = useAuth();
   const router = useRouter();
 
-  // 1. loading -> render loading boundary
   if (!initialized || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -20,19 +19,43 @@ function AdminLayout() {
     );
   }
 
-  // 2. anonymous -> login flow
   if (!user) {
     return <Navigate to="/auth/login" search={{ redirect: router.state.location.href }} replace />;
   }
 
-  // user.role is expected from the auth provider if it reads canonical application role
-  // However, Supabase session user often doesn't have the `role` attached directly unless using custom claims.
-  // Wait, let's implement a safe adapter here if the app already has a canonical role.
-  // We'll use a specific hook `useAdminAccess`
   return <AdminGuard />;
 }
 
 import { useAdminAccess, resolveAcademyDestination } from "@/features/admin/hooks/useAdminAccess";
+
+const NAV_LINKS = [
+  { to: "/admin/courses" as const, label: "Khóa học" },
+  { to: "/admin/batches" as const, label: "Lớp" },
+  { to: "/admin/calendar" as const, label: "Lịch" },
+  { to: "/admin/instructors" as const, label: "Giảng viên" },
+  { to: "/admin/academy-categories" as const, label: "Danh mục" },
+  { to: "/admin/academy-students" as const, label: "Học viên" },
+  { to: "/admin/academy-enrollments" as const, label: "Đăng ký" },
+  { to: "/admin/academy-access" as const, label: "Phân quyền" },
+  { to: "/admin/notifications" as const, label: "ZNS" },
+];
+
+function NavItem({ to, label }: { to: string; label: string }) {
+  const matchRoute = useMatchRoute();
+  const isActive = !!matchRoute({ to, fuzzy: true });
+  return (
+    <Link
+      to={to as any}
+      className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+        isActive
+          ? "bg-indigo-100 text-indigo-800 shadow-sm"
+          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+}
 
 function AdminGuard() {
   const { user } = useAuth();
@@ -57,17 +80,16 @@ function AdminGuard() {
     return <Navigate to="/student" replace />;
   }
 
-  // 3. authenticated non-admin -> forbidden
   if (destination === "forbidden" || !isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center flex-col gap-4">
-        <h1 className="text-2xl font-bold">Forbidden</h1>
-        <p>You do not have permission to access the admin area.</p>
+        <h1 className="text-2xl font-bold">Không có quyền truy cập</h1>
+        <p className="text-slate-500">Bạn không có quyền vào trang quản trị.</p>
         <button
           onClick={() => (window.location.href = "/")}
-          className="px-4 py-2 bg-primary text-white rounded-md"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-xl"
         >
-          Go Home
+          Về trang chủ
         </button>
       </div>
     );
@@ -78,85 +100,39 @@ function AdminGuard() {
     router.navigate({ to: "/auth/login", replace: true });
   };
 
-  // 4. admin/sub_admin -> Outlet with Admin Navbar
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="sticky top-0 z-10 border-b bg-card">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="font-bold text-lg hidden sm:inline-block text-primary">Academy Admin</span>
-            <span className="font-bold text-lg sm:hidden text-primary">Admin</span>
-            <nav className="flex items-center gap-4 text-sm font-medium">
-              <Link
-                to="/admin/courses"
-                className="transition-colors hover:text-foreground/80 text-foreground"
-              >
-                Courses
-              </Link>
-              <Link
-                to="/admin/instructors"
-                className="transition-colors hover:text-foreground/80 text-foreground"
-              >
-                Giảng viên
-              </Link>
-              <Link
-                to="/admin/batches"
-                className="transition-colors hover:text-foreground/80 text-foreground"
-              >
-                Batches
-              </Link>
-              <Link
-                to="/admin/calendar"
-                className="transition-colors hover:text-foreground/80 text-foreground"
-              >
-                Calendar
-              </Link>
-              <Link
-                to="/admin/academy-categories"
-                className="transition-colors hover:text-foreground/80 text-foreground"
-              >
-                Categories
-              </Link>
-              <Link
-                to="/admin/academy-students"
-                className="transition-colors hover:text-foreground/80 text-foreground"
-              >
-                Students
-              </Link>
-              <Link
-                to="/admin/academy-enrollments"
-                className="transition-colors hover:text-foreground/80 text-foreground font-semibold text-indigo-700"
-              >
-                Đăng ký khóa học
-              </Link>
-              <Link
-                to="/admin/academy-access"
-                className="transition-colors hover:text-foreground/80 text-foreground"
-              >
-                Access
-              </Link>
-              <Link
-                to="/admin/notifications"
-                className="transition-colors hover:text-foreground/80 text-foreground text-indigo-600 font-semibold"
-              >
-                ZNS Outbox
-              </Link>
-            </nav>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm">
+        <div className="px-4 h-14 flex items-center justify-between gap-3">
+          {/* Logo */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+              <GraduationCap className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-sm text-slate-900 hidden sm:inline">Academy Admin</span>
           </div>
-          <div className="flex items-center gap-4 text-sm">
-            {user?.email && (
-              <span className="hidden md:inline-block text-muted-foreground">{user.email}</span>
-            )}
-            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium uppercase tracking-wider">
+
+          {/* Nav - scrollable on mobile */}
+          <nav className="flex-1 overflow-x-auto">
+            <div className="flex items-center gap-1 min-w-max px-1">
+              {NAV_LINKS.map((link) => (
+                <NavItem key={link.to} to={link.to} label={link.label} />
+              ))}
+            </div>
+          </nav>
+
+          {/* Right side */}
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="hidden lg:inline px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase tracking-wider border border-indigo-100">
               {role}
             </span>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              title="Logout"
+              className="flex items-center gap-1.5 text-slate-500 hover:text-red-600 transition-colors text-sm"
+              title="Đăng xuất"
             >
               <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline-block">Logout</span>
+              <span className="hidden sm:inline text-xs font-semibold">Đăng xuất</span>
             </button>
           </div>
         </div>

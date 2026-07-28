@@ -210,7 +210,7 @@ function AdminCalendarPage() {
       {/* D. Main 2-column content */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
         {/* Left: Calendar Grid */}
-        <div className="border rounded-lg overflow-hidden bg-card">
+        <div className="border rounded-lg overflow-x-auto bg-card">
           {monthSessions.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <p className="font-medium text-muted-foreground">Không có buổi học nào trong tháng này</p>

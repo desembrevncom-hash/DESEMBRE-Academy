@@ -77,7 +77,7 @@ function AdminBatchesNewPage() {
       await adminCreateCourseBatch(payload);
       navigate({ to: "/admin/batches" });
     } catch (err: any) {
-      setError(err.message || "Failed to create batch");
+      setError(err.message || "Không thể tạo lớp học. Vui lòng kiểm tra lại thông tin.");
       setSubmitting(false);
     }
   };
@@ -87,11 +87,11 @@ function AdminBatchesNewPage() {
       <div className="mb-8">
         <Button variant="ghost" asChild className="mb-4 -ml-4">
           <Link to="/admin/batches">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Batches
+            <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại danh sách lớp
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">Create New Batch</h1>
-        <p className="text-muted-foreground mt-2">Set up a new monthly funnel course batch.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Tạo Lớp Đào Tạo Mới</h1>
+        <p className="text-muted-foreground mt-2">Cấu hình lớp học mới và mở đăng ký cho học viên.</p>
       </div>
 
       <div className="bg-card border rounded-lg p-6">
@@ -103,13 +103,13 @@ function AdminBatchesNewPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Course</label>
+            <label className="text-sm font-medium">Khóa học</label>
             <select 
               {...register("course_id", { required: "Course is required" })}
               className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={loadingCourses}
             >
-              <option value="">Select a course...</option>
+              <option value="">-- Chọn khóa học --</option>
               {courses.map(c => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
@@ -119,10 +119,10 @@ function AdminBatchesNewPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Batch Title</label>
+              <label className="text-sm font-medium">Tên lớp</label>
               <input 
                 {...register("title", { 
-                  required: "Title is required",
+                  required: "Tên lớp không được để trống",
                   onChange: (e) => {
                     const val = e.target.value;
                     const generatedSlug = val
@@ -142,10 +142,10 @@ function AdminBatchesNewPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Slug</label>
+              <label className="text-sm font-medium">Slug (URL)</label>
               <input 
                 {...register("slug", { 
-                  required: "Slug is required",
+                  required: "Slug không được để trống",
                   pattern: {
                     value: /^[a-z0-9-]+$/,
                     message: "Slug chỉ cho phép chữ thường (a-z), số (0-9) và dấu gạch ngang (-)"
@@ -205,7 +205,7 @@ function AdminBatchesNewPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Số ghế tối đa (Max Seats)</label>
+              <label className="text-sm font-medium">Số ghế tối đa</label>
               <input 
                 type="number"
                 {...register("max_participants")}
@@ -217,7 +217,7 @@ function AdminBatchesNewPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Ngày khai giảng (Start Date)</label>
+              <label className="text-sm font-medium">Ngày khai giảng</label>
               <input 
                 type="date"
                 {...register("start_date")}
@@ -226,7 +226,7 @@ function AdminBatchesNewPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Ngày kết thúc (End Date)</label>
+              <label className="text-sm font-medium">Ngày kết thúc</label>
               <input 
                 type="date"
                 {...register("end_date")}
@@ -245,21 +245,21 @@ function AdminBatchesNewPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
+            <label className="text-sm font-medium">Mô tả lớp học</label>
             <textarea 
               {...register("description")}
               className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              placeholder="Batch specific details or location info..."
+              placeholder="Chi tiết địa điểm, ghi chú đặc biệt cho lớp này..."
             />
           </div>
 
           <div className="flex justify-end pt-4">
             <Button type="button" variant="outline" className="mr-4" onClick={() => navigate({ to: "/admin/batches" })}>
-              Cancel
+              Hủy
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Batch
+              Tạo lớp học
             </Button>
           </div>
         </form>

@@ -20,7 +20,7 @@ export function CalendarGrid({ currentDate, sessions, onSessionClick }: Calendar
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-7 border-t border-l">
+      <div className="grid grid-cols-7 min-w-[700px] border-t border-l">
         {weekDays.map(day => (
           <div key={day} className="bg-muted/50 border-r border-b p-2 text-center text-sm font-semibold text-muted-foreground">
             {day}

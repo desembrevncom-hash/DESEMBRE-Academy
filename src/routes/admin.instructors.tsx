@@ -14,6 +14,7 @@ import {
   Globe,
   Eye,
   EyeOff,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -166,14 +167,14 @@ function AdminInstructorsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Giảng viên / Người đào tạo</h1>
-          <p className="text-slate-500 mt-1">
-            Quản lý hồ sơ chuyên gia, trainer và người phụ trách đào tạo.
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý Giảng viên</h1>
+          <p className="text-slate-500 mt-1 text-sm">
+            Quản lý hồ sơ giảng viên và phân công khóa học công khai.
           </p>
         </div>
         <button
           onClick={handleOpenCreate}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shrink-0"
+          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shrink-0 font-semibold text-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
           Thêm giảng viên
@@ -189,7 +190,7 @@ function AdminInstructorsPage() {
             placeholder="Tìm theo tên, chức danh, chuyên môn..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
           />
         </div>
         <div className="flex gap-1 bg-slate-100 p-1 rounded-lg text-sm">
@@ -267,7 +268,7 @@ function AdminInstructorsPage() {
                             className="w-10 h-10 rounded-full object-cover border border-slate-200"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm">
+                          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm">
                             {inst.full_name.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -332,9 +333,9 @@ function AdminInstructorsPage() {
                             to="/giang-vien/$slug"
                             params={{ slug: inst.slug }}
                             target="_blank"
-                            className="text-xs font-semibold text-indigo-600 hover:underline mr-1"
+                            className="inline-flex items-center gap-1 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
                           >
-                            Xem public ↗
+                            Public ↗
                           </Link>
                         )}
                         <button
