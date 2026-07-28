@@ -119,7 +119,12 @@ function CourseSettingsPage() {
           </div>
           <p className="text-muted-foreground">{course.title} ({course.slug})</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium">
+            <Link to="/admin/batches/new" search={{ course_id: course.id }}>
+              + Tạo lớp cho khóa này
+            </Link>
+          </Button>
           {course.slug && (
             <Button asChild variant="outline" size="sm" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
               <Link to="/khoa-hoc/$slug" params={{ slug: course.slug }} target="_blank">

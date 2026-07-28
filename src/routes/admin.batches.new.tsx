@@ -18,6 +18,13 @@ function fromDateTimeLocal(val: string) {
 }
 
 function AdminBatchesNewPage() {
+  const getInitialCourseId = () => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      return searchParams.get("course_id") || "";
+    }
+    return "";
+  };
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -27,7 +34,7 @@ function AdminBatchesNewPage() {
 
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     defaultValues: {
-      course_id: "",
+      course_id: getInitialCourseId(),
       title: "",
       slug: "",
       training_format: "office",
@@ -48,7 +55,16 @@ function AdminBatchesNewPage() {
           academyAdminCoursesApi.listCourses(),
           getAdminInstructors().catch(() => []),
         ]);
-        setCourses(coursesData);
+        
+        const filteredCourses = coursesData.filter((c: any) => {
+          const searchStr = ((c.title || "") + " " + (c.slug || "")).toLowerCase();
+          return !searchStr.includes("smoke") && 
+                 !searchStr.includes("test") && 
+                 !searchStr.includes("demo") && 
+                 !searchStr.includes("cancel");
+        });
+        
+        setCourses(filteredCourses);
         setInstructors(instructorsData || []);
       } catch (err) {
         console.error("Failed to load options", err);
@@ -90,8 +106,8 @@ function AdminBatchesNewPage() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại danh sách lớp
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight">Tạo Lớp Đào Tạo Mới</h1>
-        <p className="text-muted-foreground mt-2">Cấu hình lớp học mới và mở đăng ký cho học viên.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Tạo lớp đào tạo mới</h1>
+        <p className="text-muted-foreground mt-2">Cấu hình lớp khai giảng và mở đăng ký cho học viên.</p>
       </div>
 
       <div className="bg-card border rounded-lg p-6">
@@ -105,7 +121,7 @@ function AdminBatchesNewPage() {
           <div className="space-y-2">
             <label className="text-sm font-medium">Khóa học</label>
             <select 
-              {...register("course_id", { required: "Course is required" })}
+              {...register("course_id", { required: "Vui lòng chọn khóa học" })}
               className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={loadingCourses}
             >
@@ -115,6 +131,15 @@ function AdminBatchesNewPage() {
               ))}
             </select>
             {errors.course_id && <p className="text-destructive text-sm">{errors.course_id.message}</p>}
+            
+            {courses.length === 0 && !loadingCourses && (
+              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-sm flex flex-col gap-2">
+                <p>Chưa có khóa học phù hợp để tạo lớp. Vui lòng tạo khóa học trước.</p>
+                <Button asChild variant="outline" size="sm" className="w-fit bg-white">
+                  <Link to="/admin/courses/new">Tạo khóa học mới</Link>
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -259,7 +284,7 @@ function AdminBatchesNewPage() {
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Tạo lớp học
+              Tạo lớp đào tạo mới
             </Button>
           </div>
         </form>

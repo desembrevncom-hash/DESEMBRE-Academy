@@ -146,15 +146,22 @@ function AdminCourseList() {
                           to="/khoa-hoc/$slug"
                           params={{ slug: course.slug }}
                           target="_blank"
-                          className="text-xs font-semibold text-indigo-600 hover:underline"
+                          className="text-xs font-semibold text-indigo-600 hover:underline mr-3"
                         >
                           Xem public ↗
                         </Link>
                       )}
                       <Link
+                        to="/admin/batches/new"
+                        search={{ course_id: course.id }}
+                        className="text-emerald-600 hover:underline font-medium mr-3 text-xs"
+                      >
+                        + Tạo lớp
+                      </Link>
+                      <Link
                         to="/admin/courses/$courseId/settings"
                         params={{ courseId: course.id }}
-                        className="text-primary hover:underline font-medium"
+                        className="text-primary hover:underline font-medium text-xs"
                       >
                         {course.status === "archived" ? "Xem" : "Sửa"}
                       </Link>
