@@ -8,7 +8,10 @@ export interface StudentAccount {
   id: string;
   user_id: string;
   customer_id: string | null;
+  display_name?: string | null;
+  phone?: string | null;
   created_at: string;
+  status?: "active" | "pending_review" | "blocked";
 }
 
 export interface StudentCustomer {

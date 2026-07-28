@@ -40,6 +40,26 @@ export const studentService = {
       throw new StudentBootstrapError("UNAUTHENTICATED", "No active session found", false);
     }
 
+    const { data: ensureData, error: ensureError } = await supabase.rpc(
+      "ensure_current_student_account",
+    );
+
+    if (ensureError) {
+      console.error(
+        "[Student Bootstrap] Failed to ensure student account:",
+        ensureError.message,
+      );
+      // We don't throw here, let get_current_student_bootstrap handle the failure
+      // or at least log the failure.
+    } else if (ensureData) {
+      console.log(
+        `[Student Bootstrap] Profile ensured for user ${session.user.id.substring(
+          0,
+          8,
+        )}... Status: ${ensureData.status}`,
+      );
+    }
+
     const { data, error } = await supabase.rpc("get_current_student_bootstrap");
 
     if (error) {
@@ -67,4 +87,16 @@ export const studentService = {
       throw new StudentBootstrapError("INVALID_DATA", `Invalid payload: ${err.message}`, false);
     }
   },
+
+  async getStudentLearningHistory(): Promise<any[]> {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) throw new Error("UNAUTHENTICATED");
+    
+    // We pass null for phone/email to rely on auth.uid() in the RPC
+    const { data, error } = await supabase.rpc("student_get_learning_history");
+    if (error) {
+      throw error;
+    }
+    return data || [];
+  }
 };

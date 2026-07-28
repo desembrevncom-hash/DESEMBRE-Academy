@@ -89,6 +89,7 @@ function LessonPlayer() {
     lessonId,
     lesson?.duration ?? null,
     lesson?.progress?.status,
+    lesson?.progress?.progress_percent
   );
 
   const progressPct = useMemo(() => {
@@ -104,7 +105,8 @@ function LessonPlayer() {
 
     try {
       setSaving(true);
-      const persistedProgress = await saveProgress(0, status, true);
+      const source = status === "completed" ? "manual_complete" : "manual_50";
+      const persistedProgress = await saveProgress(0, status, true, null, percent, source);
 
       if (status === "completed") {
         if (
@@ -112,13 +114,16 @@ function LessonPlayer() {
           persistedProgress.progress_percent === 100
         ) {
           toast.success("Đã đánh dấu hoàn thành");
-          await Promise.all([fetchOutline(), refreshCurrentCourses()]);
         } else {
           toast.error("Lỗi xác nhận hoàn thành từ máy chủ.");
+          return;
         }
       } else {
         toast.success("Đã lưu tiến độ");
       }
+
+      // Refetch after any successful save (50% or 100%)
+      await Promise.all([fetchOutline(), refreshCurrentCourses()]);
     } catch (err: unknown) {
       toast.error("Lỗi lưu tiến độ. Vui lòng thử lại.");
     } finally {
@@ -181,16 +186,22 @@ function LessonPlayer() {
                       <Link
                         to="/student/courses/$slug/lessons/$lessonId"
                         params={{ slug: outline.course.slug, lessonId: l.id }}
-                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${active ? "bg-primary/10 text-primary-dark font-semibold" : "hover:bg-accent"}`}
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors ${
+                          active 
+                            ? "bg-primary text-primary-foreground font-semibold shadow-sm" 
+                            : done
+                              ? "hover:bg-accent/70 text-success bg-success/5"
+                              : "hover:bg-accent text-slate-700"
+                        }`}
                       >
                         {done ? (
-                          <CheckCircle2 className="h-4 w-4 text-success" />
+                          <CheckCircle2 className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-success"}`} />
                         ) : (
-                          <Circle className="h-4 w-4 text-muted-foreground" />
+                          <Circle className={`h-4 w-4 ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`} />
                         )}
                         <span className="flex-1 line-clamp-1">{l.title}</span>
                         {l.duration !== null && (
-                          <span className="text-xs text-muted-foreground">{l.duration}p</span>
+                          <span className={`text-xs ${active ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{l.duration}p</span>
                         )}
                       </Link>
                     )}
@@ -287,8 +298,7 @@ function LessonPlayer() {
             <Lock className="mx-auto h-16 w-16 opacity-50 mb-3" />
             <div className="font-semibold">Truy cập bị từ chối</div>
             <div className="text-sm mt-1">
-              Bạn không có quyền xem nội dung này. Gói hội viên của bạn chưa kích hoạt hoặc đã hết
-              hạn.
+              Bạn không có quyền truy cập bài học này.
             </div>
           </div>
         </div>
@@ -337,6 +347,7 @@ function LessonPlayer() {
               courseSlug={slug}
               lessonId={lessonId}
               mimeType={content.mime_type}
+              mediaRef={"media_ref" in content ? content.media_ref : null}
               duration={lesson.duration}
               initialPosition={contentData.progress?.last_position_seconds}
               initialProgressStatus={contentData.progress?.status ?? lesson.progress?.status}
@@ -385,16 +396,31 @@ function LessonPlayer() {
           <div className="mt-6">
             <div className="text-xs text-muted-foreground">{outline.course.title}</div>
             <h1 className="mt-1 text-2xl font-bold">{lesson.title}</h1>
+            
+            {lesson.progress && lesson.progress.progress_percent > 0 && (
+              <div className="mt-4 max-w-sm">
+                <div className="flex justify-between text-xs mb-1.5 font-medium text-slate-500">
+                  <span>Tiến độ bài học</span>
+                  <span className={completed ? "text-success" : ""}>{lesson.progress.progress_percent}%</span>
+                </div>
+                <Progress 
+                  value={lesson.progress.progress_percent} 
+                  className={`h-2 ${completed ? "[&>div]:bg-success" : ""}`} 
+                />
+              </div>
+            )}
+
             {lesson.description && (
-              <p className="mt-3 text-muted-foreground">{lesson.description}</p>
+              <p className="mt-4 text-muted-foreground">{lesson.description}</p>
             )}
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card p-4">
-            <div className="flex items-center gap-3">
+          {contentData?.state !== "ACCESS_DENIED" && (
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card p-4">
+              <div className="flex items-center gap-3">
               <Button
                 variant={completed ? "default" : "outline"}
-                className="rounded-full"
+                className={`rounded-full ${completed ? "bg-success hover:bg-success/90 text-white border-transparent" : ""}`}
                 disabled={saving || isLocked || !outline.access_decision.can_learn}
                 onClick={() =>
                   handleSaveProgress(completed ? "in_progress" : "completed", completed ? 50 : 100)
@@ -452,6 +478,7 @@ function LessonPlayer() {
               </Button>
             </div>
           </div>
+          )}
         </div>
 
         <aside className="hidden lg:block sticky top-6 h-fit rounded-3xl border border-border/70 bg-card p-5 max-h-[calc(100dvh-3rem)] overflow-y-auto">
@@ -460,6 +487,19 @@ function LessonPlayer() {
             <Lock className="h-3.5 w-3.5" /> Một số bài có thể bị khóa cho đến khi bạn hoàn thành
             bài trước.
           </div>
+          
+          {import.meta.env.DEV && import.meta.env.VITE_SHOW_ACADEMY_DEBUG_PANEL === "true" && (
+            <div className="mt-6 border-t border-border/50 pt-4 text-[10px] font-mono text-slate-400">
+              <div>Diagnostics:</div>
+              <div>lessonId: {lessonId.slice(0, 8)}...</div>
+              <div>courseSlug: {slug}</div>
+              <div>raw_state: {contentData?.state || (contentError ? "ERROR" : "N/A")}</div>
+              <div>parse_success: {contentData ? "true" : "false"}</div>
+              <div>content_kind: {contentData?.state === "AVAILABLE" && contentData.content ? contentData.content.kind : "null"}</div>
+              <div>access_denied: {contentData?.state === "ACCESS_DENIED" ? "true" : "false"}</div>
+              <div>media_requested: {contentData?.state === "AVAILABLE" && contentData.content?.kind === "video" ? "true" : "false"}</div>
+            </div>
+          )}
         </aside>
       </div>
     </div>

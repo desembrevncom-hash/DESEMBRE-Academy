@@ -46,7 +46,7 @@ function Login() {
     if (destination === "forbidden") return "/"; // Handle safe landing
 
     const searchParams = new URLSearchParams(window.location.search);
-    const returnTo = searchParams.get("returnTo");
+    const returnTo = searchParams.get("redirect") || searchParams.get("returnTo");
 
     if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
       return returnTo;
@@ -105,7 +105,7 @@ function Login() {
               <div className="grid h-12 w-12 place-items-center rounded-2xl bg-accent text-primary-dark">
                 <Mail className="h-5 w-5" />
               </div>
-              <h1 className="mt-5 text-2xl font-bold">Đăng nhập</h1>
+              <h1 className="mt-5 text-2xl font-bold">Đăng nhập quản trị</h1>
               <p className="mt-1 text-sm text-muted-foreground">Nhập email và mật khẩu của bạn.</p>
 
               {authError && (

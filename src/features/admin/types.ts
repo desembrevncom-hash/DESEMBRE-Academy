@@ -14,6 +14,38 @@ export interface AcademyAdminCourseListItem {
   updated_at: string;
 }
 
+export interface AcademyAdminCategory {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface AcademyAdminCategoryManagerItem {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  status: "draft" | "published" | "archived";
+  created_at: string;
+  updated_at: string;
+  course_count: number;
+}
+
+export interface CreateAcademyCategoryInput {
+  p_name: string;
+  p_slug: string;
+  p_description?: string | null;
+  p_status: "draft" | "published" | "archived";
+}
+
+export interface UpdateAcademyCategoryInput {
+  p_category_id: string;
+  p_name: string;
+  p_slug: string;
+  p_description?: string | null;
+  p_status: "draft" | "published" | "archived";
+}
+
 export interface AcademyAdminCourseCategory {
   id: string;
   name: string;
@@ -128,4 +160,36 @@ export interface UpdateAcademyLessonInput {
 export interface ReorderAcademyLessonsInput {
   p_module_id: string;
   p_lesson_ids: string[];
+}
+
+export interface AcademyCourseMarketingMetadata {
+  course_id: string;
+  level: 'basic' | 'intermediate' | 'advanced' | null;
+  short_description: string | null;
+  estimated_minutes: number | null;
+  is_featured: boolean;
+  featured_order: number;
+  audience: string[];
+  outcomes: string[];
+  thumbnail_url: string | null;
+  thumbnail_alt: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpsertAcademyCourseMarketingMetadataInput {
+  p_course_id: string;
+  p_level: 'basic' | 'intermediate' | 'advanced' | null;
+  p_short_description: string | null;
+  p_estimated_minutes: number | null;
+  p_is_featured: boolean;
+  p_featured_order: number;
+  p_audience: string[];
+  p_outcomes: string[];
+  p_thumbnail_url?: string | null;
+  p_thumbnail_alt?: string | null;
+  p_seo_title?: string | null;
+  p_seo_description?: string | null;
 }

@@ -1,0 +1,195 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState, useMemo } from "react";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { Loader2, Calendar, AlertCircle } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { Button } from "@/components/ui/button";
+
+import { getPublicTrainingSchedule, PublicCourseBatch } from "@/features/public-training/services/publicTrainingApi";
+import { TrainingHero } from "@/features/public-training/components/TrainingHero";
+import { TrainingFilters } from "@/features/public-training/components/TrainingFilters";
+import { TrainingScheduleCard } from "@/features/public-training/components/TrainingScheduleCard";
+import { RegistrationForm } from "@/features/public-training/components/RegistrationForm";
+import { RegistrationSuccess } from "@/features/public-training/components/RegistrationSuccess";
+
+export const Route = createFileRoute("/lich-khai-giang")({
+  component: PublicCalendarPage,
+});
+
+function PublicCalendarPage() {
+  const [batches, setBatches] = useState<PublicCourseBatch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [selectedFormat, setSelectedFormat] = useState("ALL");
+  const [selectedMonth, setSelectedMonth] = useState("ALL");
+
+  const [registeringBatch, setRegisteringBatch] = useState<PublicCourseBatch | null>(null);
+  const [successBatchTitle, setSuccessBatchTitle] = useState<string | null>(null);
+
+  const fetchSchedule = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getPublicTrainingSchedule();
+      setBatches(data);
+    } catch (err: any) {
+      console.error("fetchSchedule error:", err);
+      setError("Không thể tải lịch khai giảng. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSchedule();
+  }, []);
+
+  // Compute available months
+  const availableMonths = useMemo(() => {
+    const set = new Set<string>();
+    batches.forEach((b) => {
+      let earliest = b.start_date;
+      if (!earliest && b.sessions && b.sessions.length > 0) {
+        earliest = b.sessions[0].starts_at;
+      }
+      const monthKey = earliest ? format(parseISO(earliest), "MM/yyyy") : "TBA";
+      set.add(monthKey);
+    });
+    return Array.from(set);
+  }, [batches]);
+
+  // Filter batches by format and month
+  const filteredBatches = useMemo(() => {
+    return batches.filter((b) => {
+      // Format filter
+      if (selectedFormat !== "ALL") {
+        const fmt = b.training_format || "";
+        if (fmt !== selectedFormat) return false;
+      }
+
+      // Month filter
+      if (selectedMonth !== "ALL") {
+        let earliest = b.start_date;
+        if (!earliest && b.sessions && b.sessions.length > 0) {
+          earliest = b.sessions[0].starts_at;
+        }
+        const monthKey = earliest ? format(parseISO(earliest), "MM/yyyy") : "TBA";
+        if (monthKey !== selectedMonth) return false;
+      }
+
+      return true;
+    });
+  }, [batches, selectedFormat, selectedMonth]);
+
+  const handleOpenRegister = (batch: PublicCourseBatch) => {
+    setRegisteringBatch(batch);
+  };
+
+  const handleCloseRegister = () => {
+    setRegisteringBatch(null);
+  };
+
+  const handleSuccess = () => {
+    if (registeringBatch) {
+      setSuccessBatchTitle(registeringBatch.course?.title || registeringBatch.title);
+    }
+    setRegisteringBatch(null);
+    fetchSchedule(); // Refresh counts
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 pb-24 font-sans">
+      <SiteHeader />
+
+      {/* Hero */}
+      <TrainingHero />
+
+      {/* Main Container */}
+      <main className="container mx-auto px-4 max-w-5xl py-10 space-y-8">
+        {/* Filters */}
+        <TrainingFilters
+          selectedFormat={selectedFormat}
+          onSelectFormat={setSelectedFormat}
+          months={availableMonths}
+          selectedMonth={selectedMonth}
+          onSelectMonth={setSelectedMonth}
+        />
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-24 bg-white border border-slate-100 rounded-3xl shadow-sm">
+            <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mb-4" />
+            <p className="text-sm font-medium text-slate-500">Đang tải danh sách lịch khai giảng...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {!loading && error && (
+          <div className="text-center py-16 max-w-md mx-auto bg-white border border-red-100 rounded-3xl p-8 shadow-sm">
+            <AlertCircle className="h-10 w-10 text-rose-500 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Chưa thể kết nối lịch học</h3>
+            <p className="text-sm text-slate-500 mb-6">{error}</p>
+            <Button onClick={fetchSchedule} variant="outline" className="rounded-xl px-6">
+              Thử lại
+            </Button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && !error && filteredBatches.length === 0 && (
+          <div className="text-center py-20 border border-slate-200/80 rounded-3xl bg-white p-8 shadow-sm space-y-4">
+            <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto">
+              <Calendar className="h-8 w-8" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900">Hiện chưa có lịch khai giảng phù hợp</h3>
+            <p className="text-sm text-slate-500 max-w-md mx-auto">
+              Không tìm thấy lớp học theo bộ lọc hiện tại. Vui lòng chọn bộ lọc khác hoặc xem toàn bộ khóa học.
+            </p>
+            <div className="pt-2">
+              <Button asChild variant="outline" className="rounded-xl px-6">
+                <Link to="/courses">Xem tất cả khóa học</Link>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Schedule List */}
+        {!loading && !error && filteredBatches.length > 0 && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-lg font-bold text-slate-900">
+                Các lớp khai giảng sắp tới ({filteredBatches.length})
+              </h2>
+            </div>
+
+            {filteredBatches.map((batch) => (
+              <TrainingScheduleCard
+                key={batch.id}
+                batch={batch}
+                onRegister={handleOpenRegister}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Registration Drawer */}
+      {registeringBatch && (
+        <RegistrationForm
+          batch={registeringBatch}
+          onClose={handleCloseRegister}
+          onSuccess={handleSuccess}
+        />
+      )}
+
+      {/* Registration Success Modal */}
+      {successBatchTitle && (
+        <RegistrationSuccess
+          batchTitle={successBatchTitle}
+          onClose={() => setSuccessBatchTitle(null)}
+        />
+      )}
+    </div>
+  );
+}

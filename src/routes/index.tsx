@@ -9,13 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect, useState, useMemo } from "react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { CategoryCard } from "@/components/common/CategoryCard";
-import { CourseCard } from "@/components/common/CourseCard";
 import { SectionHeading } from "@/components/common/SectionHeading";
 import { categories } from "@/data/categories";
-import { courses } from "@/data/courses";
+import { getPublicCatalog } from "@/features/courses/services/course.service";
+import type { CourseCatalogItem } from "@/features/courses/types";
+import { CatalogCourseCard } from "@/features/courses/components/CatalogCourseCard";
+import { Loader2, AlertCircle } from "lucide-react";
 import heroImg from "@/assets/hero-instructor.jpg";
 
 export const Route = createFileRoute("/")({
@@ -23,14 +26,68 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const featured = courses.filter((c) => c.featured).slice(0, 6);
+  const [courses, setCourses] = useState<CourseCatalogItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchCatalog() {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getPublicCatalog();
+        if (mounted) {
+          setCourses(data || []);
+        }
+      } catch (err: any) {
+        if (mounted) {
+          setError("Không thể tải danh sách khóa học nổi bật.");
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+    fetchCatalog();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const featured = useMemo(() => {
+    if (!courses.length) return [];
+    
+    const featuredList = [...courses].sort((a, b) => {
+      const aFeatured = a.marketing?.is_featured ?? false;
+      const bFeatured = b.marketing?.is_featured ?? false;
+      
+      if (aFeatured && !bFeatured) return -1;
+      if (!aFeatured && bFeatured) return 1;
+      
+      if (aFeatured && bFeatured) {
+        const aOrder = a.marketing?.featured_order ?? 0;
+        const bOrder = b.marketing?.featured_order ?? 0;
+        return aOrder - bOrder;
+      }
+      
+      return 0;
+    });
+
+    const onlyFeatured = featuredList.filter(c => c.marketing?.is_featured);
+    if (onlyFeatured.length > 0) {
+      return onlyFeatured.slice(0, 6);
+    }
+    return featuredList.slice(0, 3); // Fallback: 3 khóa đầu tiên nếu không có featured
+  }, [courses]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <SiteHeader />
 
       {/* Hero */}
-      <section className="px-3 sm:px-6 pt-6">
+      <section className="px-3 sm:px-6 pt-8 md:pt-12">
         <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] sm:rounded-[36px] hero-bg border border-border/60 shadow-[var(--shadow-soft)]">
           <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:gap-6 lg:p-14">
             <div className="flex flex-col justify-center">
@@ -183,11 +240,28 @@ function Home() {
             </Button>
           }
         />
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((c) => (
-            <CourseCard key={c.id} course={c} />
-          ))}
-        </div>
+        
+        {loading ? (
+          <div className="mt-8 flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p>Đang tải khóa học...</p>
+          </div>
+        ) : error ? (
+          <div className="mt-8 flex flex-col items-center justify-center py-12">
+            <AlertCircle className="h-8 w-8 text-destructive mb-2" />
+            <p className="text-muted-foreground">{error}</p>
+          </div>
+        ) : featured.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center justify-center py-12 bg-white rounded-3xl border border-border/60">
+            <p className="text-muted-foreground text-center">Chưa có khóa học nào được xuất bản.</p>
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((c) => (
+              <CatalogCourseCard key={c.id} course={c} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* About / CTA */}

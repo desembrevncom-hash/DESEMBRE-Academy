@@ -36,6 +36,7 @@ export function useLessonProgress(
   lessonId: string,
   duration: number | null,
   initialStatus?: LessonProgressStatus | null,
+  initialPercent?: number | null,
   options?: UseLessonProgressOptions,
 ) {
   const { user } = useAuth();
@@ -50,7 +51,13 @@ export function useLessonProgress(
     position: number;
     status: LessonProgressStatus;
     actualMediaDuration?: number | null;
+    overridePercent?: number;
+    source?: string;
   } | null>(null);
+
+  const highestSavedPercent = useRef<number>(
+    initialPercent != null ? initialPercent : (initialStatus === "completed" ? 100 : 0)
+  );
 
   // Explicit completion latch scoped to userId + lessonId
   // Used to prevent unmount/remount cleanups from overwriting completion with in_progress
@@ -61,6 +68,8 @@ export function useLessonProgress(
       status: LessonProgressStatus,
       force = false,
       actualMediaDuration?: number | null,
+      overridePercent?: number,
+      source?: string
     ): Promise<LessonProgressPayload | undefined> => {
       if (!user || !lessonId || duration === null || duration === undefined) return undefined;
 
@@ -81,7 +90,22 @@ export function useLessonProgress(
           : duration;
 
       const normalizedPos = normalizeLessonPositionSeconds(positionSeconds, effectiveDuration);
-      const percent = normalizeLessonProgressPercent(positionSeconds, effectiveDuration, status);
+      let percent = normalizeLessonProgressPercent(positionSeconds, effectiveDuration, status);
+      if (typeof overridePercent === "number") {
+        percent = overridePercent;
+      }
+
+      // Prevent background saves from decreasing progress
+      const isManual = source?.startsWith("manual_");
+      if (isManual) {
+        highestSavedPercent.current = Math.max(highestSavedPercent.current, percent);
+      } else {
+        if (percent < highestSavedPercent.current) {
+          console.log(`[LessonProgress] skipping source=${source} percent=${percent} because highestSaved=${highestSavedPercent.current}`);
+          return undefined;
+        }
+        highestSavedPercent.current = Math.max(highestSavedPercent.current, percent);
+      }
 
       const finalPos =
         status === "completed" && effectiveDuration > 0
@@ -98,7 +122,7 @@ export function useLessonProgress(
           !pendingSave.current ||
           pendingSave.current.status !== "completed"
         ) {
-          pendingSave.current = { position: finalPos, status, actualMediaDuration };
+          pendingSave.current = { position: finalPos, status, actualMediaDuration, overridePercent, source };
         }
         return undefined;
       }
@@ -112,12 +136,14 @@ export function useLessonProgress(
       while (attempt < maxAttempts) {
         attempt++;
         try {
+          console.log(`[LessonProgress] saving source=${source || "unknown"} lesson=${lessonId.substring(0, 8)} percent=${percent} completed=${status === "completed"}`);
           persistedProgress = await lessonContentService.saveLessonProgress(
             lessonId,
             status,
             percent,
             finalPos,
           );
+          console.log(`[LessonProgress] saved progress=${persistedProgress.progress_percent}`);
           lastSavedPosition.current = finalPos;
           if (options?.onSuccess) {
             options.onSuccess(status);
@@ -144,14 +170,14 @@ export function useLessonProgress(
         if (status === "completed") {
           // Re-queue the completed snapshot so it remains pending for manual retry
           if (!pendingSave.current || pendingSave.current.status !== "completed") {
-            pendingSave.current = { position: finalPos, status, actualMediaDuration };
+            pendingSave.current = { position: finalPos, status, actualMediaDuration, overridePercent, source };
           }
         }
 
         if (pendingSave.current && pendingSave.current.status !== "completed") {
           const next = pendingSave.current;
           pendingSave.current = null;
-          saveProgress(next.position, next.status, force, next.actualMediaDuration).catch(() => {});
+          saveProgress(next.position, next.status, force, next.actualMediaDuration, next.overridePercent, next.source).catch(() => {});
         }
 
         console.error("Failed to save progress", lastErr);
@@ -162,7 +188,7 @@ export function useLessonProgress(
       if (pendingSave.current) {
         const next = pendingSave.current;
         pendingSave.current = null;
-        saveProgress(next.position, next.status, force, next.actualMediaDuration).catch(() => {});
+        saveProgress(next.position, next.status, force, next.actualMediaDuration, next.overridePercent, next.source).catch(() => {});
       }
 
       return persistedProgress;

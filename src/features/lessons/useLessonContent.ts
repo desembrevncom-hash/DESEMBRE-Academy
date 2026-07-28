@@ -22,6 +22,13 @@ export function useLessonContent({
     }
   }, [user, queryClient]);
 
+  // Clear query cache on route load
+  useEffect(() => {
+    if (courseSlug && lessonId) {
+      queryClient.removeQueries({ queryKey: ["lesson-content", courseSlug, lessonId] });
+    }
+  }, [courseSlug, lessonId, queryClient]);
+
   return useQuery({
     queryKey: ["lesson-content", courseSlug, lessonId, user?.id],
     queryFn: () => lessonContentService.getLessonContent(courseSlug, lessonId),

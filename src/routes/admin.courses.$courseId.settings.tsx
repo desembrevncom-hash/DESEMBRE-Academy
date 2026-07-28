@@ -1,14 +1,20 @@
-import { useEffect } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState, useRef } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useAcademyAdminCourseEditor,
+  useAcademyAdminCategories,
   useUpdateAcademyCourse,
+  useAcademyCourseMarketingMetadata,
+  useUpsertAcademyCourseMarketingMetadata,
 } from "@/features/admin/hooks/useAcademyAdminCourses";
-import { updateCourseSchema, type UpdateCourseFormData } from "@/features/admin/validators";
+import { uploadCourseThumbnail } from "@/features/admin/services/academyAdminCoursesApi";
+import { updateCourseSchema, type UpdateCourseFormData, marketingFormSchema } from "@/features/admin/validators";
 import { toast } from "sonner";
 import { useCourseEditorRegistry } from "@/features/admin/contexts/CourseEditorRegistry";
+import { ArrowLeft, Save, Undo2, Info, Upload, ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/courses/$courseId/settings")({
   component: CourseSettingsPage,
@@ -17,8 +23,9 @@ export const Route = createFileRoute("/admin/courses/$courseId/settings")({
 function CourseSettingsPage() {
   const { courseId } = Route.useParams();
 
-  // We already fetch this in the layout, so it should hit the cache immediately
+  // Load editor data
   const { data: editorData } = useAcademyAdminCourseEditor(courseId);
+  const { data: categories, isLoading: isLoadingCategories, isError: isErrorCategories } = useAcademyAdminCategories();
   const updateMutation = useUpdateAcademyCourse();
   const { setSettingsDirty, setActiveMutation, isReadOnly } = useCourseEditorRegistry();
 
@@ -28,7 +35,7 @@ function CourseSettingsPage() {
     reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<UpdateCourseFormData>({
-    resolver: zodResolver(updateCourseSchema),
+    resolver: zodResolver(updateCourseSchema) as any,
   });
 
   // Hydrate the form when data is available
@@ -61,10 +68,12 @@ function CourseSettingsPage() {
     return null; // Handled by layout loading/error state
   }
 
+  const { course } = editorData;
+
   const onSubmit = async (data: UpdateCourseFormData) => {
     try {
       await updateMutation.mutateAsync({
-        p_course_id: courseId,
+        p_course_id: course.id,
         p_title: data.title,
         p_slug: data.slug,
         p_description: data.description,
@@ -75,168 +84,666 @@ function CourseSettingsPage() {
         p_pricing_model: data.pricing_model,
       });
 
-      toast.success("Course settings updated successfully");
-      // React Query handles invalidation automatically through the hook
+      toast.success("Đã lưu cài đặt khóa học thành công");
     } catch (error: unknown) {
       const err = error as Record<string, unknown>;
       toast.error(
-        typeof err.message === "string" ? err.message : "Failed to update course settings",
+        typeof err.message === "string" ? err.message : "Cập nhật khóa học thất bại"
       );
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "published":
+        return <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">Đã xuất bản (Published)</span>;
+      case "archived":
+        return <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full font-medium">Đã lưu trữ (Archived)</span>;
+      default:
+        return <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">Bản nháp (Draft)</span>;
+    }
+  };
+
   return (
-    <div className="bg-card text-card-foreground border rounded-lg shadow-sm p-6">
-      <h2 className="text-xl font-semibold mb-6">Course Metadata</h2>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border shadow-sm">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-bold text-slate-900">Cài đặt khóa học</h1>
+            {getStatusBadge(course.status)}
+          </div>
+          <p className="text-muted-foreground">{course.title} ({course.slug})</p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to={"/admin/courses" as any}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Trở về Tổng quan
+          </Link>
+        </Button>
+      </div>
 
       {isReadOnly && (
-        <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md mb-6 border border-yellow-200">
-          This course is archived. Changes are disabled.
+        <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200 flex items-start gap-3">
+          <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
+          <p>Khóa học này đã bị lưu trữ (Archived). Các tính năng chỉnh sửa đã bị khóa.</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-2">
-          <label htmlFor="title" className="text-sm font-medium">
-            Title <span className="text-destructive">*</span>
-          </label>
-          <input
-            id="title"
-            {...register("title")}
-            disabled={isReadOnly}
-            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
-          />
-          {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
-        </div>
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6 pb-20">
+        
+        {/* Thông tin cơ bản */}
+        <div className="bg-card text-card-foreground border rounded-lg shadow-sm p-6 space-y-6">
+          <h2 className="text-lg font-semibold border-b pb-2">Thông tin cơ bản</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium">
+                Tên khóa học <span className="text-destructive">*</span>
+              </label>
+              <input
+                id="title"
+                {...register("title")}
+                disabled={isReadOnly}
+                placeholder="Ví dụ: Lập trình ReactJS Cơ bản"
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              />
+              {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
+            </div>
 
-        <div className="space-y-2">
-          <label htmlFor="slug" className="text-sm font-medium">
-            Slug <span className="text-destructive">*</span>
-          </label>
-          <div className="flex items-center">
-            <span className="bg-muted px-3 py-2 border border-r-0 rounded-l-md text-muted-foreground text-sm">
-              /courses/
-            </span>
-            <input
-              id="slug"
-              {...register("slug")}
+            <div className="space-y-2">
+              <label htmlFor="slug" className="text-sm font-medium">
+                Đường dẫn (Slug) <span className="text-destructive">*</span>
+              </label>
+              <div className="flex items-center">
+                <span className="bg-muted px-3 py-2 border border-r-0 rounded-l-md text-muted-foreground text-sm">
+                  /courses/
+                </span>
+                <input
+                  id="slug"
+                  {...register("slug")}
+                  disabled={isReadOnly}
+                  placeholder="reactjs-co-ban"
+                  className="w-full border rounded-r-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+                />
+              </div>
+              {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="description" className="text-sm font-medium">
+              Mô tả ngắn
+            </label>
+            <textarea
+              id="description"
+              {...register("description")}
+              rows={3}
               disabled={isReadOnly}
-              className="w-full border rounded-r-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              placeholder="Viết một đoạn mô tả ngắn gọn để giới thiệu khóa học này..."
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y disabled:opacity-50"
             />
-          </div>
-          {errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="description" className="text-sm font-medium">
-            Description
-          </label>
-          <textarea
-            id="description"
-            {...register("description")}
-            rows={4}
-            disabled={isReadOnly}
-            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y disabled:opacity-50"
-          />
-          {errors.description && (
-            <p className="text-sm text-destructive">{errors.description.message}</p>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label htmlFor="catalog_visibility" className="text-sm font-medium">
-              Visibility
-            </label>
-            <select
-              id="catalog_visibility"
-              {...register("catalog_visibility")}
-              disabled={isReadOnly}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
-            >
-              <option value="private">Private (Hidden from catalog)</option>
-              <option value="unlisted">Unlisted (Direct link only)</option>
-              <option value="public">Public (Visible in catalog)</option>
-            </select>
-            {errors.catalog_visibility && (
-              <p className="text-sm text-destructive">{errors.catalog_visibility.message}</p>
+            {errors.description && (
+              <p className="text-sm text-destructive">{errors.description.message}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="enrollment_policy" className="text-sm font-medium">
-              Enrollment Policy
-            </label>
-            <select
-              id="enrollment_policy"
-              {...register("enrollment_policy")}
-              disabled={isReadOnly}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
-            >
-              <option value="closed">Closed (Admin invites only)</option>
-              <option value="approval_required">Approval Required</option>
-              <option value="open">Open (Self-enrollment)</option>
-            </select>
-            {errors.enrollment_policy && (
-              <p className="text-sm text-destructive">{errors.enrollment_policy.message}</p>
+            <label htmlFor="category_id" className="text-sm font-medium">Danh mục (Category)</label>
+            {isErrorCategories ? (
+              <>
+                <input
+                  value={course.category?.name || "Chưa phân loại"}
+                  disabled
+                  className="w-full border rounded-md px-3 py-2 bg-muted text-muted-foreground"
+                />
+                <p className="text-xs text-yellow-600 mt-1">
+                  Không tải được danh mục. Vui lòng thử lại.
+                </p>
+              </>
+            ) : (
+              <select
+                id="category_id"
+                {...register("category_id")}
+                disabled={isReadOnly || isLoadingCategories}
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              >
+                <option value="">-- Chưa phân loại --</option>
+                {categories?.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name} ({cat.slug})
+                  </option>
+                ))}
+                {course.category && categories && !categories.some(c => c.id === course.category!.id) && (
+                  <option value={course.category.id}>
+                    {course.category.name} (Đã ẩn)
+                  </option>
+                )}
+              </select>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="access_policy" className="text-sm font-medium">
-              Access Policy
-            </label>
-            <select
-              id="access_policy"
-              {...register("access_policy")}
-              disabled={isReadOnly}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
-            >
-              <option value="dynamic">Dynamic (Based on user role/entitlements)</option>
-              <option value="free">Free (Open to all enrolled)</option>
-              <option value="paid">Paid (Requires purchase)</option>
-            </select>
-            {errors.access_policy && (
-              <p className="text-sm text-destructive">{errors.access_policy.message}</p>
+            
+            {course.category && categories && !categories.some(c => c.id === course.category!.id) && !isErrorCategories && (
+              <p className="text-xs text-yellow-600 mt-1">
+                Danh mục hiện tại không còn trong danh sách.
+              </p>
             )}
-          </div>
 
-          <div className="space-y-2">
-            <label htmlFor="pricing_model" className="text-sm font-medium">
-              Pricing Model
-            </label>
-            <select
-              id="pricing_model"
-              {...register("pricing_model")}
-              disabled={isReadOnly}
-              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
-            >
-              <option value="included">Included (in subscription/membership)</option>
-              <option value="free">Free</option>
-              <option value="one_time">One-time payment</option>
-              <option value="subscription">Subscription</option>
-            </select>
-            {errors.pricing_model && (
-              <p className="text-sm text-destructive">{errors.pricing_model.message}</p>
+            {errors.category_id && (
+              <p className="text-sm text-destructive">{errors.category_id.message}</p>
             )}
           </div>
         </div>
 
+        {/* Hiển thị catalog */}
+        <div className="bg-card text-card-foreground border rounded-lg shadow-sm p-6 space-y-6">
+          <h2 className="text-lg font-semibold border-b pb-2">Hiển thị Catalog</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label htmlFor="catalog_visibility" className="text-sm font-medium">
+                Chế độ hiển thị
+              </label>
+              <select
+                id="catalog_visibility"
+                {...register("catalog_visibility")}
+                disabled={isReadOnly}
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              >
+                <option value="public">Công khai (Public) - Hiện trên danh mục</option>
+                <option value="unlisted">Không liệt kê (Unlisted) - Chỉ có link trực tiếp</option>
+                <option value="private">Riêng tư (Private) - Ẩn hoàn toàn</option>
+              </select>
+              {errors.catalog_visibility && (
+                <p className="text-sm text-destructive">{errors.catalog_visibility.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Trạng thái khóa học</label>
+              <div className="w-full border rounded-md px-3 py-2 bg-muted text-muted-foreground flex items-center justify-between">
+                <span>{course.status}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                * Trạng thái được cập nhật thông qua nút Publish/Archive.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Enrollment & Access */}
+        <div className="bg-card text-card-foreground border rounded-lg shadow-sm p-6 space-y-6">
+          <h2 className="text-lg font-semibold border-b pb-2">Ghi danh & Truy cập (Enrollment & Access)</h2>
+          
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="enrollment_policy" className="text-sm font-medium">
+                Quyền đăng ký (Enrollment Policy)
+              </label>
+              <select
+                id="enrollment_policy"
+                {...register("enrollment_policy")}
+                disabled={isReadOnly}
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              >
+                <option value="open">Mở tự do (Open) - Học viên tự đăng ký</option>
+                <option value="approval_required">Cần duyệt (Approval Required) - Học viên đăng ký chờ duyệt</option>
+                <option value="closed">Đóng (Closed) - Chỉ Admin mới có thể thêm học viên</option>
+              </select>
+              {errors.enrollment_policy && (
+                <p className="text-sm text-destructive">{errors.enrollment_policy.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="access_policy" className="text-sm font-medium">
+                Quyền truy cập nội dung (Access Policy)
+              </label>
+              <select
+                id="access_policy"
+                {...register("access_policy")}
+                disabled={isReadOnly}
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              >
+                <option value="dynamic">Động (Dynamic) - Theo role (Free, Plus, Premium...)</option>
+                <option value="free">Miễn phí (Free) - Mở cho mọi học viên đã ghi danh</option>
+                <option value="paid">Trả phí (Paid) - Yêu cầu mua</option>
+              </select>
+              {errors.access_policy && (
+                <p className="text-sm text-destructive">{errors.access_policy.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="pricing_model" className="text-sm font-medium">
+                Mô hình giá (Pricing Model)
+              </label>
+              <select
+                id="pricing_model"
+                {...register("pricing_model")}
+                disabled={isReadOnly}
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              >
+                <option value="included">Đã bao gồm (Included in sub/tier)</option>
+                <option value="free">Miễn phí (Free)</option>
+                <option value="one_time">Mua một lần (One-time)</option>
+                <option value="subscription">Trả phí định kỳ (Subscription)</option>
+              </select>
+              {errors.pricing_model && (
+                <p className="text-sm text-destructive">{errors.pricing_model.message}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Floating Actions */}
         {!isReadOnly && (
-          <div className="pt-6 border-t flex justify-end">
-            <button
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t shadow-lg flex justify-end gap-4 z-50 md:pl-[260px]">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!isDirty || isSubmitting || updateMutation.isPending}
+              onClick={() => reset()}
+            >
+              <Undo2 className="mr-2 h-4 w-4" />
+              Khôi phục gốc
+            </Button>
+            <Button
               type="submit"
               disabled={!isDirty || isSubmitting || updateMutation.isPending}
-              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-8 shadow-md"
             >
-              {(isSubmitting || updateMutation.isPending) && (
-                <div className="w-4 h-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"></div>
+              {(isSubmitting || updateMutation.isPending) ? (
+                <div className="mr-2 h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"></div>
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
               )}
-              Save Changes
-            </button>
+              Lưu thay đổi
+            </Button>
           </div>
         )}
       </form>
+
+      {/* Phân hệ Marketing Khóa học */}
+      <MarketingSettings courseId={course.id} isReadOnly={isReadOnly} />
     </div>
+  );
+}
+
+function MarketingSettings({ courseId, isReadOnly }: { courseId: string; isReadOnly: boolean }) {
+  const { data: metadata, isLoading, isError } = useAcademyCourseMarketingMetadata(courseId);
+  const upsertMutation = useUpsertAcademyCourseMarketingMetadata();
+  const { setSettingsDirty, setActiveMutation } = useCourseEditorRegistry();
+  const [isUploading, setIsUploading] = useState(false);
+  const [showAdvancedThumb, setShowAdvancedThumb] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting, isDirty },
+  } = useForm({
+    resolver: zodResolver(marketingFormSchema) as any,
+  });
+
+  useEffect(() => {
+    if (metadata) {
+      reset({
+        level: metadata.level || "",
+        short_description: metadata.short_description || "",
+        estimated_minutes: metadata.estimated_minutes || "",
+        is_featured: metadata.is_featured || false,
+        featured_order: metadata.featured_order || 0,
+        audience_text: metadata.audience?.join('\n') || '',
+        outcomes_text: metadata.outcomes?.join('\n') || '',
+        thumbnail_url: metadata.thumbnail_url || "",
+        thumbnail_alt: metadata.thumbnail_alt || "",
+        seo_title: metadata.seo_title || "",
+        seo_description: metadata.seo_description || "",
+      });
+    }
+  }, [metadata, reset]);
+
+  // We intentionally do not use setSettingsDirty or setActiveMutation here for the global floating bar
+  // because this form has its own save button to keep things simple and avoid side-effects.
+
+  const watchedThumbnailUrl = watch("thumbnail_url");
+  const watchedSeoTitle = watch("seo_title");
+  const watchedSeoDescription = watch("seo_description");
+  const watchedShortDescription = watch("short_description");
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      toast.error("Dung lượng ảnh vượt quá 3MB");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const publicUrl = await uploadCourseThumbnail(courseId, file);
+      
+      setValue("thumbnail_url", publicUrl, { shouldDirty: true });
+      if (!watchedThumbnailUrl && !watchedSeoTitle) setValue("thumbnail_alt", file.name, { shouldDirty: true });
+      
+      toast.success("Tải ảnh lên thành công!");
+    } catch (error: any) {
+      toast.error(error.message || "Lỗi tải ảnh lên");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const onSubmit = async (data: any) => {
+    try {
+      const audience = data.audience_text
+        ? data.audience_text.split('\n').map((s: string) => s.trim()).filter(Boolean)
+        : [];
+      const outcomes = data.outcomes_text
+        ? data.outcomes_text.split('\n').map((s: string) => s.trim()).filter(Boolean)
+        : [];
+
+      await upsertMutation.mutateAsync({
+        p_course_id: courseId,
+        p_level: data.level || null,
+        p_short_description: data.short_description || null,
+        p_estimated_minutes: data.estimated_minutes ? Number(data.estimated_minutes) : null,
+        p_is_featured: !!data.is_featured,
+        p_featured_order: data.featured_order ? Number(data.featured_order) : 0,
+        p_audience: audience,
+        p_outcomes: outcomes,
+        p_thumbnail_url: data.thumbnail_url || null,
+        p_thumbnail_alt: data.thumbnail_alt || null,
+        p_seo_title: data.seo_title || null,
+        p_seo_description: data.seo_description || null,
+      });
+
+      reset({}, { keepValues: true }); // Reset dirty state
+      toast.success("Đã lưu Marketing khóa học thành công");
+    } catch (error: unknown) {
+      const err = error as Record<string, unknown>;
+      toast.error(
+        typeof err.message === "string" ? err.message : "Cập nhật Marketing thất bại"
+      );
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="bg-card text-card-foreground border rounded-lg shadow-sm p-6 space-y-6 animate-pulse">
+        <h2 className="text-lg font-semibold border-b pb-2">Marketing khóa học</h2>
+        <div className="h-40 bg-muted rounded-md"></div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="bg-card text-card-foreground border rounded-lg shadow-sm p-6 space-y-6">
+        <h2 className="text-lg font-semibold border-b pb-2">Marketing khóa học</h2>
+        <p className="text-sm text-destructive">Không thể tải dữ liệu Marketing. Vui lòng thử lại sau.</p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="bg-card text-card-foreground border rounded-lg shadow-sm p-6 space-y-6 mt-6">
+      <h2 className="text-lg font-semibold border-b pb-2">Marketing khóa học</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Cấp độ</label>
+          <select
+            {...register("level")}
+            disabled={isReadOnly}
+            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+          >
+            <option value="">-- Chưa chọn --</option>
+            <option value="basic">Cơ bản</option>
+            <option value="intermediate">Trung cấp</option>
+            <option value="advanced">Nâng cao</option>
+          </select>
+          {errors.level && <p className="text-sm text-destructive">{String(errors.level.message)}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Thời lượng ước tính (phút)</label>
+          <input
+            type="number"
+            {...register("estimated_minutes", { valueAsNumber: true })}
+            disabled={isReadOnly}
+            placeholder="Ví dụ: 120"
+            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+          />
+          {errors.estimated_minutes && <p className="text-sm text-destructive">{String(errors.estimated_minutes.message)}</p>}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Mô tả ngắn (Marketing)</label>
+        <textarea
+          {...register("short_description")}
+          rows={3}
+          disabled={isReadOnly}
+          placeholder="Mô tả hấp dẫn để hiển thị trên thẻ khóa học..."
+          className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y disabled:opacity-50"
+        />
+        {errors.short_description && <p className="text-sm text-destructive">{String(errors.short_description.message)}</p>}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Khóa nổi bật</label>
+          <div className="flex items-center space-x-2 mt-2">
+            <input
+              type="checkbox"
+              id="is_featured"
+              {...register("is_featured")}
+              disabled={isReadOnly}
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="is_featured" className="text-sm text-muted-foreground">Đánh dấu là nổi bật</label>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Thứ tự nổi bật</label>
+          <input
+            type="number"
+            {...register("featured_order", { valueAsNumber: true })}
+            disabled={isReadOnly}
+            placeholder="Ví dụ: 1"
+            className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+          />
+          {errors.featured_order && <p className="text-sm text-destructive">{String(errors.featured_order.message)}</p>}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Phù hợp với ai (Audience)</label>
+        <p className="text-xs text-muted-foreground mb-1">Mỗi dòng là một ý.</p>
+        <textarea
+          {...register("audience_text")}
+          rows={4}
+          disabled={isReadOnly}
+          placeholder="Sinh viên mới ra trường...&#10;Người chuyển trái ngành..."
+          className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y disabled:opacity-50"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Bạn sẽ học được gì (Outcomes)</label>
+        <p className="text-xs text-muted-foreground mb-1">Mỗi dòng là một ý.</p>
+        <textarea
+          {...register("outcomes_text")}
+          rows={4}
+          disabled={isReadOnly}
+          placeholder="Thành thạo ReactJS...&#10;Hiểu về State Management..."
+          className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y disabled:opacity-50"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 pt-4 border-t">
+        <h3 className="text-md font-semibold mb-2">SEO & Chia sẻ mạng xã hội</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">SEO Title</label>
+              <input
+                type="text"
+                {...register("seo_title")}
+                disabled={isReadOnly}
+                placeholder="Tiêu đề hiển thị trên Google/Facebook..."
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              />
+              <p className="text-xs text-muted-foreground">Tối đa 70 ký tự. Để trống sẽ dùng tên khóa học.</p>
+              {errors.seo_title && <p className="text-sm text-destructive">{String(errors.seo_title.message)}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">SEO Description</label>
+              <textarea
+                {...register("seo_description")}
+                rows={3}
+                disabled={isReadOnly}
+                placeholder="Mô tả hiển thị trên Google/Facebook..."
+                className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y disabled:opacity-50"
+              />
+              <p className="text-xs text-muted-foreground">Tối đa 170 ký tự. Để trống sẽ dùng mô tả ngắn.</p>
+              {errors.seo_description && <p className="text-sm text-destructive">{String(errors.seo_description.message)}</p>}
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-sm font-medium block">Ảnh bìa khóa học (Thumbnail)</label>
+              
+              <div className="border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center gap-2 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                <input
+                  type="file"
+                  accept="image/jpeg, image/png, image/webp"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  disabled={isReadOnly || isUploading}
+                />
+                
+                {isUploading ? (
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <span className="text-sm">Đang tải ảnh lên...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-1">
+                      <ImageIcon className="h-5 w-5" />
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isReadOnly}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Chọn ảnh tải lên
+                    </Button>
+                    <p className="text-[11px] text-muted-foreground text-center max-w-[200px] mt-1">
+                      Hỗ trợ JPEG, PNG, WEBP. Tối đa 3MB.
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedThumb(!showAdvancedThumb)}
+                  className="flex items-center text-sm text-primary font-medium hover:underline focus:outline-none"
+                >
+                  {showAdvancedThumb ? <ChevronDown className="h-4 w-4 mr-1" /> : <ChevronRight className="h-4 w-4 mr-1" />}
+                  Nâng cao (Nhập URL thủ công)
+                </button>
+                
+                {showAdvancedThumb && (
+                  <div className="mt-4 p-4 border rounded-md bg-muted/30 space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Thumbnail URL</label>
+                      <input
+                        type="text"
+                        {...register("thumbnail_url")}
+                        disabled={isReadOnly}
+                        placeholder="https://example.com/image.jpg"
+                        className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+                      />
+                      {errors.thumbnail_url && <p className="text-sm text-destructive">{String(errors.thumbnail_url.message)}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Thumbnail Alt Text</label>
+                      <input
+                        type="text"
+                        {...register("thumbnail_alt")}
+                        disabled={isReadOnly}
+                        placeholder="Mô tả ảnh cho SEO..."
+                        className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+                      />
+                      {errors.thumbnail_alt && <p className="text-sm text-destructive">{String(errors.thumbnail_alt.message)}</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Preview (Xem trước)</label>
+            <div className="border rounded-lg overflow-hidden bg-white shadow-sm flex flex-col">
+              <div className="aspect-[1.91/1] bg-accent w-full overflow-hidden border-b">
+                {watchedThumbnailUrl ? (
+                  <img src={watchedThumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                    Chưa có ảnh (Sẽ không hiển thị card khi share)
+                  </div>
+                )}
+              </div>
+              <div className="p-4 flex flex-col gap-1 bg-[#f0f2f5]">
+                <div className="text-[12px] text-slate-500 uppercase">desembre.vn</div>
+                <div className="font-bold text-[16px] text-[#1d2129] line-clamp-1">
+                  {watchedSeoTitle || "Tên khóa học"}
+                </div>
+                <div className="text-[14px] text-[#606770] line-clamp-1">
+                  {watchedSeoDescription || watchedShortDescription || "Mô tả khóa học..."}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {!isReadOnly && (
+        <div className="flex justify-end pt-4">
+          <Button
+            type="submit"
+            disabled={!isDirty || isSubmitting || upsertMutation.isPending}
+            className="px-6"
+            variant="secondary"
+          >
+            {(isSubmitting || upsertMutation.isPending) ? (
+              <div className="mr-2 h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"></div>
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            Lưu Marketing
+          </Button>
+        </div>
+      )}
+    </form>
   );
 }

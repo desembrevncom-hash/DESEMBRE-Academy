@@ -12,6 +12,10 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
+  const isBlocked = data.is_blocked === true
+    || (data.access_decision?.reason as string) === "ACCESS_BLOCKED"
+    || (data.access_decision?.can_learn === false && (data.access_decision?.reason as string) === "ACCESS_BLOCKED");
+
   const handleContinue = async () => {
     try {
       setLoading(true);
@@ -40,7 +44,11 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
         params: { slug: course.slug, lessonId: targetLesson.id },
       });
     } catch (err) {
-      toast.error("Không thể tải thông tin khóa học.");
+      if (err === "COURSE_NOT_FOUND") {
+        toast.error("Truy cập bị từ chối. Khóa học này có thể đã bị khóa.");
+      } else {
+        toast.error("Không thể tải thông tin khóa học.");
+      }
     } finally {
       setLoading(false);
     }
@@ -65,7 +73,12 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
             Chờ duyệt
           </Badge>
         )}
-        {enrollment.status === "active" && (
+        {isBlocked && (
+          <Badge className="absolute left-3 bottom-3 rounded-full bg-destructive text-white border-0 shadow-sm">
+            Đã bị khóa
+          </Badge>
+        )}
+        {enrollment.status === "active" && !isBlocked && (
           <Badge className="absolute right-3 top-3 rounded-full bg-primary text-white border-0">
             Đang học
           </Badge>
@@ -93,15 +106,29 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
           </div>
         )}
 
-        <div className="mt-5 pt-5 border-t border-border/50 mt-auto">
-          <Button 
-            className="w-full rounded-full" 
-            onClick={handleContinue}
-            disabled={loading}
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Tiếp tục học
-          </Button>
+        <div className="mt-5 pt-5 border-t border-border/50 mt-auto flex flex-col gap-2">
+          {isBlocked ? (
+            <>
+              <Button 
+                className="w-full rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20 cursor-not-allowed" 
+                disabled
+              >
+                Đã bị khóa
+              </Button>
+              <p className="text-[11px] text-muted-foreground text-center">
+                Liên hệ quản trị viên nếu cần hỗ trợ.
+              </p>
+            </>
+          ) : (
+            <Button 
+              className="w-full rounded-full" 
+              onClick={handleContinue}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Tiếp tục học
+            </Button>
+          )}
         </div>
       </div>
     </div>

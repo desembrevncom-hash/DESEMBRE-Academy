@@ -5,33 +5,28 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { authService } from "@/features/auth/services/authService";
-
-interface VerifyOtpSearch {
-  phone?: string;
-}
+import { maskPhone } from "@/utils/privacy";
 
 export const Route = createFileRoute("/auth/verify-otp")({
-  validateSearch: (search: Record<string, unknown>): VerifyOtpSearch => {
-    return {
-      phone: typeof search.phone === 'string' ? search.phone : undefined,
-    };
-  },
   component: VerifyOtp,
 });
 
 function VerifyOtp() {
-  const { phone } = Route.useSearch();
   const navigate = useNavigate();
+  const [phone, setPhone] = useState<string | null>(null);
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(60);
 
   useEffect(() => {
-    if (!phone) {
+    const storedPhone = sessionStorage.getItem("academy_pending_phone");
+    if (!storedPhone) {
       navigate({ to: "/auth/phone" });
+    } else {
+      setPhone(storedPhone);
     }
-  }, [phone, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -65,15 +60,25 @@ function VerifyOtp() {
       // 2. Link student account safely
       const linkResponse = await authService.linkStudentAccount();
 
+      // Clean up session storage
+      sessionStorage.removeItem("academy_pending_phone");
+
       // 3. Navigate based on status
       if (linkResponse.status === 'blocked') {
         navigate({ to: "/blocked" }); // Assuming this route exists or we handle it safely
       } else if (linkResponse.status === 'pending_review') {
         navigate({ to: "/pending-review" }); // Safe landing
       } else {
-        // Linked successfully -> goes to /student.
-        // Or if they are admin, useAuth/useAdminAccess will naturally redirect them to /admin/courses
-        navigate({ to: "/student" });
+        const searchParams = new URLSearchParams(window.location.search);
+        const redirectPath = searchParams.get("redirect") || searchParams.get("returnTo");
+        
+        if (redirectPath && redirectPath.startsWith("/") && !redirectPath.startsWith("//")) {
+          navigate({ to: redirectPath as any });
+        } else {
+          // Linked successfully -> goes to /student.
+          // Or if they are admin, useAuth/useAdminAccess will naturally redirect them to /admin/courses
+          navigate({ to: "/student" });
+        }
       }
     } catch (err: any) {
       // Don't leak CRM state
@@ -97,7 +102,7 @@ function VerifyOtp() {
           <h1 className="mt-6 text-center text-2xl font-bold">Xác thực OTP</h1>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             Nhập mã 6 số vừa được gửi đến <br />
-            <span className="font-semibold text-foreground">{phone}</span>
+            <span className="font-semibold text-foreground">{maskPhone(phone)}</span>
           </p>
 
           {error && (
@@ -147,9 +152,16 @@ function VerifyOtp() {
                 {cooldown > 0 ? `Gửi lại mã sau ${cooldown}s` : "Gửi lại mã OTP"}
               </button>
 
-              <Link to="/auth/phone" className="text-muted-foreground hover:text-foreground">
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  sessionStorage.removeItem("academy_pending_phone");
+                  navigate({ to: "/auth/phone" });
+                }}
+              >
                 Thay đổi số điện thoại
-              </Link>
+              </button>
             </div>
           </div>
         </div>

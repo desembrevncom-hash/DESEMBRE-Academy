@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StudentRouteImport } from './routes/student'
 import { Route as PendingReviewRouteImport } from './routes/pending-review'
+import { Route as LichKhaiGiangRouteImport } from './routes/lich-khai-giang'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as BlockedRouteImport } from './routes/blocked'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -18,19 +19,33 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StudentIndexRouteImport } from './routes/student.index'
 import { Route as CoursesIndexRouteImport } from './routes/courses.index'
+import { Route as BatchesIndexRouteImport } from './routes/batches.index'
 import { Route as StudentProfileRouteImport } from './routes/student.profile'
 import { Route as StudentCoursesRouteImport } from './routes/student.courses'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
+import { Route as BatchesSlugRouteImport } from './routes/batches.$slug'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
 import { Route as AuthPhoneRouteImport } from './routes/auth.phone'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminInstructorsRouteImport } from './routes/admin.instructors'
+import { Route as AdminCalendarRouteImport } from './routes/admin.calendar'
+import { Route as AdminAcademyStudentsRouteImport } from './routes/admin.academy-students'
+import { Route as AdminAcademyEnrollmentsRouteImport } from './routes/admin.academy-enrollments'
+import { Route as AdminAcademyCategoriesRouteImport } from './routes/admin.academy-categories'
+import { Route as AdminAcademyAccessRouteImport } from './routes/admin.academy-access'
 import { Route as StudentCoursesIndexRouteImport } from './routes/student.courses.index'
 import { Route as AdminCoursesIndexRouteImport } from './routes/admin.courses.index'
+import { Route as AdminBatchesIndexRouteImport } from './routes/admin.batches.index'
 import { Route as AdminCoursesNewRouteImport } from './routes/admin.courses.new'
 import { Route as AdminCoursesCourseIdRouteImport } from './routes/admin.courses.$courseId'
+import { Route as AdminBatchesNewRouteImport } from './routes/admin.batches.new'
+import { Route as AdminBatchesBatchIdRouteImport } from './routes/admin.batches.$batchId'
 import { Route as AdminCoursesCourseIdIndexRouteImport } from './routes/admin.courses.$courseId.index'
+import { Route as AdminBatchesBatchIdIndexRouteImport } from './routes/admin.batches.$batchId.index'
 import { Route as AdminCoursesCourseIdSettingsRouteImport } from './routes/admin.courses.$courseId.settings'
 import { Route as AdminCoursesCourseIdContentRouteImport } from './routes/admin.courses.$courseId.content'
+import { Route as AdminBatchesBatchIdRegistrationsRouteImport } from './routes/admin.batches.$batchId.registrations'
 import { Route as StudentCoursesSlugLessonsLessonIdRouteImport } from './routes/student.courses.$slug.lessons.$lessonId'
 
 const StudentRoute = StudentRouteImport.update({
@@ -41,6 +56,11 @@ const StudentRoute = StudentRouteImport.update({
 const PendingReviewRoute = PendingReviewRouteImport.update({
   id: '/pending-review',
   path: '/pending-review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LichKhaiGiangRoute = LichKhaiGiangRouteImport.update({
+  id: '/lich-khai-giang',
+  path: '/lich-khai-giang',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesRoute = CoursesRouteImport.update({
@@ -78,6 +98,11 @@ const CoursesIndexRoute = CoursesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CoursesRoute,
 } as any)
+const BatchesIndexRoute = BatchesIndexRouteImport.update({
+  id: '/batches/',
+  path: '/batches/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentProfileRoute = StudentProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -92,6 +117,11 @@ const CoursesSlugRoute = CoursesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => CoursesRoute,
+} as any)
+const BatchesSlugRoute = BatchesSlugRouteImport.update({
+  id: '/batches/$slug',
+  path: '/batches/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthVerifyOtpRoute = AuthVerifyOtpRouteImport.update({
   id: '/auth/verify-otp',
@@ -108,6 +138,41 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInstructorsRoute = AdminInstructorsRouteImport.update({
+  id: '/instructors',
+  path: '/instructors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCalendarRoute = AdminCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAcademyStudentsRoute = AdminAcademyStudentsRouteImport.update({
+  id: '/academy-students',
+  path: '/academy-students',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAcademyEnrollmentsRoute = AdminAcademyEnrollmentsRouteImport.update({
+  id: '/academy-enrollments',
+  path: '/academy-enrollments',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAcademyCategoriesRoute = AdminAcademyCategoriesRouteImport.update({
+  id: '/academy-categories',
+  path: '/academy-categories',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAcademyAccessRoute = AdminAcademyAccessRouteImport.update({
+  id: '/academy-access',
+  path: '/academy-access',
+  getParentRoute: () => AdminRoute,
+} as any)
 const StudentCoursesIndexRoute = StudentCoursesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -116,6 +181,11 @@ const StudentCoursesIndexRoute = StudentCoursesIndexRouteImport.update({
 const AdminCoursesIndexRoute = AdminCoursesIndexRouteImport.update({
   id: '/courses/',
   path: '/courses/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBatchesIndexRoute = AdminBatchesIndexRouteImport.update({
+  id: '/batches/',
+  path: '/batches/',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminCoursesNewRoute = AdminCoursesNewRouteImport.update({
@@ -128,11 +198,27 @@ const AdminCoursesCourseIdRoute = AdminCoursesCourseIdRouteImport.update({
   path: '/courses/$courseId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBatchesNewRoute = AdminBatchesNewRouteImport.update({
+  id: '/batches/new',
+  path: '/batches/new',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBatchesBatchIdRoute = AdminBatchesBatchIdRouteImport.update({
+  id: '/batches/$batchId',
+  path: '/batches/$batchId',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCoursesCourseIdIndexRoute =
   AdminCoursesCourseIdIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AdminCoursesCourseIdRoute,
+  } as any)
+const AdminBatchesBatchIdIndexRoute =
+  AdminBatchesBatchIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AdminBatchesBatchIdRoute,
   } as any)
 const AdminCoursesCourseIdSettingsRoute =
   AdminCoursesCourseIdSettingsRouteImport.update({
@@ -145,6 +231,12 @@ const AdminCoursesCourseIdContentRoute =
     id: '/content',
     path: '/content',
     getParentRoute: () => AdminCoursesCourseIdRoute,
+  } as any)
+const AdminBatchesBatchIdRegistrationsRoute =
+  AdminBatchesBatchIdRegistrationsRouteImport.update({
+    id: '/registrations',
+    path: '/registrations',
+    getParentRoute: () => AdminBatchesBatchIdRoute,
   } as any)
 const StudentCoursesSlugLessonsLessonIdRoute =
   StudentCoursesSlugLessonsLessonIdRouteImport.update({
@@ -159,22 +251,37 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/blocked': typeof BlockedRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/lich-khai-giang': typeof LichKhaiGiangRoute
   '/pending-review': typeof PendingReviewRoute
   '/student': typeof StudentRouteWithChildren
+  '/admin/academy-access': typeof AdminAcademyAccessRoute
+  '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
+  '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
+  '/admin/academy-students': typeof AdminAcademyStudentsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/instructors': typeof AdminInstructorsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
+  '/batches/$slug': typeof BatchesSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
+  '/batches/': typeof BatchesIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/admin/batches/$batchId': typeof AdminBatchesBatchIdRouteWithChildren
+  '/admin/batches/new': typeof AdminBatchesNewRoute
   '/admin/courses/$courseId': typeof AdminCoursesCourseIdRouteWithChildren
   '/admin/courses/new': typeof AdminCoursesNewRoute
+  '/admin/batches/': typeof AdminBatchesIndexRoute
   '/admin/courses/': typeof AdminCoursesIndexRoute
   '/student/courses/': typeof StudentCoursesIndexRoute
+  '/admin/batches/$batchId/registrations': typeof AdminBatchesBatchIdRegistrationsRoute
   '/admin/courses/$courseId/content': typeof AdminCoursesCourseIdContentRoute
   '/admin/courses/$courseId/settings': typeof AdminCoursesCourseIdSettingsRoute
+  '/admin/batches/$batchId/': typeof AdminBatchesBatchIdIndexRoute
   '/admin/courses/$courseId/': typeof AdminCoursesCourseIdIndexRoute
   '/student/courses/$slug/lessons/$lessonId': typeof StudentCoursesSlugLessonsLessonIdRoute
 }
@@ -183,19 +290,33 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/blocked': typeof BlockedRoute
+  '/lich-khai-giang': typeof LichKhaiGiangRoute
   '/pending-review': typeof PendingReviewRoute
+  '/admin/academy-access': typeof AdminAcademyAccessRoute
+  '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
+  '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
+  '/admin/academy-students': typeof AdminAcademyStudentsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/instructors': typeof AdminInstructorsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
+  '/batches/$slug': typeof BatchesSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/student/profile': typeof StudentProfileRoute
+  '/batches': typeof BatchesIndexRoute
   '/courses': typeof CoursesIndexRoute
   '/student': typeof StudentIndexRoute
+  '/admin/batches/new': typeof AdminBatchesNewRoute
   '/admin/courses/new': typeof AdminCoursesNewRoute
+  '/admin/batches': typeof AdminBatchesIndexRoute
   '/admin/courses': typeof AdminCoursesIndexRoute
   '/student/courses': typeof StudentCoursesIndexRoute
+  '/admin/batches/$batchId/registrations': typeof AdminBatchesBatchIdRegistrationsRoute
   '/admin/courses/$courseId/content': typeof AdminCoursesCourseIdContentRoute
   '/admin/courses/$courseId/settings': typeof AdminCoursesCourseIdSettingsRoute
+  '/admin/batches/$batchId': typeof AdminBatchesBatchIdIndexRoute
   '/admin/courses/$courseId': typeof AdminCoursesCourseIdIndexRoute
   '/student/courses/$slug/lessons/$lessonId': typeof StudentCoursesSlugLessonsLessonIdRoute
 }
@@ -206,22 +327,37 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/blocked': typeof BlockedRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/lich-khai-giang': typeof LichKhaiGiangRoute
   '/pending-review': typeof PendingReviewRoute
   '/student': typeof StudentRouteWithChildren
+  '/admin/academy-access': typeof AdminAcademyAccessRoute
+  '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
+  '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
+  '/admin/academy-students': typeof AdminAcademyStudentsRoute
+  '/admin/calendar': typeof AdminCalendarRoute
+  '/admin/instructors': typeof AdminInstructorsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/phone': typeof AuthPhoneRoute
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
+  '/batches/$slug': typeof BatchesSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
+  '/batches/': typeof BatchesIndexRoute
   '/courses/': typeof CoursesIndexRoute
   '/student/': typeof StudentIndexRoute
+  '/admin/batches/$batchId': typeof AdminBatchesBatchIdRouteWithChildren
+  '/admin/batches/new': typeof AdminBatchesNewRoute
   '/admin/courses/$courseId': typeof AdminCoursesCourseIdRouteWithChildren
   '/admin/courses/new': typeof AdminCoursesNewRoute
+  '/admin/batches/': typeof AdminBatchesIndexRoute
   '/admin/courses/': typeof AdminCoursesIndexRoute
   '/student/courses/': typeof StudentCoursesIndexRoute
+  '/admin/batches/$batchId/registrations': typeof AdminBatchesBatchIdRegistrationsRoute
   '/admin/courses/$courseId/content': typeof AdminCoursesCourseIdContentRoute
   '/admin/courses/$courseId/settings': typeof AdminCoursesCourseIdSettingsRoute
+  '/admin/batches/$batchId/': typeof AdminBatchesBatchIdIndexRoute
   '/admin/courses/$courseId/': typeof AdminCoursesCourseIdIndexRoute
   '/student/courses/$slug/lessons/$lessonId': typeof StudentCoursesSlugLessonsLessonIdRoute
 }
@@ -233,22 +369,37 @@ export interface FileRouteTypes {
     | '/admin'
     | '/blocked'
     | '/courses'
+    | '/lich-khai-giang'
     | '/pending-review'
     | '/student'
+    | '/admin/academy-access'
+    | '/admin/academy-categories'
+    | '/admin/academy-enrollments'
+    | '/admin/academy-students'
+    | '/admin/calendar'
+    | '/admin/instructors'
+    | '/admin/notifications'
     | '/auth/login'
     | '/auth/phone'
     | '/auth/verify-otp'
+    | '/batches/$slug'
     | '/courses/$slug'
     | '/student/courses'
     | '/student/profile'
+    | '/batches/'
     | '/courses/'
     | '/student/'
+    | '/admin/batches/$batchId'
+    | '/admin/batches/new'
     | '/admin/courses/$courseId'
     | '/admin/courses/new'
+    | '/admin/batches/'
     | '/admin/courses/'
     | '/student/courses/'
+    | '/admin/batches/$batchId/registrations'
     | '/admin/courses/$courseId/content'
     | '/admin/courses/$courseId/settings'
+    | '/admin/batches/$batchId/'
     | '/admin/courses/$courseId/'
     | '/student/courses/$slug/lessons/$lessonId'
   fileRoutesByTo: FileRoutesByTo
@@ -257,19 +408,33 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/blocked'
+    | '/lich-khai-giang'
     | '/pending-review'
+    | '/admin/academy-access'
+    | '/admin/academy-categories'
+    | '/admin/academy-enrollments'
+    | '/admin/academy-students'
+    | '/admin/calendar'
+    | '/admin/instructors'
+    | '/admin/notifications'
     | '/auth/login'
     | '/auth/phone'
     | '/auth/verify-otp'
+    | '/batches/$slug'
     | '/courses/$slug'
     | '/student/profile'
+    | '/batches'
     | '/courses'
     | '/student'
+    | '/admin/batches/new'
     | '/admin/courses/new'
+    | '/admin/batches'
     | '/admin/courses'
     | '/student/courses'
+    | '/admin/batches/$batchId/registrations'
     | '/admin/courses/$courseId/content'
     | '/admin/courses/$courseId/settings'
+    | '/admin/batches/$batchId'
     | '/admin/courses/$courseId'
     | '/student/courses/$slug/lessons/$lessonId'
   id:
@@ -279,22 +444,37 @@ export interface FileRouteTypes {
     | '/admin'
     | '/blocked'
     | '/courses'
+    | '/lich-khai-giang'
     | '/pending-review'
     | '/student'
+    | '/admin/academy-access'
+    | '/admin/academy-categories'
+    | '/admin/academy-enrollments'
+    | '/admin/academy-students'
+    | '/admin/calendar'
+    | '/admin/instructors'
+    | '/admin/notifications'
     | '/auth/login'
     | '/auth/phone'
     | '/auth/verify-otp'
+    | '/batches/$slug'
     | '/courses/$slug'
     | '/student/courses'
     | '/student/profile'
+    | '/batches/'
     | '/courses/'
     | '/student/'
+    | '/admin/batches/$batchId'
+    | '/admin/batches/new'
     | '/admin/courses/$courseId'
     | '/admin/courses/new'
+    | '/admin/batches/'
     | '/admin/courses/'
     | '/student/courses/'
+    | '/admin/batches/$batchId/registrations'
     | '/admin/courses/$courseId/content'
     | '/admin/courses/$courseId/settings'
+    | '/admin/batches/$batchId/'
     | '/admin/courses/$courseId/'
     | '/student/courses/$slug/lessons/$lessonId'
   fileRoutesById: FileRoutesById
@@ -305,11 +485,14 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   BlockedRoute: typeof BlockedRoute
   CoursesRoute: typeof CoursesRouteWithChildren
+  LichKhaiGiangRoute: typeof LichKhaiGiangRoute
   PendingReviewRoute: typeof PendingReviewRoute
   StudentRoute: typeof StudentRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthPhoneRoute: typeof AuthPhoneRoute
   AuthVerifyOtpRoute: typeof AuthVerifyOtpRoute
+  BatchesSlugRoute: typeof BatchesSlugRoute
+  BatchesIndexRoute: typeof BatchesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -326,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/pending-review'
       fullPath: '/pending-review'
       preLoaderRoute: typeof PendingReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lich-khai-giang': {
+      id: '/lich-khai-giang'
+      path: '/lich-khai-giang'
+      fullPath: '/lich-khai-giang'
+      preLoaderRoute: typeof LichKhaiGiangRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses': {
@@ -377,6 +567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesIndexRouteImport
       parentRoute: typeof CoursesRoute
     }
+    '/batches/': {
+      id: '/batches/'
+      path: '/batches'
+      fullPath: '/batches/'
+      preLoaderRoute: typeof BatchesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/student/profile': {
       id: '/student/profile'
       path: '/profile'
@@ -397,6 +594,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/courses/$slug'
       preLoaderRoute: typeof CoursesSlugRouteImport
       parentRoute: typeof CoursesRoute
+    }
+    '/batches/$slug': {
+      id: '/batches/$slug'
+      path: '/batches/$slug'
+      fullPath: '/batches/$slug'
+      preLoaderRoute: typeof BatchesSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/auth/verify-otp': {
       id: '/auth/verify-otp'
@@ -419,6 +623,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/instructors': {
+      id: '/admin/instructors'
+      path: '/instructors'
+      fullPath: '/admin/instructors'
+      preLoaderRoute: typeof AdminInstructorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/calendar': {
+      id: '/admin/calendar'
+      path: '/calendar'
+      fullPath: '/admin/calendar'
+      preLoaderRoute: typeof AdminCalendarRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/academy-students': {
+      id: '/admin/academy-students'
+      path: '/academy-students'
+      fullPath: '/admin/academy-students'
+      preLoaderRoute: typeof AdminAcademyStudentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/academy-enrollments': {
+      id: '/admin/academy-enrollments'
+      path: '/academy-enrollments'
+      fullPath: '/admin/academy-enrollments'
+      preLoaderRoute: typeof AdminAcademyEnrollmentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/academy-categories': {
+      id: '/admin/academy-categories'
+      path: '/academy-categories'
+      fullPath: '/admin/academy-categories'
+      preLoaderRoute: typeof AdminAcademyCategoriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/academy-access': {
+      id: '/admin/academy-access'
+      path: '/academy-access'
+      fullPath: '/admin/academy-access'
+      preLoaderRoute: typeof AdminAcademyAccessRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/student/courses/': {
       id: '/student/courses/'
       path: '/'
@@ -431,6 +684,13 @@ declare module '@tanstack/react-router' {
       path: '/courses'
       fullPath: '/admin/courses/'
       preLoaderRoute: typeof AdminCoursesIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/batches/': {
+      id: '/admin/batches/'
+      path: '/batches'
+      fullPath: '/admin/batches/'
+      preLoaderRoute: typeof AdminBatchesIndexRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/courses/new': {
@@ -447,12 +707,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCoursesCourseIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/batches/new': {
+      id: '/admin/batches/new'
+      path: '/batches/new'
+      fullPath: '/admin/batches/new'
+      preLoaderRoute: typeof AdminBatchesNewRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/batches/$batchId': {
+      id: '/admin/batches/$batchId'
+      path: '/batches/$batchId'
+      fullPath: '/admin/batches/$batchId'
+      preLoaderRoute: typeof AdminBatchesBatchIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/courses/$courseId/': {
       id: '/admin/courses/$courseId/'
       path: '/'
       fullPath: '/admin/courses/$courseId/'
       preLoaderRoute: typeof AdminCoursesCourseIdIndexRouteImport
       parentRoute: typeof AdminCoursesCourseIdRoute
+    }
+    '/admin/batches/$batchId/': {
+      id: '/admin/batches/$batchId/'
+      path: '/'
+      fullPath: '/admin/batches/$batchId/'
+      preLoaderRoute: typeof AdminBatchesBatchIdIndexRouteImport
+      parentRoute: typeof AdminBatchesBatchIdRoute
     }
     '/admin/courses/$courseId/settings': {
       id: '/admin/courses/$courseId/settings'
@@ -468,6 +749,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCoursesCourseIdContentRouteImport
       parentRoute: typeof AdminCoursesCourseIdRoute
     }
+    '/admin/batches/$batchId/registrations': {
+      id: '/admin/batches/$batchId/registrations'
+      path: '/registrations'
+      fullPath: '/admin/batches/$batchId/registrations'
+      preLoaderRoute: typeof AdminBatchesBatchIdRegistrationsRouteImport
+      parentRoute: typeof AdminBatchesBatchIdRoute
+    }
     '/student/courses/$slug/lessons/$lessonId': {
       id: '/student/courses/$slug/lessons/$lessonId'
       path: '/$slug/lessons/$lessonId'
@@ -477,6 +765,19 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AdminBatchesBatchIdRouteChildren {
+  AdminBatchesBatchIdRegistrationsRoute: typeof AdminBatchesBatchIdRegistrationsRoute
+  AdminBatchesBatchIdIndexRoute: typeof AdminBatchesBatchIdIndexRoute
+}
+
+const AdminBatchesBatchIdRouteChildren: AdminBatchesBatchIdRouteChildren = {
+  AdminBatchesBatchIdRegistrationsRoute: AdminBatchesBatchIdRegistrationsRoute,
+  AdminBatchesBatchIdIndexRoute: AdminBatchesBatchIdIndexRoute,
+}
+
+const AdminBatchesBatchIdRouteWithChildren =
+  AdminBatchesBatchIdRoute._addFileChildren(AdminBatchesBatchIdRouteChildren)
 
 interface AdminCoursesCourseIdRouteChildren {
   AdminCoursesCourseIdContentRoute: typeof AdminCoursesCourseIdContentRoute
@@ -494,14 +795,34 @@ const AdminCoursesCourseIdRouteWithChildren =
   AdminCoursesCourseIdRoute._addFileChildren(AdminCoursesCourseIdRouteChildren)
 
 interface AdminRouteChildren {
+  AdminAcademyAccessRoute: typeof AdminAcademyAccessRoute
+  AdminAcademyCategoriesRoute: typeof AdminAcademyCategoriesRoute
+  AdminAcademyEnrollmentsRoute: typeof AdminAcademyEnrollmentsRoute
+  AdminAcademyStudentsRoute: typeof AdminAcademyStudentsRoute
+  AdminCalendarRoute: typeof AdminCalendarRoute
+  AdminInstructorsRoute: typeof AdminInstructorsRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminBatchesBatchIdRoute: typeof AdminBatchesBatchIdRouteWithChildren
+  AdminBatchesNewRoute: typeof AdminBatchesNewRoute
   AdminCoursesCourseIdRoute: typeof AdminCoursesCourseIdRouteWithChildren
   AdminCoursesNewRoute: typeof AdminCoursesNewRoute
+  AdminBatchesIndexRoute: typeof AdminBatchesIndexRoute
   AdminCoursesIndexRoute: typeof AdminCoursesIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAcademyAccessRoute: AdminAcademyAccessRoute,
+  AdminAcademyCategoriesRoute: AdminAcademyCategoriesRoute,
+  AdminAcademyEnrollmentsRoute: AdminAcademyEnrollmentsRoute,
+  AdminAcademyStudentsRoute: AdminAcademyStudentsRoute,
+  AdminCalendarRoute: AdminCalendarRoute,
+  AdminInstructorsRoute: AdminInstructorsRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminBatchesBatchIdRoute: AdminBatchesBatchIdRouteWithChildren,
+  AdminBatchesNewRoute: AdminBatchesNewRoute,
   AdminCoursesCourseIdRoute: AdminCoursesCourseIdRouteWithChildren,
   AdminCoursesNewRoute: AdminCoursesNewRoute,
+  AdminBatchesIndexRoute: AdminBatchesIndexRoute,
   AdminCoursesIndexRoute: AdminCoursesIndexRoute,
 }
 
@@ -556,11 +877,14 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   BlockedRoute: BlockedRoute,
   CoursesRoute: CoursesRouteWithChildren,
+  LichKhaiGiangRoute: LichKhaiGiangRoute,
   PendingReviewRoute: PendingReviewRoute,
   StudentRoute: StudentRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthPhoneRoute: AuthPhoneRoute,
   AuthVerifyOtpRoute: AuthVerifyOtpRoute,
+  BatchesSlugRoute: BatchesSlugRoute,
+  BatchesIndexRoute: BatchesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

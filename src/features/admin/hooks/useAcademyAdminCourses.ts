@@ -10,11 +10,18 @@ import type {
   CreateAcademyLessonInput,
   UpdateAcademyLessonInput,
   ReorderAcademyLessonsInput,
+  CreateAcademyCategoryInput,
+  UpdateAcademyCategoryInput,
 } from "../types";
 import {
   SetAcademyArticleContentInput,
   SetAcademyExternalLinkContentInput,
+  getCourseMarketingMetadata,
+  upsertCourseMarketingMetadata,
 } from "../services/academyAdminCoursesApi";
+import type {
+  UpsertAcademyCourseMarketingMetadataInput,
+} from "../types";
 
 export const academyAdminKeys = {
   all: ["admin", "courses"] as const,
@@ -23,6 +30,7 @@ export const academyAdminKeys = {
     [...academyAdminKeys.lists(), filters] as const,
   editors: () => [...academyAdminKeys.all, "editor"] as const,
   editor: (courseId: string) => [...academyAdminKeys.editors(), courseId] as const,
+  marketingMetadata: (courseId: string) => [...academyAdminKeys.all, "marketing-metadata", courseId] as const,
 };
 
 export function useAcademyAdminCourses(
@@ -43,6 +51,49 @@ export function useAcademyAdminCourseEditor(courseId: string, options?: { enable
     queryFn: () => academyAdminCoursesApi.getCourseEditor(courseId),
     staleTime: 1000 * 60 * 5,
     enabled: options?.enabled,
+  });
+}
+
+export function useAcademyAdminCategories() {
+  return useQuery({
+    queryKey: [...academyAdminKeys.all, "categories"] as const,
+    queryFn: () => academyAdminCoursesApi.listCategories(),
+    staleTime: 1000 * 60 * 60, // 1 hour for categories
+  });
+}
+
+export function useAcademyAdminCategoryManager() {
+  return useQuery({
+    queryKey: [...academyAdminKeys.all, "categoryManager"] as const,
+    queryFn: () => academyAdminCoursesApi.listCategoryManager(),
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useCreateAcademyCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateAcademyCategoryInput) => academyAdminCoursesApi.createCategory(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...academyAdminKeys.all, "categories"] });
+      queryClient.invalidateQueries({ queryKey: [...academyAdminKeys.all, "categoryManager"] });
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editors() });
+    },
+  });
+}
+
+export function useUpdateAcademyCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpdateAcademyCategoryInput) => academyAdminCoursesApi.updateCategory(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...academyAdminKeys.all, "categories"] });
+      queryClient.invalidateQueries({ queryKey: [...academyAdminKeys.all, "categoryManager"] });
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.editors() });
+      queryClient.invalidateQueries({ queryKey: academyAdminKeys.lists() });
+    },
   });
 }
 
@@ -191,6 +242,34 @@ export function useArchiveAcademyCourse() {
     onSuccess: (_, courseId) => {
       queryClient.invalidateQueries({ queryKey: academyAdminKeys.lists() });
       queryClient.invalidateQueries({ queryKey: academyAdminKeys.editor(courseId) });
+    },
+  });
+}
+
+export function useAcademyCourseMarketingMetadata(courseId: string) {
+  return useQuery({
+    queryKey: academyAdminKeys.marketingMetadata(courseId),
+    queryFn: () => getCourseMarketingMetadata(courseId),
+    enabled: !!courseId,
+  });
+}
+
+export function useUpsertAcademyCourseMarketingMetadata() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: UpsertAcademyCourseMarketingMetadataInput) => upsertCourseMarketingMetadata(input),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: academyAdminKeys.marketingMetadata(variables.p_course_id),
+      });
+      // Optionally invalidate public catalog keys if used globally
+      queryClient.invalidateQueries({
+        queryKey: ["public", "academy"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: academyAdminKeys.editors(),
+      });
     },
   });
 }

@@ -76,15 +76,6 @@ export function useLessonMedia(courseSlug: string, lessonId: string, enabled: bo
         }
 
         setError(err instanceof Error ? err : new Error(String(err)));
-
-        if (retryCountRef.current < 1) {
-          retryCountRef.current += 1;
-          clearTimers();
-          timerRef.current = window.setTimeout(() => {
-            isFetchingRef.current = false;
-            fetchMedia();
-          }, 5000);
-        }
       } finally {
         if (mounted) {
           isFetchingRef.current = false;

@@ -19,7 +19,8 @@ const httpsUrlSchema = z
 export const articleContentSchema = z
   .object({
     kind: z.literal("article"),
-    markdown: z.string().min(1),
+    markdown: z.string().optional(),
+    body: z.string().optional(),
   })
   .strict();
 
@@ -53,17 +54,31 @@ export const lessonContentPayloadSchema = z.discriminatedUnion("kind", [
   videoContentSchema,
   documentContentSchema,
   externalLinkContentSchema,
-]);
+]).transform((val) => {
+  if (val.kind === "article") {
+    return {
+      kind: "article" as const,
+      markdown: (val as any).body || (val as any).markdown || "",
+    };
+  }
+  return val;
+});
 
 export const lessonProgressStatusSchema = z.enum(["not_started", "in_progress", "completed"]);
 
 export const lessonProgressPayloadSchema = z
   .object({
     status: lessonProgressStatusSchema,
-    progress_percent: z.number().min(0).max(100),
-    last_position_seconds: z.number().min(0).nullable(),
+    progress_percent: z.number().min(0).max(100).optional(),
+    percent: z.number().min(0).max(100).optional(),
+    last_position_seconds: z.number().min(0).nullable().optional(),
+    last_position: z.number().min(0).nullable().optional(),
   })
-  .strict();
+  .transform((val) => ({
+    status: val.status,
+    progress_percent: val.progress_percent ?? val.percent ?? 0,
+    last_position_seconds: val.last_position_seconds ?? val.last_position ?? null,
+  }));
 
 const baseResponseSchema = z.object({
   course: z
@@ -93,18 +108,12 @@ const baseResponseSchema = z.object({
 });
 
 export const academyLessonContentResponseSchema = z.discriminatedUnion("state", [
-  baseResponseSchema
-    .extend({
-      state: z.literal("NOT_FOUND"),
-      content: z.null(),
-    })
-    .strict(),
-  baseResponseSchema
-    .extend({
-      state: z.literal("ACCESS_DENIED"),
-      content: z.null(),
-    })
-    .strict(),
+  z.object({
+    state: z.literal("NOT_FOUND"),
+  }).passthrough(),
+  z.object({
+    state: z.literal("ACCESS_DENIED"),
+  }).passthrough(),
   baseResponseSchema
     .extend({
       state: z.literal("CONTENT_NOT_CONFIGURED"),
@@ -114,7 +123,7 @@ export const academyLessonContentResponseSchema = z.discriminatedUnion("state", 
   baseResponseSchema
     .extend({
       state: z.literal("AVAILABLE"),
-      content: lessonContentPayloadSchema,
+      content: lessonContentPayloadSchema.nullable(),
     })
     .strict(),
 ]);

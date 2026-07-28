@@ -93,6 +93,54 @@ function AdminGuard() {
               >
                 Courses
               </Link>
+              <Link
+                to="/admin/instructors"
+                className="transition-colors hover:text-foreground/80 text-foreground"
+              >
+                Giảng viên
+              </Link>
+              <Link
+                to="/admin/batches"
+                className="transition-colors hover:text-foreground/80 text-foreground"
+              >
+                Batches
+              </Link>
+              <Link
+                to="/admin/calendar"
+                className="transition-colors hover:text-foreground/80 text-foreground"
+              >
+                Calendar
+              </Link>
+              <Link
+                to="/admin/academy-categories"
+                className="transition-colors hover:text-foreground/80 text-foreground"
+              >
+                Categories
+              </Link>
+              <Link
+                to="/admin/academy-students"
+                className="transition-colors hover:text-foreground/80 text-foreground"
+              >
+                Students
+              </Link>
+              <Link
+                to="/admin/academy-enrollments"
+                className="transition-colors hover:text-foreground/80 text-foreground"
+              >
+                Enrollments
+              </Link>
+              <Link
+                to="/admin/academy-access"
+                className="transition-colors hover:text-foreground/80 text-foreground"
+              >
+                Access
+              </Link>
+              <Link
+                to="/admin/notifications"
+                className="transition-colors hover:text-foreground/80 text-foreground text-indigo-600 font-semibold"
+              >
+                ZNS Outbox
+              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-4 text-sm">

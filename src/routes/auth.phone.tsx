@@ -37,7 +37,16 @@ function PhoneLogin() {
       setLoading(true);
       setAuthError(null);
       await authService.requestOtp(values.phone);
-      navigate({ to: "/auth/verify-otp", search: { phone: values.phone } });
+      sessionStorage.setItem("academy_pending_phone", values.phone);
+      
+      const searchParams = new URLSearchParams(window.location.search);
+      const redirectPath = searchParams.get("redirect") || searchParams.get("returnTo");
+      
+      if (redirectPath) {
+        navigate({ to: "/auth/verify-otp", search: { redirect: redirectPath } as any });
+      } else {
+        navigate({ to: "/auth/verify-otp" });
+      }
     } catch (err: any) {
       // Safe generic error
       setAuthError("Không thể gửi mã OTP. Vui lòng thử lại sau.");
@@ -73,7 +82,7 @@ function PhoneLogin() {
               <div className="grid h-12 w-12 place-items-center rounded-2xl bg-accent text-primary-dark">
                 <Phone className="h-5 w-5" />
               </div>
-              <h1 className="mt-5 text-2xl font-bold">Đăng nhập</h1>
+              <h1 className="mt-5 text-2xl font-bold">Đăng nhập học viên</h1>
               <p className="mt-1 text-sm text-muted-foreground">Nhập số điện thoại Zalo của bạn (vd: 0912345678).</p>
 
               {authError && (

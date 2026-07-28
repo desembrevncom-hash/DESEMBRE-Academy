@@ -210,7 +210,7 @@ test("completed success invokes options.onSuccess only once, periodic does not",
   let successCount = 0;
   let lastStatus = "";
 
-  const { saveProgress } = useLessonProgress("lesson-3", 600, null, {
+  const { saveProgress } = useLessonProgress("lesson-3", 600, null, null, {
     onSuccess: (status) => {
       successCount++;
       lastStatus = status;
@@ -327,7 +327,7 @@ test("failed completed save leaves UI pending, not 100", async () => {
   lessonContentService.saveLessonProgress = mockSave as any;
 
   let successCalled = false;
-  const { saveProgress } = useLessonProgress("lesson-fail-test", 600, null, {
+  const { saveProgress } = useLessonProgress("lesson-fail-test", 600, null, null, {
     onSuccess: () => {
       successCalled = true;
     },
@@ -356,7 +356,7 @@ test("successful response persists completed/100", async () => {
   lessonContentService.saveLessonProgress = mockSave as any;
 
   let successCalled = false;
-  const { saveProgress } = useLessonProgress("lesson-success-test", 600, null, {
+  const { saveProgress } = useLessonProgress("lesson-success-test", 600, null, null, {
     onSuccess: (status) => {
       if (status === "completed") successCalled = true;
     },

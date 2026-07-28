@@ -7,6 +7,10 @@ import {
   courseStatusMutationResponseSchema,
 } from "../validators";
 import type {
+  AcademyAdminCategory,
+  AcademyAdminCategoryManagerItem,
+  CreateAcademyCategoryInput,
+  UpdateAcademyCategoryInput,
   AcademyAdminCourseListItem,
   AcademyAdminCourseEditor,
   CreateAcademyCourseInput,
@@ -97,6 +101,63 @@ export const academyAdminCoursesApi = {
     }
 
     return (data as AcademyAdminCourseListItem[]) || [];
+  },
+
+  async listCategories(): Promise<AcademyAdminCategory[]> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_list_academy_categories");
+
+    if (error) {
+      handleRpcError(error);
+    }
+
+    return (data as AcademyAdminCategory[]) || [];
+  },
+
+  async listCategoryManager(): Promise<AcademyAdminCategoryManagerItem[]> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_list_academy_category_manager");
+
+    if (error) {
+      handleRpcError(error);
+    }
+
+    return (data as AcademyAdminCategoryManagerItem[]) || [];
+  },
+
+  async createCategory(input: CreateAcademyCategoryInput): Promise<{ id: string }> {
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_create_academy_category", {
+      p_name: input.p_name,
+      p_slug: input.p_slug,
+      p_description: input.p_description || null,
+      p_status: input.p_status,
+    });
+
+    if (error) {
+      handleRpcError(error);
+    }
+
+    // Returning ID based on the RPC response which is a table with id column
+    const rows = data as { id: string }[];
+    return { id: rows[0]?.id };
+  },
+
+  async updateCategory(input: UpdateAcademyCategoryInput): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { error } = await client.rpc("admin_update_academy_category", {
+      p_category_id: input.p_category_id,
+      p_name: input.p_name,
+      p_slug: input.p_slug,
+      p_description: input.p_description || null,
+      p_status: input.p_status,
+    });
+
+    if (error) {
+      handleRpcError(error);
+    }
+
+    return { success: true };
   },
 
   async getCourseEditor(courseId: string): Promise<AcademyAdminCourseEditor> {
@@ -324,4 +385,84 @@ export const academyAdminCoursesApi = {
       throw new AdminCourseApiError("INVALID_RESPONSE", "Invalid archive response format.");
     }
   },
+};
+
+export const getCourseMarketingMetadata = async (courseId: string) => {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+  
+  const { data, error } = await supabase.rpc("admin_get_course_marketing_metadata", {
+    p_course_id: courseId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  
+  return data;
+};
+
+export const upsertCourseMarketingMetadata = async (input: {
+  p_course_id: string;
+  p_level: 'basic' | 'intermediate' | 'advanced' | null;
+  p_short_description: string | null;
+  p_estimated_minutes: number | null;
+  p_is_featured: boolean;
+  p_featured_order: number;
+  p_audience: string[];
+  p_outcomes: string[];
+  p_thumbnail_url?: string | null;
+  p_thumbnail_alt?: string | null;
+  p_seo_title?: string | null;
+  p_seo_description?: string | null;
+}) => {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+  
+  const { error } = await supabase.rpc("admin_upsert_course_marketing_metadata", input);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+};
+
+export const uploadCourseThumbnail = async (courseId: string, file: File): Promise<string> => {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) throw new Error("Supabase client not initialized");
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '').substring(0, 50);
+  const path = `course-thumbnails/${courseId}/${Date.now()}-${safeName}`;
+
+  // 1. Upload to storage
+  const { data: uploadData, error: uploadError } = await supabase.storage
+    .from("academy-public-assets")
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false
+    });
+
+  if (uploadError) {
+    throw new Error(`Lỗi upload ảnh: ${uploadError.message}`);
+  }
+
+  // 2. Get Public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from("academy-public-assets")
+    .getPublicUrl(uploadData.path);
+
+  // 3. Log to media_assets table
+  const { error: dbError } = await supabase.from('academy_media_assets').insert({
+    course_id: courseId,
+    file_name: file.name,
+    file_size: file.size,
+    content_type: file.type,
+    storage_path: uploadData.path,
+    public_url: publicUrl
+  });
+
+  if (dbError) {
+    console.error("Failed to log media asset:", dbError);
+  }
+
+  return publicUrl;
 };

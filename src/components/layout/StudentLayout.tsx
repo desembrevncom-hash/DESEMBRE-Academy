@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/useAuth";
 import { authService } from "@/features/auth/services/auth.service";
 import { useStudent } from "@/features/student/useStudent";
 import { useAdminAccess, resolveAcademyDestination } from "@/features/admin/hooks/useAdminAccess";
+import { getStudentDisplayName } from "@/utils/privacy";
 
 const navItems = [
   { to: "/student", label: "Tổng quan", icon: Home, exact: true },
@@ -25,6 +26,7 @@ export function StudentLayout() {
     latestExpiredMembership,
     error,
     retry,
+    studentAccount,
   } = useStudent();
   const { role, roleQueryStatus, isLoading: roleLoading } = useAdminAccess();
   const navigate = useNavigate();
@@ -32,9 +34,20 @@ export function StudentLayout() {
 
   useEffect(() => {
     if (authInitialized && !session) {
-      navigate({ to: "/auth/login" });
+      navigate({ to: "/auth/phone", search: { redirect: window.location.pathname } as any });
     }
   }, [authInitialized, session, navigate]);
+
+  // Route based on student account status
+  useEffect(() => {
+    if (studentInitialized && studentAccount) {
+      if (studentAccount.status === "pending_review") {
+        navigate({ to: "/pending-review", replace: true });
+      } else if (studentAccount.status === "blocked") {
+        navigate({ to: "/blocked", replace: true });
+      }
+    }
+  }, [studentInitialized, studentAccount, navigate]);
 
   // Role-aware routing: Prevent admins from accessing student layout
   useEffect(() => {
@@ -90,26 +103,21 @@ export function StudentLayout() {
     );
   }
 
-  if (bootstrapState === "NO_CUSTOMER") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-surface p-4">
-        <div className="text-center">
-          <p className="text-lg font-medium text-foreground">Your Academy profile is incomplete.</p>
-        </div>
-      </div>
-    );
-  }
-
   const handleLogout = async () => {
     try {
       await authService.signOut();
-      navigate({ to: "/auth/login" });
+      navigate({ to: "/auth/phone" });
     } catch (e) {
       console.error(e);
     }
   };
 
-  const displayName = customer?.name || session.user.email || "Unknown Student";
+  const displayName = getStudentDisplayName(
+    customer?.name,
+    session?.user?.email,
+    session?.user?.phone,
+    studentAccount?.id
+  );
   const displayEmail = customer?.email || session.user.email || "";
   const displayPhone = customer?.phone || "";
 
@@ -201,6 +209,14 @@ export function StudentLayout() {
           <Outlet />
         </main>
       </div>
+
+      {import.meta.env.DEV && import.meta.env.VITE_SHOW_ACADEMY_DEBUG_PANEL === "true" && (
+        <div className="fixed bottom-20 right-4 z-50 rounded bg-black/80 p-3 text-[10px] text-green-400 font-mono shadow-lg backdrop-blur pointer-events-none opacity-50">
+          <div>User: {session.user.id.substring(0, 8)}...</div>
+          <div>Status: {studentAccount?.status || "missing"}</div>
+          <div>State: {bootstrapState}</div>
+        </div>
+      )}
 
       {/* Bottom nav mobile */}
       <nav className="md:hidden fixed bottom-3 left-3 right-3 rounded-full glass p-1.5 shadow-[var(--shadow-float)] z-40">

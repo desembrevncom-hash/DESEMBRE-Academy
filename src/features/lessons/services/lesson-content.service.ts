@@ -76,6 +76,16 @@ export const lessonContentService = {
     courseSlug: string,
     lessonId: string,
   ): Promise<EdgeFunctionMediaResponse> {
+    // Temporary bypass for local testing on Course B behind env var
+    if (import.meta.env.VITE_USE_MOCK_LESSON_MEDIA === 'true' && lessonId.startsWith("b2222222")) {
+      return {
+        signed_url: "https://www.w3schools.com/html/mov_bbb.mp4",
+        expires_in: 3600,
+        mime_type: "video/mp4",
+        original_filename: "mock_video.mp4"
+      };
+    }
+
     const client = getClientOrThrow();
     const { data, error } = await client.functions.invoke("academy-lesson-media", {
       body: {

@@ -8,3 +8,7 @@ export function useCourseRuntime(): CourseRuntimeContextType {
   }
   return context;
 }
+
+export function useOptionalCourseRuntime(): CourseRuntimeContextType | undefined {
+  return useContext(CourseRuntimeContext);
+}

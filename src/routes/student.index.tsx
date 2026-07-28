@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { useStudent } from "@/features/student/useStudent";
 import { useAuth } from "@/features/auth/useAuth";
 import { useCourseRuntime } from "@/features/courses/useCourseRuntime";
+import { getStudentDisplayName } from "@/utils/privacy";
 
 export const Route = createFileRoute("/student/")({
   component: Dashboard,
@@ -18,11 +19,15 @@ function greeting() {
 }
 
 function Dashboard() {
-  const { customer } = useStudent();
+  const { customer, studentAccount } = useStudent();
   const { session } = useAuth();
   const { currentCourses, catalog } = useCourseRuntime();
 
-  const activeCourses = currentCourses.filter((c) => c.enrollment.status === "active");
+  const isCourseBlocked = (c: any) => 
+    c.is_blocked || (c.access_decision && c.access_decision.can_learn === false && c.access_decision.reason === "ACCESS_BLOCKED");
+
+  const activeCourses = currentCourses.filter((c) => c.enrollment.status === "active" && !isCourseBlocked(c));
+  const blockedCoursesCount = currentCourses.filter(isCourseBlocked).length;
   const completedLessons = currentCourses.reduce((sum, c) => sum + c.completed_lessons, 0);
 
   const continueCourse = activeCourses.length > 0 ? activeCourses[0] : null;
@@ -30,7 +35,12 @@ function Dashboard() {
     .filter((c) => !currentCourses.some((cc) => cc.course.id === c.id))
     .slice(0, 3);
 
-  const displayName = customer?.name || session?.user?.email || "Student";
+  const displayName = getStudentDisplayName(
+    customer?.name,
+    session?.user?.email,
+    session?.user?.phone,
+    studentAccount?.id
+  );
 
   return (
     <div className="space-y-8">
@@ -48,6 +58,7 @@ function Dashboard() {
         {[
           { icon: BookOpen, label: "Khóa học đang học", value: activeCourses.length },
           { icon: PlayCircle, label: "Bài đã hoàn thành", value: completedLessons },
+          ...(blockedCoursesCount > 0 ? [{ icon: BookOpen, label: "Khóa học bị khóa", value: blockedCoursesCount }] : [])
         ].map((s) => (
           <div key={s.label} className="rounded-3xl border border-border/70 bg-card p-5 card-hover">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-accent text-primary-dark">
@@ -122,17 +133,49 @@ function Dashboard() {
               </Link>
             </div>
           )}
-          {currentCourses.map((x) => (
-            <div
-              key={x.course.id}
-              className="rounded-3xl border border-border/70 bg-card p-5 card-hover"
-            >
-              <div className="font-semibold line-clamp-2">{x.course.title}</div>
-              <div className="mt-2 text-sm text-muted-foreground">
-                {x.enrollment.status === "active" ? "Đang học" : "Hoàn thành"}
-              </div>
+          {currentCourses.length > 0 && activeCourses.length === 0 && continueCourse === null && (
+            <div className="sm:col-span-2 lg:col-span-3 rounded-3xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+              Hiện chưa có khóa học khả dụng để tiếp tục học.
             </div>
-          ))}
+          )}
+          {currentCourses.map((x) => {
+            const blocked = isCourseBlocked(x);
+            return (
+              <div
+                key={x.course.id}
+                className={`rounded-3xl border border-border/70 bg-card p-5 ${blocked ? 'opacity-70' : 'card-hover'}`}
+              >
+                <div className="font-semibold line-clamp-2">{x.course.title}</div>
+                <div className="mt-2 text-sm">
+                  {blocked ? (
+                    <span className="text-error font-medium">Đã bị khóa</span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {x.enrollment.status === "active" ? "Đang học" : "Hoàn thành"}
+                    </span>
+                  )}
+                </div>
+                {!blocked && (
+                  <Button asChild variant="outline" className="mt-4 w-full rounded-full">
+                    <Link
+                      to="/student/courses/$slug/lessons/$lessonId"
+                      params={{
+                        slug: x.course.slug,
+                        lessonId: x.last_accessed_lesson || "start",
+                      }}
+                    >
+                      Tiếp tục học
+                    </Link>
+                  </Button>
+                )}
+                {blocked && (
+                  <Button disabled variant="outline" className="mt-4 w-full rounded-full">
+                    Đã bị khóa
+                  </Button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 

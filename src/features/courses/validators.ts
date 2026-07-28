@@ -31,6 +31,7 @@ const courseAccessReasonSchema = z.enum([
   "MEMBERSHIP_REQUIRED",
   "TIER_REQUIRED",
   "ENROLLMENT_APPROVAL_REQUIRED",
+  "ACCESS_BLOCKED",
 ]);
 
 const courseAccessDecisionSchema = z.object({
@@ -44,6 +45,18 @@ const courseAccessDecisionSchema = z.object({
 const enrollmentStatusSchema = z.enum(["active", "completed", "pending"]);
 const progressStatusSchema = z.enum(["not_started", "in_progress", "completed"]);
 
+const courseMarketingMetadataSchema = z.object({
+  level: z.enum(["basic", "intermediate", "advanced"]).nullable().optional(),
+  short_description: z.string().nullable().optional(),
+  estimated_minutes: z.number().nullable().optional(),
+  is_featured: z.boolean().optional(),
+  featured_order: z.number().optional(),
+  audience: z.array(z.string()).optional(),
+  outcomes: z.array(z.string()).optional(),
+  thumbnail_url: z.string().nullable().optional(),
+  thumbnail_alt: z.string().nullable().optional(),
+});
+
 const courseBaseSchema = z.object({
   id: z.string(),
   slug: z.string(),
@@ -55,6 +68,7 @@ const courseBaseSchema = z.object({
   access_policy: z.string(),
   pricing_model: z.string(),
   category: courseCategorySchema.nullable(),
+  marketing: courseMarketingMetadataSchema.nullable().optional(),
 });
 
 const enrollmentSummarySchema = z.object({
@@ -92,7 +106,12 @@ const currentStudentCourseSchema = z.object({
   total_lessons: z.number(),
   progress_percent: z.number(),
   last_accessed_lesson: z.string().nullable(),
-});
+  access_decision: courseAccessDecisionSchema.optional().nullable(),
+  is_blocked: z.boolean().optional().nullable(),
+}).transform((data) => ({
+  ...data,
+  is_blocked: data.is_blocked ?? (data.access_decision?.can_learn === false && data.access_decision?.reason === "ACCESS_BLOCKED"),
+}));
 
 export const currentStudentCoursesSchema = z.array(currentStudentCourseSchema);
 
@@ -111,7 +130,7 @@ const courseLessonSchema = z.object({
   duration: z.number().nullable(),
   is_preview: z.boolean(),
   is_locked: z.boolean(),
-  progress: lessonProgressSchema.nullable(),
+  progress: lessonProgressSchema.nullable().optional(),
 });
 
 const courseModuleSchema = z.object({
@@ -151,7 +170,47 @@ export function validateCatalog(data: unknown): CourseCatalogItem[] {
 }
 
 export function validateCurrentCourses(data: unknown): CurrentStudentCourse[] {
-  return currentStudentCoursesSchema.parse(data);
+  if (!Array.isArray(data)) {
+    console.error({
+      raw_count: 0,
+      parsed_count: 0,
+      filter_count: 0,
+      parse_error_name: "Not an array",
+    });
+    throw new Error("INVALID_DATA");
+  }
+
+  const parsed: CurrentStudentCourse[] = [];
+  let errorName = null;
+
+  for (const item of data) {
+    const result = currentStudentCourseSchema.safeParse(item);
+    if (result.success) {
+      parsed.push(result.data);
+    } else {
+      if (!errorName) errorName = result.error.name || "ZodError";
+      console.error("Course parse error on item:", JSON.stringify(result.error.issues).replace(/"(id|user_id|slug|phone|jwt|token)":"[^"]*"/g, '"$1":"***"'));
+    }
+  }
+
+  const raw_count = data.length;
+  const parsed_count = parsed.length;
+  const filter_count = raw_count - parsed_count;
+
+  if (filter_count > 0) {
+    console.error({
+      raw_count,
+      parsed_count,
+      filter_count,
+      parse_error_name: errorName,
+    });
+  }
+
+  if (parsed_count === 0 && raw_count > 0) {
+    throw new Error("INVALID_DATA");
+  }
+
+  return parsed;
 }
 
 export function validateCourseOutline(data: unknown): CourseOutline {

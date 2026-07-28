@@ -7,6 +7,7 @@ interface VideoPlayerProps {
   lessonId: string;
   mimeType: string;
   duration: number | null;
+  mediaRef?: string | null;
   initialPosition?: number;
   initialProgressStatus?: string | null;
   onProgressComplete?: () => void;
@@ -17,12 +18,14 @@ export function VideoPlayer({
   lessonId,
   mimeType,
   duration,
+  mediaRef,
   initialPosition,
   initialProgressStatus,
   onProgressComplete,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { signedUrl, isLoading, error } = useLessonMedia(courseSlug, lessonId, true);
+  const hasMedia = !!mediaRef;
+  const { signedUrl, isLoading, error } = useLessonMedia(courseSlug, lessonId, hasMedia);
 
   const { saveProgress } = useLessonProgress(lessonId, duration, initialProgressStatus as any);
 
@@ -37,15 +40,15 @@ export function VideoPlayer({
     const handleTimeUpdate = () => {
       const now = Date.now();
       if (now - lastThrottleTime > 5000) {
-        saveProgress(video.currentTime, "in_progress", false).catch(() => {});
+        saveProgress(video.currentTime, "in_progress", false, null, undefined, "video_autosave").catch(() => {});
         lastThrottleTime = now;
       }
     };
 
-    const handlePause = () => saveProgress(video.currentTime, "in_progress", true).catch(() => {});
-    const handleSeeked = () => saveProgress(video.currentTime, "in_progress", true).catch(() => {});
+    const handlePause = () => saveProgress(video.currentTime, "in_progress", true, null, undefined, "video_autosave").catch(() => {});
+    const handleSeeked = () => saveProgress(video.currentTime, "in_progress", true, null, undefined, "video_autosave").catch(() => {});
     const handleEnded = () => {
-      saveProgress(video.currentTime, "completed", true, video.duration)
+      saveProgress(video.currentTime, "completed", true, video.duration, undefined, "video_autosave")
         .then((persistedProgress) => {
           if (
             persistedProgress?.status === "completed" &&
@@ -67,7 +70,7 @@ export function VideoPlayer({
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("seeked", handleSeeked);
       video.removeEventListener("ended", handleEnded);
-      saveProgress(video.currentTime, "in_progress", true).catch(() => {});
+      saveProgress(video.currentTime, "in_progress", true, null, undefined, "unmount").catch(() => {});
     };
   }, [saveProgress]);
 
@@ -109,8 +112,18 @@ export function VideoPlayer({
     };
   }, [signedUrl, initialPosition]);
 
-  if (error) {
-    return <div className="p-4 bg-red-50 text-red-600 rounded">Video temporarily unavailable.</div>;
+  if (error || !hasMedia) {
+    return (
+      <div className="aspect-video rounded-3xl border border-border/70 bg-accent grid place-items-center text-muted-foreground p-6 text-center">
+        <div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto opacity-30 mb-3"><path d="M10.66 6H14a2 2 0 0 1 2 2v2.34l1 1L22 8v8"/><path d="M16 16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2l10 10Z"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+          <div className="font-semibold text-lg text-slate-700">
+            {error ? "File video chưa được upload." : "Bài học này chưa có video."}
+          </div>
+          <div className="text-sm mt-2 text-slate-500">Vui lòng quay lại sau.</div>
+        </div>
+      </div>
+    );
   }
 
   // Only show loading state if we don't have a signedUrl at all
