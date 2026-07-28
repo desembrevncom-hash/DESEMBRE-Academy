@@ -14,6 +14,12 @@ import { RegistrationSuccess } from "@/features/public-training/components/Regis
 
 export const Route = createFileRoute("/lich-khai-giang")({
   component: PublicCalendarPage,
+  head: () => ({
+    meta: [
+      { title: "Lịch Khai Giảng | DESEMBRE Academy" },
+      { name: "description", content: "Lịch khai giảng các khóa đào tạo spa, thẩm mỹ, quản trị kinh doanh spa chuẩn Hàn Quốc mới nhất tại DESEMBRE Academy." }
+    ]
+  })
 });
 
 function PublicCalendarPage() {

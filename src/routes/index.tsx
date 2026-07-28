@@ -19,7 +19,7 @@ import { getPublicCatalog } from "@/features/courses/services/course.service";
 import type { CourseCatalogItem } from "@/features/courses/types";
 import { CatalogCourseCard } from "@/features/courses/components/CatalogCourseCard";
 import { Loader2, AlertCircle } from "lucide-react";
-import heroImg from "@/assets/hero-instructor.jpg";
+import heroImg from "@/assets/hero-banner.jpg";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -264,8 +264,25 @@ function Home() {
         )}
       </section>
 
+      {/* Resources Placeholder */}
+      <section id="resources" className="mx-auto max-w-6xl px-6 py-12">
+        <div className="rounded-[32px] bg-slate-50 border border-slate-100 p-10 md:p-14 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+            Tài liệu chuyên môn miễn phí
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-slate-600">
+            Bộ tài liệu dành cho khách hàng và đối tác DESEMBRE sẽ được cập nhật tại đây.
+          </p>
+          <div className="mt-6 flex justify-center">
+            <Button disabled variant="outline" className="rounded-full bg-white/70 opacity-70">
+              Đang cập nhật...
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* About / CTA */}
-      <section id="about" className="mx-auto max-w-6xl px-6 py-20">
+      <section id="about" className="mx-auto max-w-6xl px-6 py-12">
         <div className="rounded-[32px] hero-bg border border-border/60 p-10 md:p-14 text-center">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
             Sẵn sàng bắt đầu hành trình học tập?

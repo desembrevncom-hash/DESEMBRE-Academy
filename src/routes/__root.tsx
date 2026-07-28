@@ -77,19 +77,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "DESEMBRE Academy — Học đúng kiến thức. Phát triển đúng hướng." },
+      { title: "DESEMBRE Academy" },
       {
         name: "description",
-        content: "Nền tảng đào tạo trực tuyến dành cho khách hàng, đối tác và đội ngũ DESEMBRE.",
+        content: "Học đúng kiến thức. Phát triển đúng hướng.",
       },
       { property: "og:title", content: "DESEMBRE Academy" },
       { property: "og:description", content: "Học đúng kiến thức. Phát triển đúng hướng." },
+      { property: "og:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+      { property: "og:url", content: "https://academy.desembre-vn.com/" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "alternate icon", href: "/favicon.ico" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

@@ -7,12 +7,13 @@ import { maskPhone } from "@/utils/privacy";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { AcademyLogo } from "@/components/brand/AcademyLogo";
 
 const nav = [
-  { to: "/", label: "Trang chủ" },
+  { to: "/about", label: "Về DESEMBRE" },
+  { to: "/lich-khai-giang", label: "Lịch khai giảng" },
   { to: "/courses", label: "Khóa học" },
-  { to: "/courses", label: "Lộ trình học", search: { sort: "featured" } as const },
-  { to: "/about", label: "Về chúng tôi" },
+  { to: "/", hash: "resources", label: "Tài liệu" },
 ];
 
 export function SiteHeader() {
@@ -31,16 +32,10 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full px-3 sm:px-6 pt-4 pb-2 bg-gradient-to-b from-background via-background/90 to-transparent pointer-events-none">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full glass px-4 py-2.5 shadow-[var(--shadow-float)] pointer-events-auto">
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground">
-            <GraduationCap className="h-5 w-5" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-[13px] font-bold tracking-tight">DESEMBRE</div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Academy</div>
-          </div>
+    <header className="sticky top-4 z-50 w-full px-4 pointer-events-none">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 rounded-full border border-teal-100 bg-white/90 px-5 shadow-sm backdrop-blur pointer-events-auto">
+        <Link to="/" className="shrink-0" aria-label="DESEMBRE Academy Home">
+          <AcademyLogo />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 text-sm">
@@ -48,8 +43,9 @@ export function SiteHeader() {
             <Link
               key={i}
               to={n.to}
-              activeOptions={{ exact: n.to === "/" }}
-              className="rounded-full px-3 py-2 text-foreground/70 transition hover:text-foreground hover:bg-accent/60 data-[status=active]:text-primary-dark data-[status=active]:font-semibold"
+              hash={n.hash}
+              activeOptions={{ exact: n.to === "/" && !n.hash }}
+              className="rounded-full px-3 py-2 text-slate-600 transition hover:text-teal-700 hover:bg-teal-50 data-[status=active]:text-teal-700 data-[status=active]:bg-teal-50 data-[status=active]:font-semibold"
             >
               {n.label}
             </Link>
@@ -89,7 +85,7 @@ export function SiteHeader() {
                 <Link to="/auth/phone">Đăng nhập</Link>
               </Button>
               <Button asChild className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
-                <Link to="/courses">Bắt đầu học</Link>
+                <Link to="/lich-khai-giang">Đăng ký học</Link>
               </Button>
             </>
           )}
@@ -112,8 +108,9 @@ export function SiteHeader() {
               <Link
                 key={i}
                 to={n.to}
+                hash={n.hash}
                 onClick={() => setOpen(false)}
-                className="rounded-2xl px-4 py-3 text-sm hover:bg-accent"
+                className="rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-700 data-[status=active]:bg-teal-50 data-[status=active]:text-teal-700 data-[status=active]:font-semibold"
               >
                 {n.label}
               </Link>
@@ -148,7 +145,7 @@ export function SiteHeader() {
                     <Link to="/auth/phone" onClick={() => setOpen(false)}>Đăng nhập</Link>
                   </Button>
                   <Button asChild className="rounded-full bg-primary hover:bg-primary-dark text-primary-foreground">
-                    <Link to="/courses" onClick={() => setOpen(false)}>Bắt đầu học</Link>
+                    <Link to="/lich-khai-giang" onClick={() => setOpen(false)}>Đăng ký học</Link>
                   </Button>
                 </div>
               )}
