@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Loader2, AlertCircle, BookOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/useAuth";
+import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 export const Route = createFileRoute("/courses/")({
   component: CoursesIndexPage,
@@ -42,7 +43,8 @@ function CoursesIndexPage() {
           data = await getPublicCatalog();
         }
         if (mounted) {
-          setCourses(data || []);
+          const safeData = data || [];
+          setCourses(safeData.filter((c: any) => !isDemoRecord(c)));
         }
       } catch (err: any) {
         if (mounted) {

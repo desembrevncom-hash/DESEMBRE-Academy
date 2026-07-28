@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useAcademyAdminCourses } from "@/features/admin/hooks/useAcademyAdminCourses";
+import { useAcademyAdminCourses, useArchiveAcademyCourse } from "@/features/admin/hooks/useAcademyAdminCourses";
 import type { AcademyCourseStatus } from "@/features/admin/types";
-import { Search, Plus } from "lucide-react";
+import { isDemoRecord } from "@/features/admin/utils/demoData";
+import { Search, Plus, Archive } from "lucide-react";
 
 export const Route = createFileRoute("/admin/courses/")({
   component: AdminCourseList,
@@ -10,8 +11,9 @@ export const Route = createFileRoute("/admin/courses/")({
 
 function AdminCourseList() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<AcademyCourseStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<AcademyCourseStatus | "all" | "demo">("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const archiveMutation = useArchiveAcademyCourse();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -21,14 +23,27 @@ function AdminCourseList() {
   }, [searchQuery]);
 
   const {
-    data: courses,
+    data: allCourses,
     isLoading,
     error,
     refetch,
   } = useAcademyAdminCourses({
-    status: statusFilter === "all" ? undefined : statusFilter,
+    status: (statusFilter === "all" || statusFilter === "demo") ? undefined : statusFilter,
     search: debouncedSearch || undefined,
   });
+
+  const courses = allCourses?.filter(course => {
+    const isDemo = isDemoRecord(course);
+    if (statusFilter === "demo") return isDemo;
+    if (statusFilter === "all") return !isDemo;
+    return !isDemo;
+  });
+
+  const handleArchiveDemo = async (courseId: string) => {
+    if (window.confirm("Lưu trữ khóa học test/demo này?")) {
+      await archiveMutation.mutateAsync(courseId);
+    }
+  };
 
   return (
     <div className="container mx-auto py-8 max-w-5xl px-4">
@@ -59,13 +74,14 @@ function AdminCourseList() {
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as AcademyCourseStatus | "all")}
+          onChange={(e) => setStatusFilter(e.target.value as AcademyCourseStatus | "all" | "demo")}
           className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
         >
-          <option value="all">Tất cả</option>
-          <option value="draft">Bản nháp</option>
+          <option value="all">Đang hoạt động</option>
           <option value="published">Công khai</option>
-          <option value="archived">Lưu trữ</option>
+          <option value="draft">Bản nháp</option>
+          <option value="archived">Đã lưu trữ</option>
+          <option value="demo">Dữ liệu test/demo</option>
         </select>
       </div>
 
@@ -120,7 +136,14 @@ function AdminCourseList() {
                 {courses?.map((course) => (
                   <tr key={course.id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-medium text-foreground">{course.title}</div>
+                      <div className="font-medium text-foreground flex items-center gap-2">
+                        {course.title}
+                        {isDemoRecord(course) && (
+                          <span className="bg-rose-100 text-rose-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">
+                            Dữ liệu test
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground mt-1">{course.slug}</div>
                     </td>
                     <td className="px-6 py-4">
@@ -158,6 +181,15 @@ function AdminCourseList() {
                       >
                         + Tạo lớp
                       </Link>
+                      {isDemoRecord(course) && course.status !== "archived" && (
+                        <button
+                          onClick={() => handleArchiveDemo(course.id)}
+                          className="text-rose-600 hover:underline font-medium mr-3 text-xs"
+                          title="Lưu trữ dữ liệu test"
+                        >
+                          Lưu trữ
+                        </button>
+                      )}
                       <Link
                         to="/admin/courses/$courseId/settings"
                         params={{ courseId: course.id }}

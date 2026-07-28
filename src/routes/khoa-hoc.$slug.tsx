@@ -11,6 +11,7 @@ import { RegistrationSuccess } from "@/features/public-training/components/Regis
 import { PublicEmptyState } from "@/features/public-training/components/PublicEmptyState";
 import { Loader2, BookOpen, CheckCircle2, Sparkles, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 export const Route = createFileRoute("/khoa-hoc/$slug")({
   head: ({ params }) => ({
@@ -36,9 +37,12 @@ function PublicCourseDetailPage() {
       setLoading(true);
       setError(null);
       const data = await getPublicCourseBySlug(slug);
-      if (!data) {
+      if (!data || isDemoRecord(data)) {
         setError("COURSE_NOT_FOUND");
       } else {
+        if (data.batches) {
+          data.batches = data.batches.filter((b) => !isDemoRecord(b));
+        }
         setCourse(data);
       }
     } catch (err: any) {

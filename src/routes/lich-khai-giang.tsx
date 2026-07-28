@@ -11,6 +11,7 @@ import { TrainingFilters } from "@/features/public-training/components/TrainingF
 import { TrainingScheduleCard } from "@/features/public-training/components/TrainingScheduleCard";
 import { RegistrationForm } from "@/features/public-training/components/RegistrationForm";
 import { RegistrationSuccess } from "@/features/public-training/components/RegistrationSuccess";
+import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 export const Route = createFileRoute("/lich-khai-giang")({
   component: PublicCalendarPage,
@@ -39,7 +40,7 @@ function PublicCalendarPage() {
       setLoading(true);
       setError(null);
       const data = await getPublicTrainingSchedule();
-      setBatches(data);
+      setBatches(data.filter(b => !isDemoRecord(b)));
     } catch (err: any) {
       console.error("fetchSchedule error:", err);
       setError("Không thể tải lịch khai giảng. Vui lòng thử lại sau.");

@@ -5,6 +5,7 @@ import { Loader2, Plus, AlertCircle, Edit, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
+import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 export const Route = createFileRoute("/admin/batches/")({
   component: AdminBatchesIndexPage,
@@ -14,6 +15,7 @@ function AdminBatchesIndexPage() {
   const [batches, setBatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "open" | "draft" | "closed" | "demo">("all");
 
   useEffect(() => {
     let mounted = true;
@@ -38,6 +40,39 @@ function AdminBatchesIndexPage() {
     return () => { mounted = false; };
   }, []);
 
+  const filteredBatches = batches.filter((batch) => {
+    const isDemo = isDemoRecord(batch);
+    if (statusFilter === "demo") return isDemo;
+    if (isDemo) return false;
+    if (statusFilter === "all") return true;
+    const regStatus = (batch.registration_status || batch.status || "open").toLowerCase();
+    return regStatus === statusFilter;
+  });
+
+  const handleCloseDemo = async (batch: any) => {
+    if (!window.confirm("Đóng đăng ký lớp dữ liệu test này?")) return;
+    try {
+      const { adminUpdateCourseBatch } = await import("@/features/admin/services/academyAdminBatchesApi");
+      await adminUpdateCourseBatch(batch.id, {
+        course_id: batch.course_id,
+        title: batch.title,
+        slug: batch.slug,
+        training_format: batch.training_format,
+        instructor_id: batch.instructor_id,
+        max_participants: batch.max_participants,
+        start_date: batch.start_date,
+        end_date: batch.end_date,
+        registration_closes_at: batch.registration_closes_at,
+        description: batch.description,
+        registration_status: "CLOSED",
+      });
+      const data = await adminGetCourseBatches();
+      setBatches(data || []);
+    } catch (err) {
+      alert("Lỗi khi đóng đăng ký lớp test");
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="flex justify-between items-center mb-8">
@@ -50,6 +85,20 @@ function AdminBatchesIndexPage() {
             <Plus className="mr-2 h-4 w-4" /> Tạo lớp mới
           </Link>
         </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as any)}
+          className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+        >
+          <option value="all">Đang hoạt động</option>
+          <option value="open">Đang mở đăng ký</option>
+          <option value="draft">Bản nháp</option>
+          <option value="closed">Đã đóng</option>
+          <option value="demo">Dữ liệu test/demo</option>
+        </select>
       </div>
 
       {loading && (
@@ -65,13 +114,13 @@ function AdminBatchesIndexPage() {
         </div>
       )}
 
-      {!loading && !error && batches.length === 0 && (
+      {!loading && !error && filteredBatches.length === 0 && (
         <div className="text-center py-12 border rounded-lg bg-card text-muted-foreground">
-          Chưa có lớp nào. Tạo lớp đầu tiên để bắt đầu.
+          Chưa có lớp nào trong mục này.
         </div>
       )}
 
-      {!loading && !error && batches.length > 0 && (
+      {!loading && !error && filteredBatches.length > 0 && (
         <div className="border rounded-lg bg-card overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-muted/50 border-b">
@@ -86,7 +135,7 @@ function AdminBatchesIndexPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {batches.map((batch) => {
+              {filteredBatches.map((batch) => {
                 const regStatus = (batch.registration_status || batch.status || "open").toLowerCase();
                 const instructorName = batch.instructor?.full_name || "Chưa gán";
                 const courseSlug = batch.course?.slug;
@@ -94,7 +143,14 @@ function AdminBatchesIndexPage() {
                 return (
                   <tr key={batch.id} className="hover:bg-muted/30">
                     <td className="px-5 py-3.5">
-                      <div className="font-semibold text-foreground">{batch.title}</div>
+                      <div className="font-semibold text-foreground flex items-center gap-2">
+                        {batch.title}
+                        {isDemoRecord(batch) && (
+                          <span className="bg-rose-100 text-rose-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">
+                            Dữ liệu test
+                          </span>
+                        )}
+                      </div>
                       <div className="text-muted-foreground text-xs">{batch.slug}</div>
                     </td>
                     <td className="px-5 py-3.5 text-muted-foreground font-medium">
@@ -144,6 +200,14 @@ function AdminBatchesIndexPage() {
                         >
                           Khóa học ↗
                         </Link>
+                      )}
+                      {isDemoRecord(batch) && regStatus !== "closed" && (
+                        <button 
+                          onClick={() => handleCloseDemo(batch)}
+                          className="inline-flex items-center justify-center gap-1 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 h-8 px-2.5 rounded-md"
+                        >
+                          Đóng đăng ký
+                        </button>
                       )}
                       <Link 
                         to="/admin/batches/$batchId/registrations" 
