@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -326,7 +326,17 @@ function AdminInstructorsPage() {
                       {inst.display_order}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex items-center justify-end gap-2">
+                        {inst.slug && (
+                          <Link
+                            to="/giang-vien/$slug"
+                            params={{ slug: inst.slug }}
+                            target="_blank"
+                            className="text-xs font-semibold text-indigo-600 hover:underline mr-1"
+                          >
+                            Xem public ↗
+                          </Link>
+                        )}
                         <button
                           onClick={() => handleToggleActive(inst)}
                           className={`p-1.5 rounded-lg transition-colors ${

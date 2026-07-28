@@ -38,6 +38,8 @@ export const createCourseSchema = z.object({
   enrollment_policy: z.enum(["open", "approval_required", "closed"]),
   access_policy: z.enum(["free", "paid", "dynamic"]),
   pricing_model: z.enum(["free", "one_time", "subscription", "included"]),
+  cover_url: z.string().optional().nullable().or(z.literal("")),
+  summary: z.string().max(1000, "Tóm tắt quá dài").optional().nullable(),
 });
 
 export type CreateCourseFormData = z.infer<typeof createCourseSchema>;
@@ -48,6 +50,8 @@ export const updateCourseSchema = createCourseSchema.extend({
   enrollment_policy: z.enum(["open", "approval_required", "closed"]),
   access_policy: z.enum(["free", "paid", "dynamic"]),
   pricing_model: z.enum(["free", "one_time", "subscription", "included"]),
+  cover_url: z.string().optional().nullable().or(z.literal("")),
+  summary: z.string().max(1000, "Tóm tắt quá dài").optional().nullable(),
 });
 
 export type UpdateCourseFormData = z.infer<typeof updateCourseSchema>;

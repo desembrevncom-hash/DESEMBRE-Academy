@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { adminGetCourseBatches, adminUpdateCourseBatch } from "@/features/admin/services/academyAdminBatchesApi";
 import { academyAdminCoursesApi } from "@/features/admin/services/academyAdminCoursesApi";
+import { getAdminInstructors, type Instructor } from "@/features/admin/services/academyAdminInstructorsApi";
 import {
   adminGetBatchSessions,
   adminCreateSession,
@@ -339,6 +340,7 @@ function AdminBatchesEditPage() {
   const { batchId } = Route.useParams();
 
   const [courses, setCourses] = useState<any[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -349,8 +351,10 @@ function AdminBatchesEditPage() {
       title: "",
       slug: "",
       training_format: "office",
+      instructor_id: "",
       max_participants: "",
-      registration_status: "DRAFT",
+      registration_status: "OPEN",
+      registration_closes_at: "",
       start_date: "",
       end_date: "",
       description: ""
@@ -361,11 +365,13 @@ function AdminBatchesEditPage() {
     async function loadData() {
       try {
         setLoading(true);
-        const [coursesData, batchesData] = await Promise.all([
+        const [coursesData, batchesData, instructorsData] = await Promise.all([
           academyAdminCoursesApi.listCourses(),
-          adminGetCourseBatches()
+          adminGetCourseBatches(),
+          getAdminInstructors().catch(() => []),
         ]);
         setCourses(coursesData);
+        setInstructors(instructorsData || []);
         const batch = batchesData.find((b: any) => b.id === batchId);
         if (batch) {
           reset({
@@ -373,10 +379,12 @@ function AdminBatchesEditPage() {
             title: batch.title ?? "",
             slug: batch.slug ?? "",
             training_format: batch.training_format ?? "office",
+            instructor_id: batch.instructor_id ?? "",
             max_participants: batch.max_participants ? String(batch.max_participants) : "",
             registration_status: normalizeBatchStatus(batch.registration_status ?? batch.status),
-            start_date: toDateInputValue(batch.registration_opens_at ?? batch.start_date),
-            end_date: toDateInputValue(batch.registration_closes_at ?? batch.end_date),
+            registration_closes_at: toDateTimeLocal(batch.registration_closes_at),
+            start_date: toDateInputValue(batch.start_date ?? batch.registration_opens_at),
+            end_date: toDateInputValue(batch.end_date ?? batch.registration_closes_at),
             description: batch.description ?? ""
           });
         } else {
@@ -398,7 +406,9 @@ function AdminBatchesEditPage() {
       const payload = {
         ...values,
         slug: values.slug ? values.slug.trim().toLowerCase() : "",
+        instructor_id: values.instructor_id || null,
         max_participants: values.max_participants ? parseInt(values.max_participants) : null,
+        registration_closes_at: fromDateTimeLocal(values.registration_closes_at),
         start_date: values.start_date || null,
         end_date: values.end_date || null
       };
@@ -486,38 +496,59 @@ function AdminBatchesEditPage() {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Giảng viên phụ trách</label>
+            <select {...register("instructor_id")} className={selectCls}>
+              <option value="">-- Chưa gán giảng viên --</option>
+              {instructors.map((inst) => (
+                <option key={inst.id} value={inst.id}>
+                  {inst.full_name} {inst.title ? `— ${inst.title}` : ""} {!inst.is_active ? " (Ẩn)" : ""}
+                </option>
+              ))}
+            </select>
+            {instructors.length === 0 && (
+              <p className="text-xs text-amber-600">
+                Chưa có giảng viên. Hãy tạo giảng viên trước trong mục <Link to="/admin/instructors" className="underline font-bold">Giảng viên</Link>.
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Format</label>
+              <label className="text-sm font-medium">Hình thức</label>
               <select {...register("training_format")} className={selectCls}>
-                <option value="office">Office</option>
-                <option value="zoom">Zoom</option>
+                <option value="office">Văn phòng (Offline)</option>
+                <option value="zoom">Zoom Online</option>
                 <option value="hybrid">Hybrid</option>
-                <option value="external_seminar">External Seminar</option>
+                <option value="external_seminar">Seminar ngoài</option>
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Registration Status</label>
+              <label className="text-sm font-medium">Trạng thái đăng ký</label>
               <select {...register("registration_status")} className={selectCls}>
-                <option value="DRAFT">Draft</option>
-                <option value="OPEN">Open</option>
-                <option value="CLOSED">Closed</option>
+                <option value="OPEN">Đang mở đăng ký (Open)</option>
+                <option value="DRAFT">Bản nháp (Draft)</option>
+                <option value="CLOSED">Đã đóng (Closed)</option>
               </select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Max Participants</label>
-              <input type="number" {...register("max_participants")} className={inputCls} placeholder="Unlimited" />
+              <label className="text-sm font-medium">Số ghế tối đa (Max Seats)</label>
+              <input type="number" {...register("max_participants")} className={inputCls} placeholder="Không giới hạn" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Start Date</label>
+              <label className="text-sm font-medium">Ngày khai giảng (Start Date)</label>
               <input type="date" {...register("start_date")} className={inputCls} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">End Date</label>
+              <label className="text-sm font-medium">Ngày kết thúc (End Date)</label>
               <input type="date" {...register("end_date")} className={inputCls} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Hạn chót đăng ký</label>
+              <input type="datetime-local" {...register("registration_closes_at")} className={inputCls} />
             </div>
           </div>
 

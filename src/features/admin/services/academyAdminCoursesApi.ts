@@ -223,6 +223,37 @@ export const academyAdminCoursesApi = {
       handleRpcError(error);
     }
 
+    if (input.cover_url !== undefined || input.summary !== undefined) {
+      await client
+        .from("courses")
+        .update({
+          cover_url: input.cover_url || null,
+          summary: input.summary || null,
+        })
+        .eq("id", input.p_course_id);
+    }
+
+    return { success: true };
+  },
+
+  async updateCoursePublicDetails(
+    courseId: string,
+    payload: { cover_url?: string | null; summary?: string | null }
+  ): Promise<{ success: boolean }> {
+    const client = getClientOrThrow();
+    const { error } = await client
+      .from("courses")
+      .update({
+        cover_url: payload.cover_url || null,
+        summary: payload.summary || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", courseId);
+
+    if (error) {
+      console.error("[updateCoursePublicDetails Error]", error);
+      throw error;
+    }
     return { success: true };
   },
 

@@ -56,6 +56,8 @@ export interface AcademyAdminCourseDetails {
   title: string;
   slug: string;
   description: string | null;
+  summary?: string | null;
+  cover_url?: string | null;
   status: AcademyCourseStatus;
   catalog_visibility: AcademyCatalogVisibility;
   enrollment_policy: AcademyEnrollmentPolicy;
@@ -113,6 +115,8 @@ export interface CreateAcademyCourseInput {
   p_enrollment_policy?: AcademyEnrollmentPolicy;
   p_access_policy?: AcademyAccessPolicy;
   p_pricing_model?: AcademyPricingModel;
+  cover_url?: string | null;
+  summary?: string | null;
 }
 
 export interface UpdateAcademyCourseInput {
@@ -125,6 +129,8 @@ export interface UpdateAcademyCourseInput {
   p_enrollment_policy: AcademyEnrollmentPolicy;
   p_access_policy: AcademyAccessPolicy;
   p_pricing_model: AcademyPricingModel;
+  cover_url?: string | null;
+  summary?: string | null;
 }
 
 export interface CreateAcademyModuleInput {

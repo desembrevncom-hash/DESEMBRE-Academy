@@ -22,6 +22,8 @@ import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as BatchesIndexRouteImport } from './routes/batches.index'
 import { Route as StudentProfileRouteImport } from './routes/student.profile'
 import { Route as StudentCoursesRouteImport } from './routes/student.courses'
+import { Route as KhoaHocSlugRouteImport } from './routes/khoa-hoc.$slug'
+import { Route as GiangVienSlugRouteImport } from './routes/giang-vien.$slug'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as BatchesSlugRouteImport } from './routes/batches.$slug'
 import { Route as AuthVerifyOtpRouteImport } from './routes/auth.verify-otp'
@@ -112,6 +114,16 @@ const StudentCoursesRoute = StudentCoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
   getParentRoute: () => StudentRoute,
+} as any)
+const KhoaHocSlugRoute = KhoaHocSlugRouteImport.update({
+  id: '/khoa-hoc/$slug',
+  path: '/khoa-hoc/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GiangVienSlugRoute = GiangVienSlugRouteImport.update({
+  id: '/giang-vien/$slug',
+  path: '/giang-vien/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesSlugRoute = CoursesSlugRouteImport.update({
   id: '/$slug',
@@ -266,6 +278,8 @@ export interface FileRoutesByFullPath {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/batches/$slug': typeof BatchesSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/giang-vien/$slug': typeof GiangVienSlugRoute
+  '/khoa-hoc/$slug': typeof KhoaHocSlugRoute
   '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
   '/batches/': typeof BatchesIndexRoute
@@ -304,6 +318,8 @@ export interface FileRoutesByTo {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/batches/$slug': typeof BatchesSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/giang-vien/$slug': typeof GiangVienSlugRoute
+  '/khoa-hoc/$slug': typeof KhoaHocSlugRoute
   '/student/profile': typeof StudentProfileRoute
   '/batches': typeof BatchesIndexRoute
   '/courses': typeof CoursesIndexRoute
@@ -342,6 +358,8 @@ export interface FileRoutesById {
   '/auth/verify-otp': typeof AuthVerifyOtpRoute
   '/batches/$slug': typeof BatchesSlugRoute
   '/courses/$slug': typeof CoursesSlugRoute
+  '/giang-vien/$slug': typeof GiangVienSlugRoute
+  '/khoa-hoc/$slug': typeof KhoaHocSlugRoute
   '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
   '/batches/': typeof BatchesIndexRoute
@@ -384,6 +402,8 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/batches/$slug'
     | '/courses/$slug'
+    | '/giang-vien/$slug'
+    | '/khoa-hoc/$slug'
     | '/student/courses'
     | '/student/profile'
     | '/batches/'
@@ -422,6 +442,8 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/batches/$slug'
     | '/courses/$slug'
+    | '/giang-vien/$slug'
+    | '/khoa-hoc/$slug'
     | '/student/profile'
     | '/batches'
     | '/courses'
@@ -459,6 +481,8 @@ export interface FileRouteTypes {
     | '/auth/verify-otp'
     | '/batches/$slug'
     | '/courses/$slug'
+    | '/giang-vien/$slug'
+    | '/khoa-hoc/$slug'
     | '/student/courses'
     | '/student/profile'
     | '/batches/'
@@ -492,6 +516,8 @@ export interface RootRouteChildren {
   AuthPhoneRoute: typeof AuthPhoneRoute
   AuthVerifyOtpRoute: typeof AuthVerifyOtpRoute
   BatchesSlugRoute: typeof BatchesSlugRoute
+  GiangVienSlugRoute: typeof GiangVienSlugRoute
+  KhoaHocSlugRoute: typeof KhoaHocSlugRoute
   BatchesIndexRoute: typeof BatchesIndexRoute
 }
 
@@ -587,6 +613,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/student/courses'
       preLoaderRoute: typeof StudentCoursesRouteImport
       parentRoute: typeof StudentRoute
+    }
+    '/khoa-hoc/$slug': {
+      id: '/khoa-hoc/$slug'
+      path: '/khoa-hoc/$slug'
+      fullPath: '/khoa-hoc/$slug'
+      preLoaderRoute: typeof KhoaHocSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/giang-vien/$slug': {
+      id: '/giang-vien/$slug'
+      path: '/giang-vien/$slug'
+      fullPath: '/giang-vien/$slug'
+      preLoaderRoute: typeof GiangVienSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/courses/$slug': {
       id: '/courses/$slug'
@@ -884,6 +924,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthPhoneRoute: AuthPhoneRoute,
   AuthVerifyOtpRoute: AuthVerifyOtpRoute,
   BatchesSlugRoute: BatchesSlugRoute,
+  GiangVienSlugRoute: GiangVienSlugRoute,
+  KhoaHocSlugRoute: KhoaHocSlugRoute,
   BatchesIndexRoute: BatchesIndexRoute,
 }
 export const routeTree = rootRouteImport

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { adminCreateCourseBatch } from "@/features/admin/services/academyAdminBatchesApi";
 import { academyAdminCoursesApi } from "@/features/admin/services/academyAdminCoursesApi";
+import { getAdminInstructors, type Instructor } from "@/features/admin/services/academyAdminInstructorsApi";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
@@ -11,9 +12,15 @@ export const Route = createFileRoute("/admin/batches/new")({
   component: AdminBatchesNewPage,
 });
 
+function fromDateTimeLocal(val: string) {
+  if (!val) return null;
+  return new Date(val).toISOString();
+}
+
 function AdminBatchesNewPage() {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +31,10 @@ function AdminBatchesNewPage() {
       title: "",
       slug: "",
       training_format: "office",
+      instructor_id: "",
       max_participants: "",
-      registration_status: "DRAFT",
+      registration_status: "OPEN",
+      registration_closes_at: "",
       start_date: "",
       end_date: "",
       description: ""
@@ -33,17 +42,21 @@ function AdminBatchesNewPage() {
   });
 
   useEffect(() => {
-    async function loadCourses() {
+    async function loadData() {
       try {
-        const data = await academyAdminCoursesApi.listCourses();
-        setCourses(data);
+        const [coursesData, instructorsData] = await Promise.all([
+          academyAdminCoursesApi.listCourses(),
+          getAdminInstructors().catch(() => []),
+        ]);
+        setCourses(coursesData);
+        setInstructors(instructorsData || []);
       } catch (err) {
-        console.error("Failed to load courses", err);
+        console.error("Failed to load options", err);
       } finally {
         setLoadingCourses(false);
       }
     }
-    loadCourses();
+    loadData();
   }, []);
 
   const onSubmit = async (values: any) => {
@@ -54,7 +67,9 @@ function AdminBatchesNewPage() {
       const payload = {
         ...values,
         slug: values.slug ? values.slug.trim().toLowerCase() : "",
+        instructor_id: values.instructor_id || null,
         max_participants: values.max_participants ? parseInt(values.max_participants) : null,
+        registration_closes_at: fromDateTimeLocal(values.registration_closes_at),
         start_date: values.start_date || null,
         end_date: values.end_date || null
       };
@@ -143,45 +158,66 @@ function AdminBatchesNewPage() {
             </div>
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Giảng viên phụ trách</label>
+            <select 
+              {...register("instructor_id")}
+              className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="">-- Chưa gán giảng viên --</option>
+              {instructors.map((inst) => (
+                <option key={inst.id} value={inst.id}>
+                  {inst.full_name} {inst.title ? `— ${inst.title}` : ""} {!inst.is_active ? " (Ẩn)" : ""}
+                </option>
+              ))}
+            </select>
+            {instructors.length === 0 && (
+              <p className="text-xs text-amber-600">
+                Chưa có giảng viên. Hãy tạo giảng viên trước trong mục <Link to="/admin/instructors" className="underline font-bold">Giảng viên</Link>.
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Format</label>
+              <label className="text-sm font-medium">Hình thức</label>
               <select 
                 {...register("training_format")}
                 className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <option value="office">Office</option>
-                <option value="zoom">Zoom</option>
+                <option value="office">Văn phòng (Offline)</option>
+                <option value="zoom">Zoom Online</option>
                 <option value="hybrid">Hybrid</option>
+                <option value="external_seminar">Seminar ngoài</option>
               </select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Registration Status</label>
+              <label className="text-sm font-medium">Trạng thái đăng ký</label>
               <select 
                 {...register("registration_status")}
                 className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <option value="DRAFT">Draft</option>
-                <option value="OPEN">Open</option>
-                <option value="CLOSED">Closed</option>
+                <option value="OPEN">Đang mở đăng ký (Open)</option>
+                <option value="DRAFT">Bản nháp (Draft)</option>
+                <option value="CLOSED">Đã đóng (Closed)</option>
               </select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Max Participants</label>
+              <label className="text-sm font-medium">Số ghế tối đa (Max Seats)</label>
               <input 
                 type="number"
                 {...register("max_participants")}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                placeholder="Unlimited"
+                placeholder="Không giới hạn"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Start Date</label>
+              <label className="text-sm font-medium">Ngày khai giảng (Start Date)</label>
               <input 
                 type="date"
                 {...register("start_date")}
@@ -190,10 +226,19 @@ function AdminBatchesNewPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">End Date</label>
+              <label className="text-sm font-medium">Ngày kết thúc (End Date)</label>
               <input 
                 type="date"
                 {...register("end_date")}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Hạn chót đăng ký</label>
+              <input 
+                type="datetime-local"
+                {...register("registration_closes_at")}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
             </div>

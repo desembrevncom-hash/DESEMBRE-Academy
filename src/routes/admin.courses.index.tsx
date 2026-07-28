@@ -140,7 +140,17 @@ function AdminCourseList() {
                     <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
                       {new Date(course.updated_at).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right space-x-3">
+                      {course.slug && (
+                        <Link
+                          to="/khoa-hoc/$slug"
+                          params={{ slug: course.slug }}
+                          target="_blank"
+                          className="text-xs font-semibold text-indigo-600 hover:underline"
+                        >
+                          Xem public ↗
+                        </Link>
+                      )}
                       <Link
                         to="/admin/courses/$courseId/settings"
                         params={{ courseId: course.id }}

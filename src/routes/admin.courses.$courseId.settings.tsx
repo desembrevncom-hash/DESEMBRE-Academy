@@ -51,6 +51,8 @@ function CourseSettingsPage() {
         enrollment_policy: c.enrollment_policy,
         access_policy: c.access_policy,
         pricing_model: c.pricing_model,
+        cover_url: (c as any).cover_url || "",
+        summary: (c as any).summary || "",
       });
     }
   }, [editorData, reset]);
@@ -82,6 +84,8 @@ function CourseSettingsPage() {
         p_enrollment_policy: data.enrollment_policy,
         p_access_policy: data.access_policy,
         p_pricing_model: data.pricing_model,
+        cover_url: data.cover_url || null,
+        summary: data.summary || null,
       });
 
       toast.success("Đã lưu cài đặt khóa học thành công");
@@ -115,12 +119,21 @@ function CourseSettingsPage() {
           </div>
           <p className="text-muted-foreground">{course.title} ({course.slug})</p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to={"/admin/courses" as any}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Trở về Tổng quan
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          {course.slug && (
+            <Button asChild variant="outline" size="sm" className="border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+              <Link to="/khoa-hoc/$slug" params={{ slug: course.slug }} target="_blank">
+                Xem trang public ↗
+              </Link>
+            </Button>
+          )}
+          <Button asChild variant="outline" size="sm">
+            <Link to={"/admin/courses" as any}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Trở về Tổng quan
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {isReadOnly && (
@@ -185,6 +198,39 @@ function CourseSettingsPage() {
             />
             {errors.description && (
               <p className="text-sm text-destructive">{errors.description.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="summary" className="text-sm font-medium">
+              Tóm tắt public (Landing Page Summary)
+            </label>
+            <textarea
+              id="summary"
+              {...register("summary")}
+              rows={2}
+              disabled={isReadOnly}
+              placeholder="Tóm tắt nội dung khóa học hiển thị ngoài trang public /lich-khai-giang và /khoa-hoc/:slug..."
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background resize-y disabled:opacity-50"
+            />
+            {errors.summary && (
+              <p className="text-sm text-destructive">{errors.summary.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="cover_url" className="text-sm font-medium">
+              Ảnh bìa public (Cover URL)
+            </label>
+            <input
+              id="cover_url"
+              {...register("cover_url")}
+              disabled={isReadOnly}
+              placeholder="https://domain.com/path/to/cover-image.jpg"
+              className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+            />
+            {errors.cover_url && (
+              <p className="text-sm text-destructive">{errors.cover_url.message}</p>
             )}
           </div>
 
