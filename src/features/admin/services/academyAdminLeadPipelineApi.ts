@@ -7,6 +7,19 @@ export type RegistrationStatus =
   | "rejected"
   | "cancelled";
 
+export type FollowUpStatus =
+  | "new"
+  | "need_call"
+  | "contacted"
+  | "callback_scheduled"
+  | "no_answer"
+  | "qualified"
+  | "unqualified"
+  | "won"
+  | "lost";
+
+export type LeadQuality = "hot" | "warm" | "cold" | "unknown";
+
 export type BatchRegistrationLead = {
   id: string;
   batch_id: string;
@@ -29,6 +42,14 @@ export type BatchRegistrationLead = {
   updated_at?: string | null;
   training_format?: string | null;
   start_date?: string | null;
+  assigned_to?: string | null;
+  assigned_to_email?: string | null;
+  follow_up_status?: FollowUpStatus | string | null;
+  next_follow_up_at?: string | null;
+  last_contacted_at?: string | null;
+  internal_note?: string | null;
+  lead_quality?: LeadQuality | string | null;
+  lost_reason?: string | null;
 };
 
 export type LeadInsightData = {
@@ -157,6 +178,61 @@ export async function updateRegistrationStatus(
   return data;
 }
 
+export interface UpdateFollowUpPayload {
+  registrationId: string;
+  followUpStatus: string;
+  nextFollowUpAt?: string | null;
+  internalNote?: string | null;
+  leadQuality?: string | null;
+  assignedTo?: string | null;
+  assignedToEmail?: string | null;
+  lostReason?: string | null;
+}
+
+export async function updateRegistrationFollowUp(
+  payload: UpdateFollowUpPayload
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) throw new Error("UNAUTHENTICATED");
+
+  const { data, error } = await supabase.rpc("admin_update_registration_follow_up", {
+    p_registration_id: payload.registrationId,
+    p_follow_up_status: payload.followUpStatus,
+    p_next_follow_up_at: payload.nextFollowUpAt || null,
+    p_internal_note: payload.internalNote || null,
+    p_lead_quality: payload.leadQuality || null,
+    p_assigned_to: payload.assignedTo || null,
+    p_assigned_to_email: payload.assignedToEmail || null,
+    p_lost_reason: payload.lostReason || null,
+  });
+
+  if (error) {
+    console.warn("[updateRegistrationFollowUp RPC error, fallback to direct query]", error);
+    const { error: fallbackErr } = await supabase
+      .from("course_registrations")
+      .update({
+        follow_up_status: payload.followUpStatus,
+        next_follow_up_at: payload.nextFollowUpAt || null,
+        internal_note: payload.internalNote || null,
+        lead_quality: payload.leadQuality || null,
+        assigned_to: payload.assignedTo || null,
+        assigned_to_email: payload.assignedToEmail || null,
+        lost_reason: payload.lostReason || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", payload.registrationId);
+
+    if (fallbackErr) throw new Error(fallbackErr.message || "Lỗi khi cập nhật chăm sóc lead.");
+    return { ok: true };
+  }
+
+  if (data && !data.ok) {
+    throw new Error(data.error || "Cập nhật thất bại.");
+  }
+
+  return data;
+}
+
 export async function getRegistrationsByPhone(phone: string): Promise<BatchRegistrationLead[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
@@ -208,8 +284,9 @@ export function exportRegistrationsToCsv(leads: BatchRegistrationLead[], batchTi
   if (!leads.length) return;
 
   const headers = [
-    "Họ tên", "Số điện thoại", "Email", "Khóa học", "Lớp / Batch", "Nguồn", "Ghi chú khách",
-    "Trạng thái", "Ghi chú admin", "Ngày đăng ký", "Ngày liên hệ", "Ngày xác nhận"
+    "Họ tên", "Số điện thoại", "Email", "Khóa học", "Lớp / Batch", "Nguồn",
+    "Chất lượng", "Trạng thái chăm sóc", "Người phụ trách", "Lịch hẹn", "Ghi chú khách",
+    "Trạng thái đăng ký", "Lý do thất bại", "Ngày đăng ký"
   ];
 
   const escapeCsvCell = (value: unknown) => {
@@ -230,12 +307,14 @@ export function exportRegistrationsToCsv(leads: BatchRegistrationLead[], batchTi
     escapeCsvCell(lead.course_title),
     escapeCsvCell(lead.batch_title),
     escapeCsvCell(lead.source),
+    escapeCsvCell(lead.lead_quality),
+    escapeCsvCell(lead.follow_up_status),
+    escapeCsvCell(lead.assigned_to_email),
+    escapeCsvCell(lead.next_follow_up_at),
     escapeCsvCell(lead.note || lead.notes),
     escapeCsvCell(lead.status),
-    escapeCsvCell(lead.admin_note),
+    escapeCsvCell(lead.lost_reason),
     escapeCsvCell(lead.created_at),
-    escapeCsvCell(lead.contacted_at),
-    escapeCsvCell(lead.confirmed_at),
   ].join(","));
 
   const csvContent = [headers.join(","), ...rows].join("\n");

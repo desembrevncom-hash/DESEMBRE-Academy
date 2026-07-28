@@ -3,11 +3,14 @@ import { useEffect, useState, useMemo } from "react";
 import {
   getAllCourseRegistrations,
   updateRegistrationStatus,
+  updateRegistrationFollowUp,
   getLeadInsights,
   getRegistrationsByPhone,
   exportRegistrationsToCsv,
   BatchRegistrationLead,
   RegistrationStatus,
+  FollowUpStatus,
+  LeadQuality,
   LeadInsightData,
 } from "@/features/admin/services/academyAdminLeadPipelineApi";
 import {
@@ -32,16 +35,23 @@ import {
   GraduationCap,
   Users,
   AlertTriangle,
+  Flame,
+  Sun,
+  Snowflake,
+  Clock,
+  UserCheck,
+  Save,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isToday, isBefore, startOfDay, endOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/academy-enrollments")({
   component: AcademyRegistrationsCrmAdmin,
 });
 
-const STATUS_MAP: Record<RegistrationStatus, { label: string; bg: string; text: string; border: string }> = {
+const REGISTRATION_STATUS_MAP: Record<RegistrationStatus, { label: string; bg: string; text: string; border: string }> = {
   pending: { label: "Mới đăng ký", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
   contacted: { label: "Đã liên hệ", bg: "bg-sky-50", text: "text-sky-700", border: "border-sky-200" },
   confirmed: { label: "Đã xác nhận", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
@@ -49,13 +59,69 @@ const STATUS_MAP: Record<RegistrationStatus, { label: string; bg: string; text: 
   cancelled: { label: "Đã hủy", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200" },
 };
 
+const FOLLOW_UP_MAP: Record<string, { label: string; bg: string; text: string }> = {
+  new: { label: "Mới", bg: "bg-slate-100", text: "text-slate-700" },
+  need_call: { label: "Cần gọi", bg: "bg-amber-100", text: "text-amber-800" },
+  contacted: { label: "Đã liên hệ", bg: "bg-blue-100", text: "text-blue-800" },
+  callback_scheduled: { label: "Hẹn gọi lại", bg: "bg-purple-100", text: "text-purple-800" },
+  no_answer: { label: "Không nghe máy", bg: "bg-rose-100", text: "text-rose-800" },
+  qualified: { label: "Tiềm năng", bg: "bg-indigo-100", text: "text-indigo-800" },
+  unqualified: { label: "Kém tiềm năng", bg: "bg-slate-200", text: "text-slate-600" },
+  won: { label: "Chốt đăng ký", bg: "bg-emerald-100", text: "text-emerald-800" },
+  lost: { label: "Thất bại", bg: "bg-red-100", text: "text-red-700" },
+};
+
+const LEAD_QUALITY_MAP: Record<string, { label: string; bg: string; text: string; icon: any }> = {
+  hot: { label: "Hot Lead", bg: "bg-rose-100", text: "text-rose-700", icon: Flame },
+  warm: { label: "Warm", bg: "bg-amber-100", text: "text-amber-700", icon: Sun },
+  cold: { label: "Cold", bg: "bg-blue-100", text: "text-blue-700", icon: Snowflake },
+  unknown: { label: "Chưa loại", bg: "bg-slate-100", text: "text-slate-500", icon: Clock },
+};
+
 function StatusBadge({ status }: { status: RegistrationStatus }) {
-  const cfg = STATUS_MAP[status] || STATUS_MAP.pending;
+  const cfg = REGISTRATION_STATUS_MAP[status] || REGISTRATION_STATUS_MAP.pending;
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
       {cfg.label}
     </span>
   );
+}
+
+function FollowUpBadge({ status }: { status?: string | null }) {
+  const s = status || "new";
+  const cfg = FOLLOW_UP_MAP[s] || FOLLOW_UP_MAP.new;
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}>
+      {cfg.label}
+    </span>
+  );
+}
+
+function QualityBadge({ quality }: { quality?: string | null }) {
+  const q = quality || "unknown";
+  const cfg = LEAD_QUALITY_MAP[q] || LEAD_QUALITY_MAP.unknown;
+  const Icon = cfg.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${cfg.bg} ${cfg.text}`}>
+      <Icon className="w-3 h-3" />
+      {cfg.label}
+    </span>
+  );
+}
+
+function toDateTimeLocal(isoStr?: string | null) {
+  if (!isoStr) return "";
+  try {
+    const d = new Date(isoStr);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  } catch {
+    return "";
+  }
+}
+
+function fromDateTimeLocal(val: string) {
+  if (!val) return null;
+  return new Date(val).toISOString();
 }
 
 function AcademyRegistrationsCrmAdmin() {
@@ -64,14 +130,21 @@ function AcademyRegistrationsCrmAdmin() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [quickFilter, setQuickFilter] = useState<string>("all"); // 'all' | 'today' | 'overdue' | 'unassigned' | 'hot' | 'confirmed'
 
   const [selectedLead, setSelectedLead] = useState<BatchRegistrationLead | null>(null);
   const [leadInsights, setLeadInsights] = useState<LeadInsightData | null>(null);
   const [phoneHistory, setPhoneHistory] = useState<BatchRegistrationLead[]>([]);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
-  const [adminNote, setAdminNote] = useState("");
-  const [submittingStatus, setSubmittingStatus] = useState(false);
+  // Follow-up form state inside drawer
+  const [followUpStatus, setFollowUpStatus] = useState("new");
+  const [leadQuality, setLeadQuality] = useState("unknown");
+  const [nextFollowUpAt, setNextFollowUpAt] = useState("");
+  const [assignedToEmail, setAssignedToEmail] = useState("");
+  const [internalNote, setInternalNote] = useState("");
+  const [lostReason, setLostReason] = useState("");
+  const [savingFollowUp, setSavingFollowUp] = useState(false);
 
   const fetchRegistrations = async () => {
     setLoading(true);
@@ -114,9 +187,46 @@ function AcademyRegistrationsCrmAdmin() {
     return counts;
   }, [registrations]);
 
+  // Quick filtering
+  const filteredRegistrations = useMemo(() => {
+    const now = new Date();
+    return registrations.filter((r) => {
+      if (quickFilter === "today") {
+        if (!r.next_follow_up_at) return false;
+        try {
+          const d = parseISO(r.next_follow_up_at);
+          return isToday(d);
+        } catch { return false; }
+      }
+      if (quickFilter === "overdue") {
+        if (!r.next_follow_up_at) return false;
+        try {
+          const d = parseISO(r.next_follow_up_at);
+          return isBefore(d, startOfDay(now));
+        } catch { return false; }
+      }
+      if (quickFilter === "unassigned") {
+        return !r.assigned_to_email;
+      }
+      if (quickFilter === "hot") {
+        return r.lead_quality === "hot";
+      }
+      if (quickFilter === "confirmed") {
+        return r.status === "confirmed";
+      }
+      return true;
+    });
+  }, [registrations, quickFilter]);
+
   const loadLeadDetails = async (lead: BatchRegistrationLead) => {
     setSelectedLead(lead);
-    setAdminNote(lead.admin_note || lead.note || "");
+    setFollowUpStatus(lead.follow_up_status || "new");
+    setLeadQuality(lead.lead_quality || "unknown");
+    setNextFollowUpAt(toDateTimeLocal(lead.next_follow_up_at));
+    setAssignedToEmail(lead.assigned_to_email || "");
+    setInternalNote(lead.internal_note || lead.note || lead.notes || "");
+    setLostReason(lead.lost_reason || "");
+
     setPhoneHistory([]);
     setLoadingInsights(true);
     try {
@@ -133,7 +243,7 @@ function AcademyRegistrationsCrmAdmin() {
     }
   };
 
-  const handleUpdateStatus = async (newStatus: RegistrationStatus) => {
+  const handleUpdateRegistrationStatus = async (newStatus: RegistrationStatus) => {
     if (!selectedLead) return;
 
     if (newStatus === "confirmed") {
@@ -143,35 +253,64 @@ function AcademyRegistrationsCrmAdmin() {
       if (!ok) return;
     }
 
-    let noteToSave = adminNote;
+    let noteToSave = internalNote;
     if (newStatus === "cancelled") {
       const reason = window.prompt("Nhập lý do hủy đăng ký (không bắt buộc):");
-      if (reason === null) return; // User cancelled prompt
+      if (reason === null) return;
       if (reason) noteToSave = reason;
     }
 
-    setSubmittingStatus(true);
     try {
       await updateRegistrationStatus(selectedLead.id, newStatus, noteToSave);
       toast.success(
         newStatus === "confirmed"
           ? "Đã xác nhận đăng ký! Đã queue thông báo ZNS."
-          : `Đã chuyển trạng thái sang "${STATUS_MAP[newStatus]?.label || newStatus}".`
+          : `Đã chuyển trạng thái sang "${REGISTRATION_STATUS_MAP[newStatus]?.label || newStatus}".`
       );
 
-      // Refresh lead details and list
       fetchRegistrations();
-      loadLeadDetails({ ...selectedLead, status: newStatus, admin_note: noteToSave });
+      loadLeadDetails({ ...selectedLead, status: newStatus });
     } catch (err: any) {
-      console.error("handleUpdateStatus error:", err);
+      console.error("handleUpdateRegistrationStatus error:", err);
       toast.error(err.message || "Cập nhật trạng thái thất bại.");
+    }
+  };
+
+  const handleSaveFollowUp = async () => {
+    if (!selectedLead) return;
+    setSavingFollowUp(true);
+    try {
+      await updateRegistrationFollowUp({
+        registrationId: selectedLead.id,
+        followUpStatus,
+        leadQuality,
+        nextFollowUpAt: fromDateTimeLocal(nextFollowUpAt),
+        assignedToEmail: assignedToEmail.trim() || null,
+        internalNote: internalNote.trim() || null,
+        lostReason: lostReason.trim() || null,
+      });
+
+      toast.success("Đã lưu thông tin chăm sóc lead!");
+      fetchRegistrations();
+      loadLeadDetails({
+        ...selectedLead,
+        follow_up_status: followUpStatus,
+        lead_quality: leadQuality,
+        next_follow_up_at: fromDateTimeLocal(nextFollowUpAt),
+        assigned_to_email: assignedToEmail.trim() || null,
+        internal_note: internalNote.trim() || null,
+        lost_reason: lostReason.trim() || null,
+      });
+    } catch (err: any) {
+      console.error("handleSaveFollowUp error:", err);
+      toast.error(err.message || "Lỗi khi lưu chăm sóc lead.");
     } finally {
-      setSubmittingStatus(false);
+      setSavingFollowUp(false);
     }
   };
 
   const handleExportCsv = () => {
-    exportRegistrationsToCsv(registrations, "tat-ca-dang-ky");
+    exportRegistrationsToCsv(filteredRegistrations, "tat-ca-dang-ky");
     toast.success("Đã xuất danh sách thành file CSV.");
   };
 
@@ -185,10 +324,10 @@ function AcademyRegistrationsCrmAdmin() {
             <span>DESEMBRE ACADEMY CRM</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Đăng ký khóa học
+            Đăng ký khóa học & Tư vấn CRM
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm mt-1">
-            Quản lý thông tin khách đăng ký từ lịch khai giảng và các landing page.
+            Quản lý khách đăng ký, phân công tư vấn và đặt lịch follow-up chăm sóc học viên.
           </p>
         </div>
 
@@ -202,13 +341,37 @@ function AcademyRegistrationsCrmAdmin() {
         </Button>
       </div>
 
+      {/* Quick Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
+        {[
+          { key: "all", label: `Tất cả (${registrations.length})` },
+          { key: "today", label: "📞 Cần gọi hôm nay" },
+          { key: "overdue", label: "⚠️ Quá hạn follow-up" },
+          { key: "unassigned", label: "👤 Chưa phân công" },
+          { key: "hot", label: "🔥 Hot Lead" },
+          { key: "confirmed", label: "✅ Đã xác nhận" },
+        ].map((f) => (
+          <button
+            key={f.key}
+            onClick={() => setQuickFilter(f.key)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+              quickFilter === f.key
+                ? "bg-slate-900 text-white shadow-md"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {/* Filter Bar */}
       <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm theo họ tên, SĐT Zalo, email hoặc tên khóa học..."
+            placeholder="Tìm theo họ tên, SĐT Zalo, email, sale phụ trách..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -221,7 +384,7 @@ function AcademyRegistrationsCrmAdmin() {
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           >
-            <option value="all">Tất cả trạng thái</option>
+            <option value="all">Tất cả trạng thái hệ thống</option>
             <option value="pending">Mới đăng ký (Pending)</option>
             <option value="contacted">Đã liên hệ (Contacted)</option>
             <option value="confirmed">Đã xác nhận (Confirmed)</option>
@@ -248,10 +411,10 @@ function AcademyRegistrationsCrmAdmin() {
             <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
               <tr>
                 <th className="px-5 py-4">Khách hàng</th>
-                <th className="px-5 py-4">Khóa học / Lớp mở</th>
-                <th className="px-5 py-4">Nguồn</th>
-                <th className="px-5 py-4">Trạng thái</th>
-                <th className="px-5 py-4">Ngày đăng ký</th>
+                <th className="px-5 py-4">Khóa học / Lớp</th>
+                <th className="px-5 py-4">Chăm sóc CRM</th>
+                <th className="px-5 py-4">Người phụ trách</th>
+                <th className="px-5 py-4">Lịch Follow-up</th>
                 <th className="px-5 py-4 text-right">Thao tác</th>
               </tr>
             </thead>
@@ -263,21 +426,33 @@ function AcademyRegistrationsCrmAdmin() {
                     Đang tải danh sách đăng ký...
                   </td>
                 </tr>
-              ) : registrations.length === 0 ? (
+              ) : filteredRegistrations.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center text-slate-400 space-y-2">
                     <User className="w-10 h-10 mx-auto text-slate-300" />
-                    <p className="font-bold text-slate-700">Chưa có đăng ký nào</p>
-                    <p className="text-xs text-slate-400">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+                    <p className="font-bold text-slate-700">Không tìm thấy đăng ký nào</p>
+                    <p className="text-xs text-slate-400">Thử thay đổi tab bộ lọc hoặc từ khóa tìm kiếm.</p>
                   </td>
                 </tr>
               ) : (
-                registrations.map((lead) => {
+                filteredRegistrations.map((lead) => {
                   const cleanPhone = (lead.phone || "").replace(/[^0-9]/g, "");
                   const hasOtherRegistrations = (phoneCounts[cleanPhone] || 0) > 1;
 
+                  let isOverdue = false;
+                  if (lead.next_follow_up_at) {
+                    try {
+                      isOverdue = isBefore(parseISO(lead.next_follow_up_at), startOfDay(new Date()));
+                    } catch {}
+                  }
+
                   return (
-                    <tr key={lead.id} className="hover:bg-slate-50/60 transition-colors">
+                    <tr
+                      key={lead.id}
+                      className={`transition-colors hover:bg-slate-50/80 ${
+                        isOverdue ? "bg-rose-50/30" : ""
+                      }`}
+                    >
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-slate-900">{lead.full_name}</span>
@@ -304,17 +479,36 @@ function AcademyRegistrationsCrmAdmin() {
                       </td>
 
                       <td className="px-5 py-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                          {lead.source || "public_website"}
-                        </span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <StatusBadge status={lead.status} />
+                          <FollowUpBadge status={lead.follow_up_status} />
+                          <QualityBadge quality={lead.lead_quality} />
+                        </div>
                       </td>
 
-                      <td className="px-5 py-4">
-                        <StatusBadge status={lead.status} />
+                      <td className="px-5 py-4 text-xs">
+                        {lead.assigned_to_email ? (
+                          <span className="font-semibold text-slate-800 flex items-center gap-1">
+                            <UserCheck className="w-3.5 h-3.5 text-indigo-600" />
+                            {lead.assigned_to_email}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic">Chưa gán</span>
+                        )}
                       </td>
 
-                      <td className="px-5 py-4 text-xs text-slate-500 whitespace-nowrap">
-                        {format(parseISO(lead.created_at), "dd/MM/yyyy HH:mm")}
+                      <td className="px-5 py-4 text-xs">
+                        {lead.next_follow_up_at ? (
+                          <div className={`flex items-center gap-1 font-semibold ${
+                            isOverdue ? "text-rose-600 font-bold" : "text-slate-700"
+                          }`}>
+                            {isOverdue && <AlertTriangle className="w-3.5 h-3.5 shrink-0 animate-bounce" />}
+                            <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{format(parseISO(lead.next_follow_up_at), "dd/MM/yyyy HH:mm")}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">Chưa hẹn</span>
+                        )}
                       </td>
 
                       <td className="px-5 py-4 text-right">
@@ -351,7 +545,7 @@ function AcademyRegistrationsCrmAdmin() {
             <div className="px-6 py-5 bg-slate-900 text-white flex items-center justify-between shrink-0">
               <div>
                 <div className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider mb-0.5">
-                  CHI TIẾT ĐĂNG KÝ # {selectedLead.id.slice(0, 8)}
+                  CRM LEAD # {selectedLead.id.slice(0, 8)}
                 </div>
                 <h3 className="text-lg font-bold">{selectedLead.full_name}</h3>
               </div>
@@ -369,7 +563,7 @@ function AcademyRegistrationsCrmAdmin() {
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Trạng thái hiện tại
+                    Trạng thái đăng ký
                   </div>
                   <StatusBadge status={selectedLead.status} />
                 </div>
@@ -379,6 +573,117 @@ function AcademyRegistrationsCrmAdmin() {
                   <span className="font-semibold text-slate-800">
                     {format(parseISO(selectedLead.created_at), "dd/MM/yyyy HH:mm")}
                   </span>
+                </div>
+              </div>
+
+              {/* CRM Follow-up & Care Box */}
+              <div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-4 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1.5">
+                    <PhoneCall className="w-4 h-4 text-indigo-600" />
+                    <span>Chăm sóc lead & Lịch hẹn</span>
+                  </h4>
+                  <Button
+                    onClick={handleSaveFollowUp}
+                    disabled={savingFollowUp}
+                    size="sm"
+                    className="h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs"
+                  >
+                    {savingFollowUp ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Save className="w-3.5 h-3.5 mr-1" />}
+                    Lưu chăm sóc
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Trạng thái tư vấn (CRM Status)
+                    </label>
+                    <select
+                      value={followUpStatus}
+                      onChange={(e) => setFollowUpStatus(e.target.value)}
+                      className="w-full h-9 px-3 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500/20"
+                    >
+                      <option value="new">Mới đăng ký</option>
+                      <option value="need_call">Cần gọi chăm sóc</option>
+                      <option value="contacted">Đã liên hệ</option>
+                      <option value="callback_scheduled">Hẹn gọi lại</option>
+                      <option value="no_answer">Không nghe máy</option>
+                      <option value="qualified">Tiềm năng (Qualified)</option>
+                      <option value="unqualified">Không tiềm năng</option>
+                      <option value="won">Chốt đăng ký thành công</option>
+                      <option value="lost">Thất bại / Hủy lead</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Đánh giá chất lượng (Lead Quality)
+                    </label>
+                    <select
+                      value={leadQuality}
+                      onChange={(e) => setLeadQuality(e.target.value)}
+                      className="w-full h-9 px-3 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500/20"
+                    >
+                      <option value="hot">🔥 Hot Lead (Rất muốn học)</option>
+                      <option value="warm">☀️ Warm (Đang phân vân)</option>
+                      <option value="cold">❄️ Cold (Tham khảo)</option>
+                      <option value="unknown">⚪ Chưa phân loại</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Lịch follow-up tiếp theo
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={nextFollowUpAt}
+                      onChange={(e) => setNextFollowUpAt(e.target.value)}
+                      className="w-full h-9 px-3 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Email tư vấn viên phụ trách
+                    </label>
+                    <input
+                      type="email"
+                      value={assignedToEmail}
+                      onChange={(e) => setAssignedToEmail(e.target.value)}
+                      placeholder="e.g. sale@desembre.vn"
+                      className="w-full h-9 px-3 bg-white border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                  </div>
+                </div>
+
+                {(followUpStatus === "lost" || followUpStatus === "unqualified") && (
+                  <div>
+                    <label className="text-[11px] font-bold text-rose-700 block mb-1">
+                      Lý do thất bại / Không tiềm năng
+                    </label>
+                    <input
+                      type="text"
+                      value={lostReason}
+                      onChange={(e) => setLostReason(e.target.value)}
+                      placeholder="e.g. Trùng giờ làm, học phí quá cao..."
+                      className="w-full h-9 px-3 bg-white border border-rose-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-rose-500/20"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    Ghi chú chăm sóc nội bộ
+                  </label>
+                  <textarea
+                    value={internalNote}
+                    onChange={(e) => setInternalNote(e.target.value)}
+                    rows={2}
+                    className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500/20"
+                    placeholder="Ghi chú kết quả cuộc gọi, nhu cầu đặc biệt..."
+                  />
                 </div>
               </div>
 
@@ -531,20 +836,6 @@ function AcademyRegistrationsCrmAdmin() {
                   </div>
                 )}
               </div>
-
-              {/* Admin Notes Field */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Ghi chú Admin (Nội bộ)
-                </label>
-                <textarea
-                  value={adminNote}
-                  onChange={(e) => setAdminNote(e.target.value)}
-                  rows={2}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder="Ghi chú về trao đổi với khách, thắc mắc..."
-                />
-              </div>
             </div>
 
             {/* Drawer Footer Actions */}
@@ -552,8 +843,7 @@ function AcademyRegistrationsCrmAdmin() {
               <div className="flex flex-wrap items-center gap-2">
                 {selectedLead.status !== "contacted" && (
                   <Button
-                    onClick={() => handleUpdateStatus("contacted")}
-                    disabled={submittingStatus}
+                    onClick={() => handleUpdateRegistrationStatus("contacted")}
                     size="sm"
                     variant="outline"
                     className="rounded-xl text-xs font-semibold text-sky-700 border-sky-200 bg-sky-50 hover:bg-sky-100"
@@ -564,8 +854,7 @@ function AcademyRegistrationsCrmAdmin() {
 
                 {selectedLead.status !== "confirmed" && (
                   <Button
-                    onClick={() => handleUpdateStatus("confirmed")}
-                    disabled={submittingStatus}
+                    onClick={() => handleUpdateRegistrationStatus("confirmed")}
                     size="sm"
                     className="rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                   >
@@ -576,8 +865,7 @@ function AcademyRegistrationsCrmAdmin() {
 
                 {selectedLead.status !== "cancelled" && (
                   <Button
-                    onClick={() => handleUpdateStatus("cancelled")}
-                    disabled={submittingStatus}
+                    onClick={() => handleUpdateRegistrationStatus("cancelled")}
                     size="sm"
                     variant="ghost"
                     className="rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50"
@@ -588,8 +876,7 @@ function AcademyRegistrationsCrmAdmin() {
 
                 {selectedLead.status === "cancelled" && (
                   <Button
-                    onClick={() => handleUpdateStatus("pending")}
-                    disabled={submittingStatus}
+                    onClick={() => handleUpdateRegistrationStatus("pending")}
                     size="sm"
                     variant="outline"
                     className="rounded-xl text-xs font-semibold"
