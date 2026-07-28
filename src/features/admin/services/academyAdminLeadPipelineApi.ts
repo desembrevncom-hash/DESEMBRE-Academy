@@ -96,36 +96,16 @@ export async function getAllCourseRegistrations(filters?: {
   });
 
   if (error) {
-    console.warn("[getAllCourseRegistrations RPC error, fallback to direct query]", error);
-    let query = supabase
-      .from("course_registrations")
-      .select("*, batch:course_batches(id, title, slug, training_format, start_date, course:courses(id, title))")
-      .order("created_at", { ascending: false });
-
-    if (filters?.status && filters.status !== "all") {
-      query = query.eq("status", filters.status);
-    }
-    if (filters?.batchId) {
-      query = query.eq("batch_id", filters.batchId);
-    }
-    if (filters?.source && filters.source !== "all") {
-      query = query.eq("source", filters.source);
-    }
-    if (filters?.search) {
-      query = query.or(`full_name.ilike.%${filters.search}%,phone.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
-    }
-
-    const { data: fallbackData, error: fallbackErr } = await query;
-    if (fallbackErr) throw fallbackErr;
-    return (fallbackData || []).map((r: any) => ({
-      ...r,
-      batch_title: r.batch?.title,
-      batch_slug: r.batch?.slug,
-      training_format: r.batch?.training_format,
-      start_date: r.batch?.start_date,
-      course_title: r.batch?.course?.title,
-      note: r.note || r.notes,
-    }));
+    console.error("[getAllCourseRegistrations] RPC failed:", {
+      code: error.code,
+      message: error.message,
+      details: (error as any).details,
+      hint: (error as any).hint,
+    });
+    throw new Error(
+      `Không thể tải danh sách đăng ký: ${error.message || "Lỗi RPC không xác định"}` +
+      ((error as any).hint ? ` (Hint: ${(error as any).hint})` : "")
+    );
   }
 
   return (data || []) as BatchRegistrationLead[];
