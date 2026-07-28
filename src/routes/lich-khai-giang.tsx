@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
-import { Loader2, Calendar, AlertCircle } from "lucide-react";
+import { Loader2, Calendar, AlertCircle, RotateCcw } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 
@@ -64,8 +64,8 @@ function PublicCalendarPage() {
     return batches.filter((b) => {
       // Format filter
       if (selectedFormat !== "ALL") {
-        const fmt = b.training_format || "";
-        if (fmt !== selectedFormat) return false;
+        const fmt = (b.training_format || "").toLowerCase();
+        if (fmt !== selectedFormat.toLowerCase()) return false;
       }
 
       // Month filter
@@ -81,6 +81,11 @@ function PublicCalendarPage() {
       return true;
     });
   }, [batches, selectedFormat, selectedMonth]);
+
+  const handleResetFilters = () => {
+    setSelectedFormat("ALL");
+    setSelectedMonth("ALL");
+  };
 
   const handleOpenRegister = (batch: PublicCourseBatch) => {
     setRegisteringBatch(batch);
@@ -99,14 +104,14 @@ function PublicCalendarPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-24 font-sans">
+    <div className="min-h-screen bg-slate-50/60 pb-24 font-sans antialiased text-slate-900">
       <SiteHeader />
 
-      {/* Hero */}
+      {/* Hero Section */}
       <TrainingHero />
 
-      {/* Main Container */}
-      <main className="container mx-auto px-4 max-w-5xl py-10 space-y-8">
+      {/* Main Schedule Container */}
+      <main id="schedule-section" className="container mx-auto px-4 max-w-5xl py-10 space-y-8">
         {/* Filters */}
         <TrainingFilters
           selectedFormat={selectedFormat}
@@ -114,11 +119,13 @@ function PublicCalendarPage() {
           months={availableMonths}
           selectedMonth={selectedMonth}
           onSelectMonth={setSelectedMonth}
+          onResetFilters={handleResetFilters}
+          totalResults={filteredBatches.length}
         />
 
         {/* Loading State */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-24 bg-white border border-slate-100 rounded-3xl shadow-sm">
+          <div className="flex flex-col items-center justify-center py-24 bg-white border border-slate-200/70 rounded-3xl shadow-sm">
             <Loader2 className="h-10 w-10 animate-spin text-indigo-600 mb-4" />
             <p className="text-sm font-medium text-slate-500">Đang tải danh sách lịch khai giảng...</p>
           </div>
@@ -130,7 +137,7 @@ function PublicCalendarPage() {
             <AlertCircle className="h-10 w-10 text-rose-500 mx-auto mb-3" />
             <h3 className="text-lg font-bold text-slate-900 mb-2">Chưa thể kết nối lịch học</h3>
             <p className="text-sm text-slate-500 mb-6">{error}</p>
-            <Button onClick={fetchSchedule} variant="outline" className="rounded-xl px-6">
+            <Button onClick={fetchSchedule} variant="outline" className="rounded-xl px-6 font-semibold">
               Thử lại
             </Button>
           </div>
@@ -139,15 +146,22 @@ function PublicCalendarPage() {
         {/* Empty State */}
         {!loading && !error && filteredBatches.length === 0 && (
           <div className="text-center py-20 border border-slate-200/80 rounded-3xl bg-white p-8 shadow-sm space-y-4">
-            <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
               <Calendar className="h-8 w-8" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900">Hiện chưa có lịch khai giảng phù hợp</h3>
+            <h3 className="text-2xl font-bold text-slate-900">Chưa có lớp phù hợp</h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto">
-              Không tìm thấy lớp học theo bộ lọc hiện tại. Vui lòng chọn bộ lọc khác hoặc xem toàn bộ khóa học.
+              Không tìm thấy lớp khai giảng theo bộ lọc hiện tại. Bạn có thể xóa bộ lọc hoặc xem toàn bộ danh mục khóa học.
             </p>
-            <div className="pt-2">
-              <Button asChild variant="outline" className="rounded-xl px-6">
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              {(selectedFormat !== "ALL" || selectedMonth !== "ALL") && (
+                <Button onClick={handleResetFilters} variant="outline" className="rounded-xl px-5 font-semibold">
+                  <RotateCcw className="mr-2 w-4 h-4 text-indigo-600" />
+                  Xóa bộ lọc
+                </Button>
+              )}
+              <Button asChild className="rounded-xl px-6 font-semibold bg-indigo-600 hover:bg-indigo-700">
                 <Link to="/courses">Xem tất cả khóa học</Link>
               </Button>
             </div>
@@ -158,7 +172,7 @@ function PublicCalendarPage() {
         {!loading && !error && filteredBatches.length > 0 && (
           <div className="space-y-6">
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-bold text-slate-900">
+              <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
                 Các lớp khai giảng sắp tới ({filteredBatches.length})
               </h2>
             </div>

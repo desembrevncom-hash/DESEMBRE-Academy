@@ -1,19 +1,14 @@
-import { Video, MapPin, MonitorPlay, Calendar, Filter } from "lucide-react";
+import { Video, MapPin, MonitorPlay, Calendar, Filter, RotateCcw } from "lucide-react";
+import { FORMAT_OPTIONS } from "./TrainingFiltersData";
 
-export const FORMAT_OPTIONS = [
-  { id: "ALL", label: "Tất cả hình thức", icon: Calendar },
-  { id: "office", label: "Văn phòng (Offline)", icon: MapPin },
-  { id: "zoom", label: "Zoom Online", icon: Video },
-  { id: "hybrid", label: "Hybrid", icon: MonitorPlay },
-  { id: "external_seminar", label: "Seminar ngoài", icon: Calendar },
-];
-
-interface TrainingFiltersProps {
+export interface TrainingFiltersProps {
   selectedFormat: string;
   onSelectFormat: (format: string) => void;
   months: string[];
   selectedMonth: string;
   onSelectMonth: (month: string) => void;
+  onResetFilters?: () => void;
+  totalResults?: number;
 }
 
 export function TrainingFilters({
@@ -22,16 +17,34 @@ export function TrainingFilters({
   months,
   selectedMonth,
   onSelectMonth,
+  onResetFilters,
+  totalResults,
 }: TrainingFiltersProps) {
+  const isFiltered = selectedFormat !== "ALL" || selectedMonth !== "ALL";
+
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+    <div className="bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
       {/* Format filters */}
       <div>
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-          <Filter className="w-3.5 h-3.5" />
-          <span>Hình thức đào tạo</span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+            <Filter className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Hình thức đào tạo</span>
+          </div>
+
+          {isFiltered && onResetFilters && (
+            <button
+              onClick={onResetFilters}
+              className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Xóa bộ lọc</span>
+            </button>
+          )}
         </div>
-        <div className="flex flex-wrap gap-2">
+
+        {/* Scrollable container on mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
           {FORMAT_OPTIONS.map((opt) => {
             const Icon = opt.icon;
             const isSelected = selectedFormat === opt.id;
@@ -39,10 +52,10 @@ export function TrainingFilters({
               <button
                 key={opt.id}
                 onClick={() => onSelectFormat(opt.id)}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 shrink-0 ${
                   isSelected
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
-                    : "bg-slate-50 text-slate-600 border border-slate-200/60 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                    : "bg-slate-50 text-slate-600 border border-slate-200/70 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isSelected ? "text-white" : "text-slate-400"}`} />
@@ -55,15 +68,16 @@ export function TrainingFilters({
 
       {/* Month filters */}
       {months.length > 0 && (
-        <div className="pt-3 border-t border-slate-100">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-            <Calendar className="w-3.5 h-3.5" />
+        <div className="pt-3.5 border-t border-slate-100">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+            <Calendar className="w-3.5 h-3.5 text-indigo-600" />
             <span>Tháng khai giảng</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
             <button
               onClick={() => onSelectMonth("ALL")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
                 selectedMonth === "ALL"
                   ? "bg-slate-900 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -75,7 +89,7 @@ export function TrainingFilters({
               <button
                 key={m}
                 onClick={() => onSelectMonth(m)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
                   selectedMonth === m
                     ? "bg-slate-900 text-white"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
