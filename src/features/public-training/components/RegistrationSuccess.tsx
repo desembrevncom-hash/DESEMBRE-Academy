@@ -1,13 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CheckCircle2, ArrowRight, PhoneCall, Sparkles, Home } from "lucide-react";
+import { CheckCircle2, ArrowRight, PhoneCall, Sparkles, Home, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface RegistrationSuccessProps {
   batchTitle: string;
+  isDuplicate?: boolean;
   onClose: () => void;
 }
 
-export function RegistrationSuccess({ batchTitle, onClose }: RegistrationSuccessProps) {
+export function RegistrationSuccess({ batchTitle, isDuplicate, onClose }: RegistrationSuccessProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -15,23 +16,38 @@ export function RegistrationSuccess({ batchTitle, onClose }: RegistrationSuccess
 
       {/* Modal Card */}
       <div className="relative bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-6 animate-in zoom-in-95 duration-300">
-        <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-          <CheckCircle2 className="w-10 h-10" />
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-inner ${
+          isDuplicate ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"
+        }`}>
+          {isDuplicate ? <Info className="w-10 h-10" /> : <CheckCircle2 className="w-10 h-10" />}
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+            isDuplicate ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
+          }`}>
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Đăng ký thành công</span>
+            <span>{isDuplicate ? "Thông tin đăng ký" : "Đăng ký thành công"}</span>
           </div>
 
           <h3 className="text-2xl font-extrabold text-slate-900 leading-tight">
-            DESEMBRE Academy đã nhận thông tin đăng ký của bạn!
+            {isDuplicate
+              ? "Bạn đã đăng ký lớp học này trước đó!"
+              : "DESEMBRE Academy đã nhận thông tin đăng ký của bạn!"}
           </h3>
 
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-1">
-            Cảm ơn bạn đã đăng ký tham gia lớp học{" "}
-            <span className="font-bold text-slate-900">{batchTitle}</span>.
+            {isDuplicate ? (
+              <>
+                Hệ thống ghi nhận bạn đã đăng ký tham gia lớp{" "}
+                <span className="font-bold text-slate-900">{batchTitle}</span>. DESEMBRE Academy sẽ liên hệ xác nhận trong thời gian sớm nhất.
+              </>
+            ) : (
+              <>
+                Cảm ơn bạn đã đăng ký tham gia lớp học{" "}
+                <span className="font-bold text-slate-900">{batchTitle}</span>.
+              </>
+            )}
           </p>
         </div>
 

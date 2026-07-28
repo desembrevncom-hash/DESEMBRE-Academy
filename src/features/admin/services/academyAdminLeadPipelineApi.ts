@@ -157,6 +157,38 @@ export async function updateRegistrationStatus(
   return data;
 }
 
+export async function getRegistrationsByPhone(phone: string): Promise<BatchRegistrationLead[]> {
+  const supabase = getSupabaseBrowserClient();
+  if (!supabase) throw new Error("UNAUTHENTICATED");
+  if (!phone) return [];
+
+  const { data, error } = await supabase.rpc("admin_get_registrations_by_phone", {
+    p_phone: phone,
+  });
+
+  if (error) {
+    console.warn("[getRegistrationsByPhone RPC error, fallback to direct query]", error);
+    const cleanPhone = phone.replace(/[^0-9]/g, "");
+    const { data: fallbackData, error: fallbackErr } = await supabase
+      .from("course_registrations")
+      .select("*, batch:course_batches(id, title, slug, training_format, course:courses(id, title))")
+      .order("created_at", { ascending: false });
+
+    if (fallbackErr) return [];
+    return (fallbackData || [])
+      .filter((r: any) => (r.phone || "").replace(/[^0-9]/g, "") === cleanPhone)
+      .map((r: any) => ({
+        ...r,
+        batch_title: r.batch?.title,
+        batch_slug: r.batch?.slug,
+        training_format: r.batch?.training_format,
+        course_title: r.batch?.course?.title,
+      }));
+  }
+
+  return (data || []) as BatchRegistrationLead[];
+}
+
 export async function getLeadInsights(registrationId: string): Promise<LeadInsightData> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");

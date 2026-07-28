@@ -20,7 +20,7 @@ type RegistrationFormValues = z.infer<typeof registrationSchema>;
 interface RegistrationFormProps {
   batch: PublicCourseBatch;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (isDuplicate?: boolean) => void;
 }
 
 export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationFormProps) {
@@ -44,17 +44,19 @@ export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationForm
   });
 
   const onSubmit = async (values: RegistrationFormValues) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     setErrorMsg(null);
     try {
-      await submitPublicCourseRegistration({
+      const res = await submitPublicCourseRegistration({
         batchId: batch.id,
         fullName: values.fullName,
         phone: values.phone,
         email: values.email || undefined,
         notes: values.notes || undefined,
       });
-      onSuccess();
+
+      onSuccess(!!res.duplicate);
     } catch (err: any) {
       console.error("[PublicRegistration Error]:", err);
       // Show user-friendly error message in Vietnamese

@@ -4,6 +4,7 @@ import {
   getAllCourseRegistrations,
   updateRegistrationStatus,
   getLeadInsights,
+  getRegistrationsByPhone,
   exportRegistrationsToCsv,
   BatchRegistrationLead,
   RegistrationStatus,
@@ -29,6 +30,8 @@ import {
   Phone,
   Mail,
   GraduationCap,
+  Users,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
@@ -64,6 +67,7 @@ function AcademyRegistrationsCrmAdmin() {
 
   const [selectedLead, setSelectedLead] = useState<BatchRegistrationLead | null>(null);
   const [leadInsights, setLeadInsights] = useState<LeadInsightData | null>(null);
+  const [phoneHistory, setPhoneHistory] = useState<BatchRegistrationLead[]>([]);
   const [loadingInsights, setLoadingInsights] = useState(false);
 
   const [adminNote, setAdminNote] = useState("");
@@ -98,13 +102,30 @@ function AcademyRegistrationsCrmAdmin() {
     return () => clearTimeout(t);
   }, [search]);
 
+  // Phone frequency map across current dataset
+  const phoneCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    registrations.forEach((r) => {
+      const clean = (r.phone || "").replace(/[^0-9]/g, "");
+      if (clean) {
+        counts[clean] = (counts[clean] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [registrations]);
+
   const loadLeadDetails = async (lead: BatchRegistrationLead) => {
     setSelectedLead(lead);
     setAdminNote(lead.admin_note || lead.note || "");
+    setPhoneHistory([]);
     setLoadingInsights(true);
     try {
-      const insights = await getLeadInsights(lead.id);
+      const [insights, phoneRegs] = await Promise.all([
+        getLeadInsights(lead.id).catch(() => null),
+        getRegistrationsByPhone(lead.phone).catch(() => []),
+      ]);
       setLeadInsights(insights);
+      setPhoneHistory(phoneRegs || []);
     } catch (e) {
       console.error("loadLeadDetails error:", e);
     } finally {
@@ -251,51 +272,64 @@ function AcademyRegistrationsCrmAdmin() {
                   </td>
                 </tr>
               ) : (
-                registrations.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="font-bold text-slate-900">{lead.full_name}</div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                        <span className="font-semibold text-slate-700">{lead.phone}</span>
-                        {lead.email && <span className="text-slate-400">· {lead.email}</span>}
-                      </div>
-                    </td>
+                registrations.map((lead) => {
+                  const cleanPhone = (lead.phone || "").replace(/[^0-9]/g, "");
+                  const hasOtherRegistrations = (phoneCounts[cleanPhone] || 0) > 1;
 
-                    <td className="px-5 py-4">
-                      <div className="font-bold text-slate-900 max-w-xs truncate">
-                        {lead.course_title || "Khóa đào tạo DESEMBRE"}
-                      </div>
-                      <div className="text-xs text-indigo-600 font-medium">
-                        Lớp: {lead.batch_title || lead.batch_id}
-                      </div>
-                    </td>
+                  return (
+                    <tr key={lead.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900">{lead.full_name}</span>
+                          {hasOtherRegistrations && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[10px] font-bold border border-amber-200">
+                              <Users className="w-3 h-3" />
+                              Có đăng ký khác
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                          <span className="font-semibold text-slate-700">{lead.phone}</span>
+                          {lead.email && <span className="text-slate-400">· {lead.email}</span>}
+                        </div>
+                      </td>
 
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                        {lead.source || "public_website"}
-                      </span>
-                    </td>
+                      <td className="px-5 py-4">
+                        <div className="font-bold text-slate-900 max-w-xs truncate">
+                          {lead.course_title || "Khóa đào tạo DESEMBRE"}
+                        </div>
+                        <div className="text-xs text-indigo-600 font-medium">
+                          Lớp: {lead.batch_title || lead.batch_id}
+                        </div>
+                      </td>
 
-                    <td className="px-5 py-4">
-                      <StatusBadge status={lead.status} />
-                    </td>
+                      <td className="px-5 py-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                          {lead.source || "public_website"}
+                        </span>
+                      </td>
 
-                    <td className="px-5 py-4 text-xs text-slate-500 whitespace-nowrap">
-                      {format(parseISO(lead.created_at), "dd/MM/yyyy HH:mm")}
-                    </td>
+                      <td className="px-5 py-4">
+                        <StatusBadge status={lead.status} />
+                      </td>
 
-                    <td className="px-5 py-4 text-right">
-                      <Button
-                        onClick={() => loadLeadDetails(lead)}
-                        variant="outline"
-                        size="sm"
-                        className="rounded-xl text-xs font-semibold text-indigo-600 border-indigo-200 hover:bg-indigo-50"
-                      >
-                        Chi tiết / Xử lý
-                      </Button>
-                    </td>
-                  </tr>
-                ))
+                      <td className="px-5 py-4 text-xs text-slate-500 whitespace-nowrap">
+                        {format(parseISO(lead.created_at), "dd/MM/yyyy HH:mm")}
+                      </td>
+
+                      <td className="px-5 py-4 text-right">
+                        <Button
+                          onClick={() => loadLeadDetails(lead)}
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl text-xs font-semibold text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                        >
+                          Chi tiết / Xử lý
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -391,6 +425,38 @@ function AcademyRegistrationsCrmAdmin() {
                   </div>
                 )}
               </div>
+
+              {/* Duplicate Registrations by Phone Box */}
+              {phoneHistory.length > 0 && (
+                <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Lịch sử đăng ký cùng số điện thoại ({phoneHistory.length})</span>
+                  </h4>
+                  <div className="space-y-2 text-xs">
+                    {phoneHistory.map((p) => (
+                      <div
+                        key={p.id}
+                        className={`flex items-center justify-between p-3 rounded-xl border shadow-2xs transition-colors ${
+                          p.id === selectedLead.id
+                            ? "bg-amber-100/70 border-amber-300 font-bold"
+                            : "bg-white border-amber-100"
+                        }`}
+                      >
+                        <div>
+                          <div className="font-bold text-slate-900">
+                            {p.course_title || "Khóa đào tạo DESEMBRE"}
+                          </div>
+                          <div className="text-[11px] text-slate-500 font-normal">
+                            Lớp: {p.batch_title || p.batch_id} · {format(parseISO(p.created_at), "dd/MM/yyyy HH:mm")}
+                          </div>
+                        </div>
+                        <StatusBadge status={p.status} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Class Info Box */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-2xs">

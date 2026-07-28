@@ -49,6 +49,14 @@ export interface SubmitPublicRegistrationPayload {
   notes?: string;
 }
 
+export interface SubmitPublicRegistrationResponse {
+  ok: boolean;
+  duplicate?: boolean;
+  registration_id?: string;
+  message?: string;
+  error?: string;
+}
+
 export async function getPublicTrainingSchedule(): Promise<PublicCourseBatch[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) {
@@ -73,7 +81,7 @@ export async function getPublicTrainingSchedule(): Promise<PublicCourseBatch[]> 
 
 export async function submitPublicCourseRegistration(
   payload: SubmitPublicRegistrationPayload
-): Promise<{ ok: boolean; registration_id?: string; error?: string }> {
+): Promise<SubmitPublicRegistrationResponse> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("Supabase client unavailable");
 
@@ -99,5 +107,5 @@ export async function submitPublicCourseRegistration(
     throw new Error(data.error || "Đăng ký không thành công");
   }
 
-  return data;
+  return (data || { ok: true }) as SubmitPublicRegistrationResponse;
 }

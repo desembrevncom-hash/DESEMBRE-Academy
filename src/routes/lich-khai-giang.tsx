@@ -26,6 +26,7 @@ function PublicCalendarPage() {
 
   const [registeringBatch, setRegisteringBatch] = useState<PublicCourseBatch | null>(null);
   const [successBatchTitle, setSuccessBatchTitle] = useState<string | null>(null);
+  const [isDuplicateRegistration, setIsDuplicateRegistration] = useState(false);
 
   const fetchSchedule = async () => {
     try {
@@ -201,6 +202,7 @@ function PublicCalendarPage() {
       {successBatchTitle && (
         <RegistrationSuccess
           batchTitle={successBatchTitle}
+          isDuplicate={isDuplicateRegistration}
           onClose={() => setSuccessBatchTitle(null)}
         />
       )}
