@@ -181,7 +181,7 @@ function SessionForm({ batchId, editing, onDone, onCancel }: SessionFormProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Sessions Section
 // ─────────────────────────────────────────────────────────────────────────────
-function SessionsSection({ batchId }: { batchId: string }) {
+function SessionsSection({ batchId, onCountChange }: { batchId: string, onCountChange?: (count: number) => void }) {
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -195,6 +195,7 @@ function SessionsSection({ batchId }: { batchId: string }) {
       setError(null);
       const data = await adminGetBatchSessions(batchId);
       setSessions(data);
+      if (onCountChange) onCountChange(data.length);
     } catch (err: any) {
       setError(err.message || "Không tải được danh sách buổi học.");
     } finally {
@@ -227,8 +228,8 @@ function SessionsSection({ batchId }: { batchId: string }) {
     <div className="bg-card border rounded-lg p-6 mt-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold">Sessions / Lịch học</h2>
-          <p className="text-sm text-muted-foreground mt-1">Quản lý các buổi học trong batch này.</p>
+          <h2 className="text-xl font-bold">Lịch học của lớp này</h2>
+          <p className="text-sm text-muted-foreground mt-1">Các buổi học sẽ hiển thị trên lịch khai giảng và trang chi tiết khóa học.</p>
         </div>
         {!showForm && !editingSession && (
           <Button size="sm" onClick={() => setShowForm(true)}>
@@ -260,7 +261,8 @@ function SessionsSection({ batchId }: { batchId: string }) {
 
       {!loading && !error && sessions.length === 0 && !showForm && (
         <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/20">
-          Chưa có buổi học nào. Nhấn "Thêm buổi học" để tạo.
+          <p className="font-semibold text-slate-700">Chưa có buổi học nào cho lớp này.</p>
+          <p className="text-sm mt-1">Bạn có thể thêm buổi học sau khi tạo lớp.</p>
         </div>
       )}
 
@@ -344,6 +346,8 @@ function AdminBatchesEditPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionCount, setSessionCount] = useState<number>(0);
+  const [batchRegistrations, setBatchRegistrations] = useState<number>(0);
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
     defaultValues: {
@@ -374,8 +378,10 @@ function AdminBatchesEditPage() {
         setInstructors(instructorsData || []);
         const batch = batchesData.find((b: any) => b.id === batchId);
         if (batch) {
+          const totalRegs = (batch.confirmed_count || 0) + (batch.pending_count || 0) + (batch.registration_count || 0);
+          setBatchRegistrations(totalRegs);
           reset({
-            course_id: batch.course_id ?? "",
+            course_id: batch.course_id || batch.course?.id || "",
             title: batch.title ?? "",
             slug: batch.slug ?? "",
             training_format: batch.training_format ?? "office",
@@ -401,6 +407,12 @@ function AdminBatchesEditPage() {
 
   const onSubmit = async (values: any) => {
     try {
+      if ((values.registration_status === "OPEN" || values.registration_status === "open") && sessionCount === 0) {
+        if (!window.confirm("Lớp này chưa có buổi học. Khách vẫn có thể đăng ký nhưng lịch học sẽ hiển thị là đang cập nhật. Bạn vẫn muốn mở đăng ký?")) {
+          return;
+        }
+      }
+
       setSubmitting(true);
       setError(null);
       const payload = {
@@ -438,18 +450,18 @@ function AdminBatchesEditPage() {
         <div>
           <Button variant="ghost" asChild className="mb-4 -ml-4">
             <Link to="/admin/batches">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Batches
+              <ArrowLeft className="mr-2 h-4 w-4" /> Quay lại danh sách lớp
             </Link>
           </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Batch</h1>
-          <p className="text-muted-foreground mt-2">Update batch details and status.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa lớp đào tạo</h1>
+          <p className="text-muted-foreground mt-2">Cập nhật thông tin khai giảng, giảng viên và trạng thái đăng ký.</p>
         </div>
         <Link
           to="/admin/batches/$batchId/registrations"
           params={{ batchId }}
           className="mt-8 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
         >
-          <Users className="mr-2 h-4 w-4" /> View Registrations
+          <Users className="mr-2 h-4 w-4" /> Xem đăng ký
         </Link>
       </div>
 
@@ -461,22 +473,29 @@ function AdminBatchesEditPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Course</label>
-            <select {...register("course_id", { required: "Course is required" })} className={selectCls}>
-              <option value="">Select a course...</option>
+            <label className="text-sm font-medium">Khóa học</label>
+            <select
+              {...register("course_id", { required: "Vui lòng chọn khóa học" })}
+              className={selectCls}
+              disabled={batchRegistrations > 0}
+            >
+              <option value="">Chọn khóa học...</option>
               {courses.map(c => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
             </select>
+            {batchRegistrations > 0 && (
+              <p className="text-xs text-amber-600 font-medium mt-1">Lớp đã có học viên đăng ký. Không thể đổi khóa học.</p>
+            )}
             {errors.course_id && <p className="text-destructive text-sm">{errors.course_id.message}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Batch Title</label>
+              <label className="text-sm font-medium">Tên lớp (Batch Title)</label>
               <input
                 {...register("title", {
-                  required: "Title is required",
+                  required: "Vui lòng nhập tên lớp",
                   onChange: (e) => setValue("slug", generateSlug(e.target.value), { shouldValidate: true })
                 })}
                 className={inputCls}
@@ -484,10 +503,10 @@ function AdminBatchesEditPage() {
               {errors.title && <p className="text-destructive text-sm">{errors.title.message}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Slug</label>
+              <label className="text-sm font-medium">Đường dẫn (Slug)</label>
               <input
                 {...register("slug", {
-                  required: "Slug is required",
+                  required: "Vui lòng nhập đường dẫn",
                   pattern: { value: /^[a-z0-9-]+$/, message: "Chỉ cho phép a-z, 0-9, dấu gạch ngang" }
                 })}
                 className={inputCls}
@@ -553,24 +572,24 @@ function AdminBatchesEditPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
+            <label className="text-sm font-medium">Mô tả public (Description)</label>
             <textarea {...register("description")} className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
           </div>
 
           <div className="flex justify-end pt-4">
             <Button type="button" variant="outline" className="mr-4" onClick={() => navigate({ to: "/admin/batches" })}>
-              Cancel
+              Huỷ
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Changes
+              Lưu thay đổi
             </Button>
           </div>
         </form>
       </div>
 
       {/* Sessions Section */}
-      <SessionsSection batchId={batchId} />
+      <SessionsSection batchId={batchId} onCountChange={setSessionCount} />
     </div>
   );
 }

@@ -222,8 +222,8 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 italic">
-                Lịch học chi tiết sẽ được ban tổ chức chốt khi đủ lớp.
+              <p className="text-sm font-medium text-slate-500 italic text-center py-2">
+                Lịch học đang cập nhật
               </p>
             )}
           </div>
