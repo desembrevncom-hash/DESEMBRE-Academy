@@ -106,11 +106,21 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
             {instructor ? (
               <>
                 {instructor.avatar_url ? (
-                  <img
-                    src={instructor.avatar_url}
-                    alt={instructor.full_name}
-                    className="w-12 h-12 rounded-full object-cover border border-indigo-200 shrink-0 shadow-sm"
-                  />
+                  <>
+                    <img
+                      src={instructor.avatar_url}
+                      alt={instructor.full_name}
+                      className="w-12 h-12 rounded-full object-cover border border-indigo-200 shrink-0 shadow-sm"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const next = e.currentTarget.nextElementSibling;
+                        if (next) next.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm hidden">
+                      {getInitials(instructor.full_name)}
+                    </div>
+                  </>
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
                     {getInitials(instructor.full_name)}
@@ -118,7 +128,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 )}
                 <div className="min-w-0 flex-1 text-xs">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-0.5">
-                    Giảng viên phụ trách
+                    Chuyên gia đào tạo
                   </div>
                   <div className="font-bold text-slate-900 text-sm truncate">
                     {instructor.full_name}
@@ -147,7 +157,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 </div>
                 <div className="text-xs">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
-                    Giảng viên
+                    Chuyên gia đào tạo
                   </div>
                   <div className="font-bold text-slate-900 text-sm">
                     Đội ngũ đào tạo DESEMBRE Academy

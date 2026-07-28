@@ -262,13 +262,23 @@ function AdminInstructorsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {inst.avatar_url ? (
-                          <img
-                            src={inst.avatar_url}
-                            alt={inst.full_name}
-                            className="w-10 h-10 rounded-full object-cover border border-slate-200"
-                          />
+                          <>
+                            <img
+                              src={inst.avatar_url}
+                              alt={inst.full_name}
+                              className="w-11 h-11 rounded-full object-cover border border-slate-200"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const next = e.currentTarget.nextElementSibling;
+                                if (next) next.classList.remove('hidden');
+                              }}
+                            />
+                            <div className="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm hidden">
+                              {inst.full_name.charAt(0).toUpperCase()}
+                            </div>
+                          </>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm">
+                          <div className="w-11 h-11 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm">
                             {inst.full_name.charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -429,6 +439,7 @@ function InstructorDrawer({
 
   // Auto-generate slug from full_name (only when creating)
   const watchName = watch("full_name");
+  const avatarUrl = watch("avatar_url");
   useEffect(() => {
     if (!isEditing && watchName) {
       setValue("slug", generateSlug(watchName));
@@ -552,20 +563,52 @@ function InstructorDrawer({
             </div>
 
             {/* avatar_url */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
-                Avatar URL
+            <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-4">
+              <label className="block text-sm font-semibold text-slate-900">
+                Ảnh đại diện giảng viên
               </label>
-              <input
-                {...register("avatar_url")}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                placeholder="https://example.com/photo.jpg"
-              />
-              {errors.avatar_url && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.avatar_url.message}
-                </p>
-              )}
+              <div className="flex items-start gap-4">
+                {avatarUrl ? (
+                  <>
+                    <img
+                      src={avatarUrl}
+                      alt="Preview"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border border-slate-200 shrink-0 shadow-sm"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const next = e.currentTarget.nextElementSibling;
+                        if (next) next.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-2xl shrink-0 hidden shadow-sm">
+                      {watchName ? watchName.charAt(0).toUpperCase() : <User className="w-8 h-8 opacity-50" />}
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-2xl shrink-0 shadow-sm">
+                    {watchName ? watchName.charAt(0).toUpperCase() : <User className="w-8 h-8 opacity-50" />}
+                  </div>
+                )}
+                <div className="flex-1 space-y-1">
+                  <label className="block text-sm font-medium text-slate-700">
+                    URL ảnh đại diện
+                  </label>
+                  <input
+                    {...register("avatar_url")}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="https://example.com/photo.jpg"
+                  />
+                  <p className="text-slate-400 text-xs leading-relaxed">
+                    Khuyến nghị ảnh vuông, tối thiểu 400x400px.<br/>
+                    (Tính năng tải ảnh lên trực tiếp sẽ được cập nhật ở phase sau)
+                  </p>
+                  {errors.avatar_url && (
+                    <p className="text-red-500 text-xs font-medium">
+                      {errors.avatar_url.message}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* expertise */}

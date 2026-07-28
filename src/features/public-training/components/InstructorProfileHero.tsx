@@ -43,11 +43,21 @@ export function InstructorProfileHero({ instructor }: InstructorProfileHeroProps
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 text-center md:text-left">
           {/* Avatar */}
           {instructor.avatar_url ? (
-            <img
-              src={instructor.avatar_url}
-              alt={instructor.full_name}
-              className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-indigo-400/30 shadow-2xl shrink-0"
-            />
+            <>
+              <img
+                src={instructor.avatar_url}
+                alt={instructor.full_name}
+                className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-indigo-400/30 shadow-2xl shrink-0"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const next = e.currentTarget.nextElementSibling;
+                  if (next) next.classList.remove('hidden');
+                }}
+              />
+              <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-800 text-white flex items-center justify-center font-extrabold text-3xl sm:text-4xl border-4 border-indigo-400/30 shadow-2xl shrink-0 hidden">
+                {getInitials(instructor.full_name)}
+              </div>
+            </>
           ) : (
             <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-br from-indigo-600 to-indigo-800 text-white flex items-center justify-center font-extrabold text-3xl sm:text-4xl border-4 border-indigo-400/30 shadow-2xl shrink-0">
               {getInitials(instructor.full_name)}

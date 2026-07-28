@@ -15,7 +15,7 @@ export function PublicInstructorCard({ instructor }: PublicInstructorCardProps) 
           DA
         </div>
         <div className="space-y-1">
-          <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">Giảng viên phụ trách</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-indigo-600">Chuyên gia đào tạo</div>
           <h4 className="text-lg font-bold text-slate-900">Đội ngũ đào tạo DESEMBRE Academy</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
             Các chuyên gia Da liễu, Thẩm mỹ và Senior Trainer hơn 10 năm kinh nghiệm trong ngành Spa / Thẩm mỹ chuẩn Y Khoa.
@@ -30,11 +30,21 @@ export function PublicInstructorCard({ instructor }: PublicInstructorCardProps) 
   return (
     <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-center sm:items-start gap-5">
       {instructor.avatar_url ? (
-        <img
-          src={instructor.avatar_url}
-          alt={instructor.full_name}
-          className="w-16 h-16 rounded-full object-cover border-2 border-indigo-200 shrink-0 shadow-md"
-        />
+        <>
+          <img
+            src={instructor.avatar_url}
+            alt={instructor.full_name}
+            className="w-16 h-16 rounded-full object-cover border-2 border-indigo-200 shrink-0 shadow-md"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+              const next = e.currentTarget.nextElementSibling;
+              if (next) next.classList.remove('hidden');
+            }}
+          />
+          <div className="w-16 h-16 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md hidden">
+            {getInitials(instructor.full_name)}
+          </div>
+        </>
       ) : (
         <div className="w-16 h-16 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md">
           {getInitials(instructor.full_name)}
@@ -44,7 +54,7 @@ export function PublicInstructorCard({ instructor }: PublicInstructorCardProps) 
       <div className="flex-1 text-center sm:text-left space-y-1.5 min-w-0">
         <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center justify-center sm:justify-start gap-1">
           <GraduationCap className="w-3.5 h-3.5" />
-          <span>Giảng viên phụ trách</span>
+          <span>Chuyên gia đào tạo</span>
         </div>
 
         <h4 className="text-lg font-extrabold text-slate-900 leading-snug">
