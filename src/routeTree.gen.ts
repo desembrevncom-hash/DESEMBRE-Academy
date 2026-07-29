@@ -23,6 +23,7 @@ import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as BatchesIndexRouteImport } from './routes/batches.index'
 import { Route as StudentProfileRouteImport } from './routes/student.profile'
 import { Route as StudentCoursesRouteImport } from './routes/student.courses'
+import { Route as LSlugRouteImport } from './routes/l.$slug'
 import { Route as KhoaHocSlugRouteImport } from './routes/khoa-hoc.$slug'
 import { Route as GiangVienSlugRouteImport } from './routes/giang-vien.$slug'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
@@ -34,6 +35,7 @@ import { Route as AdminNotificationsRouteImport } from './routes/admin.notificat
 import { Route as AdminInstructorsRouteImport } from './routes/admin.instructors'
 import { Route as AdminCalendarRouteImport } from './routes/admin.calendar'
 import { Route as AdminAcademyStudentsRouteImport } from './routes/admin.academy-students'
+import { Route as AdminAcademyLandingsRouteImport } from './routes/admin.academy-landings'
 import { Route as AdminAcademyEnrollmentsRouteImport } from './routes/admin.academy-enrollments'
 import { Route as AdminAcademyCategoriesRouteImport } from './routes/admin.academy-categories'
 import { Route as AdminAcademyAccessRouteImport } from './routes/admin.academy-access'
@@ -121,6 +123,11 @@ const StudentCoursesRoute = StudentCoursesRouteImport.update({
   path: '/courses',
   getParentRoute: () => StudentRoute,
 } as any)
+const LSlugRoute = LSlugRouteImport.update({
+  id: '/l/$slug',
+  path: '/l/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KhoaHocSlugRoute = KhoaHocSlugRouteImport.update({
   id: '/khoa-hoc/$slug',
   path: '/khoa-hoc/$slug',
@@ -174,6 +181,11 @@ const AdminCalendarRoute = AdminCalendarRouteImport.update({
 const AdminAcademyStudentsRoute = AdminAcademyStudentsRouteImport.update({
   id: '/academy-students',
   path: '/academy-students',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAcademyLandingsRoute = AdminAcademyLandingsRouteImport.update({
+  id: '/academy-landings',
+  path: '/academy-landings',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAcademyEnrollmentsRoute = AdminAcademyEnrollmentsRouteImport.update({
@@ -276,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
+  '/admin/academy-landings': typeof AdminAcademyLandingsRoute
   '/admin/academy-students': typeof AdminAcademyStudentsRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/instructors': typeof AdminInstructorsRoute
@@ -287,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/courses/$slug': typeof CoursesSlugRoute
   '/giang-vien/$slug': typeof GiangVienSlugRoute
   '/khoa-hoc/$slug': typeof KhoaHocSlugRoute
+  '/l/$slug': typeof LSlugRoute
   '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
   '/batches/': typeof BatchesIndexRoute
@@ -317,6 +331,7 @@ export interface FileRoutesByTo {
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
+  '/admin/academy-landings': typeof AdminAcademyLandingsRoute
   '/admin/academy-students': typeof AdminAcademyStudentsRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/instructors': typeof AdminInstructorsRoute
@@ -328,6 +343,7 @@ export interface FileRoutesByTo {
   '/courses/$slug': typeof CoursesSlugRoute
   '/giang-vien/$slug': typeof GiangVienSlugRoute
   '/khoa-hoc/$slug': typeof KhoaHocSlugRoute
+  '/l/$slug': typeof LSlugRoute
   '/student/profile': typeof StudentProfileRoute
   '/batches': typeof BatchesIndexRoute
   '/courses': typeof CoursesIndexRoute
@@ -358,6 +374,7 @@ export interface FileRoutesById {
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
+  '/admin/academy-landings': typeof AdminAcademyLandingsRoute
   '/admin/academy-students': typeof AdminAcademyStudentsRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/instructors': typeof AdminInstructorsRoute
@@ -369,6 +386,7 @@ export interface FileRoutesById {
   '/courses/$slug': typeof CoursesSlugRoute
   '/giang-vien/$slug': typeof GiangVienSlugRoute
   '/khoa-hoc/$slug': typeof KhoaHocSlugRoute
+  '/l/$slug': typeof LSlugRoute
   '/student/courses': typeof StudentCoursesRouteWithChildren
   '/student/profile': typeof StudentProfileRoute
   '/batches/': typeof BatchesIndexRoute
@@ -403,6 +421,7 @@ export interface FileRouteTypes {
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
+    | '/admin/academy-landings'
     | '/admin/academy-students'
     | '/admin/calendar'
     | '/admin/instructors'
@@ -414,6 +433,7 @@ export interface FileRouteTypes {
     | '/courses/$slug'
     | '/giang-vien/$slug'
     | '/khoa-hoc/$slug'
+    | '/l/$slug'
     | '/student/courses'
     | '/student/profile'
     | '/batches/'
@@ -444,6 +464,7 @@ export interface FileRouteTypes {
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
+    | '/admin/academy-landings'
     | '/admin/academy-students'
     | '/admin/calendar'
     | '/admin/instructors'
@@ -455,6 +476,7 @@ export interface FileRouteTypes {
     | '/courses/$slug'
     | '/giang-vien/$slug'
     | '/khoa-hoc/$slug'
+    | '/l/$slug'
     | '/student/profile'
     | '/batches'
     | '/courses'
@@ -484,6 +506,7 @@ export interface FileRouteTypes {
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
+    | '/admin/academy-landings'
     | '/admin/academy-students'
     | '/admin/calendar'
     | '/admin/instructors'
@@ -495,6 +518,7 @@ export interface FileRouteTypes {
     | '/courses/$slug'
     | '/giang-vien/$slug'
     | '/khoa-hoc/$slug'
+    | '/l/$slug'
     | '/student/courses'
     | '/student/profile'
     | '/batches/'
@@ -531,6 +555,7 @@ export interface RootRouteChildren {
   BatchesSlugRoute: typeof BatchesSlugRoute
   GiangVienSlugRoute: typeof GiangVienSlugRoute
   KhoaHocSlugRoute: typeof KhoaHocSlugRoute
+  LSlugRoute: typeof LSlugRoute
   BatchesIndexRoute: typeof BatchesIndexRoute
 }
 
@@ -634,6 +659,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentCoursesRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/l/$slug': {
+      id: '/l/$slug'
+      path: '/l/$slug'
+      fullPath: '/l/$slug'
+      preLoaderRoute: typeof LSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/khoa-hoc/$slug': {
       id: '/khoa-hoc/$slug'
       path: '/khoa-hoc/$slug'
@@ -709,6 +741,13 @@ declare module '@tanstack/react-router' {
       path: '/academy-students'
       fullPath: '/admin/academy-students'
       preLoaderRoute: typeof AdminAcademyStudentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/academy-landings': {
+      id: '/admin/academy-landings'
+      path: '/academy-landings'
+      fullPath: '/admin/academy-landings'
+      preLoaderRoute: typeof AdminAcademyLandingsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/academy-enrollments': {
@@ -858,6 +897,7 @@ interface AdminRouteChildren {
   AdminAcademyAccessRoute: typeof AdminAcademyAccessRoute
   AdminAcademyCategoriesRoute: typeof AdminAcademyCategoriesRoute
   AdminAcademyEnrollmentsRoute: typeof AdminAcademyEnrollmentsRoute
+  AdminAcademyLandingsRoute: typeof AdminAcademyLandingsRoute
   AdminAcademyStudentsRoute: typeof AdminAcademyStudentsRoute
   AdminCalendarRoute: typeof AdminCalendarRoute
   AdminInstructorsRoute: typeof AdminInstructorsRoute
@@ -874,6 +914,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAcademyAccessRoute: AdminAcademyAccessRoute,
   AdminAcademyCategoriesRoute: AdminAcademyCategoriesRoute,
   AdminAcademyEnrollmentsRoute: AdminAcademyEnrollmentsRoute,
+  AdminAcademyLandingsRoute: AdminAcademyLandingsRoute,
   AdminAcademyStudentsRoute: AdminAcademyStudentsRoute,
   AdminCalendarRoute: AdminCalendarRoute,
   AdminInstructorsRoute: AdminInstructorsRoute,
@@ -947,6 +988,7 @@ const rootRouteChildren: RootRouteChildren = {
   BatchesSlugRoute: BatchesSlugRoute,
   GiangVienSlugRoute: GiangVienSlugRoute,
   KhoaHocSlugRoute: KhoaHocSlugRoute,
+  LSlugRoute: LSlugRoute,
   BatchesIndexRoute: BatchesIndexRoute,
 }
 export const routeTree = rootRouteImport

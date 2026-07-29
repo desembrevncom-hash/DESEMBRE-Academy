@@ -36,6 +36,7 @@ const NAV_LINKS = [
   { to: "/admin/academy-categories" as const, label: "Danh mục" },
   { to: "/admin/academy-students" as const, label: "Học viên" },
   { to: "/admin/academy-enrollments" as const, label: "Đăng ký" },
+  { to: "/admin/academy-landings" as const, label: "Landing Pages" },
   { to: "/admin/academy-access" as const, label: "Phân quyền" },
   { to: "/admin/notifications" as const, label: "ZNS" },
 ];
