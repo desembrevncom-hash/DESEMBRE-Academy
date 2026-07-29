@@ -11,6 +11,12 @@ import {
 } from "@/features/admin/hooks/useAcademyAdminCourses";
 import { uploadCourseThumbnail } from "@/features/admin/services/academyAdminCoursesApi";
 import { updateCourseSchema, type UpdateCourseFormData, marketingFormSchema } from "@/features/admin/validators";
+import {
+  CATALOG_VISIBILITY_OPTIONS,
+  ENROLLMENT_POLICY_OPTIONS,
+  ACCESS_POLICY_OPTIONS,
+  PRICING_MODEL_OPTIONS,
+} from "@/features/admin/constants";
 import { toast } from "sonner";
 import { useCourseEditorRegistry } from "@/features/admin/contexts/CourseEditorRegistry";
 import { ArrowLeft, Save, Undo2, Info, Upload, ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
@@ -300,9 +306,11 @@ function CourseSettingsPage() {
                 disabled={isReadOnly}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
               >
-                <option value="public">Công khai (Public) - Hiện trên danh mục</option>
-                <option value="unlisted">Không liệt kê (Unlisted) - Chỉ có link trực tiếp</option>
-                <option value="private">Riêng tư (Private) - Ẩn hoàn toàn</option>
+                {CATALOG_VISIBILITY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {errors.catalog_visibility && (
                 <p className="text-sm text-destructive">{errors.catalog_visibility.message}</p>
@@ -336,9 +344,11 @@ function CourseSettingsPage() {
                 disabled={isReadOnly}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
               >
-                <option value="open">Mở tự do (Open) - Học viên tự đăng ký</option>
-                <option value="approval_required">Cần duyệt (Approval Required) - Học viên đăng ký chờ duyệt</option>
-                <option value="closed">Đóng (Closed) - Chỉ Admin mới có thể thêm học viên</option>
+                {ENROLLMENT_POLICY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {errors.enrollment_policy && (
                 <p className="text-sm text-destructive">{errors.enrollment_policy.message}</p>
@@ -355,8 +365,11 @@ function CourseSettingsPage() {
                 disabled={isReadOnly}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
               >
-                <option value="dynamic">Động (Dynamic) - Theo vai trò & quyền hạn</option>
-                <option value="grandfathered">Đã cấp quyền trước đây (Grandfathered)</option>
+                {ACCESS_POLICY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {errors.access_policy && (
                 <p className="text-sm text-destructive">{errors.access_policy.message}</p>
@@ -373,9 +386,11 @@ function CourseSettingsPage() {
                 disabled={isReadOnly}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
               >
-                <option value="included">Đã bao gồm (Included in sub/tier)</option>
-                <option value="free">Miễn phí (Free)</option>
-                <option value="paid">Trả phí (Paid)</option>
+                {PRICING_MODEL_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {errors.pricing_model && (
                 <p className="text-sm text-destructive">{errors.pricing_model.message}</p>

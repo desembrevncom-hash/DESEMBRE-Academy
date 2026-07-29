@@ -1,6 +1,6 @@
 export type AcademyCourseStatus = "draft" | "published" | "archived";
-export type AcademyCatalogVisibility = "public" | "unlisted" | "private";
-export type AcademyEnrollmentPolicy = "open" | "approval_required" | "closed";
+export type AcademyCatalogVisibility = "public" | "tier" | "private";
+export type AcademyEnrollmentPolicy = "open" | "approval" | "assigned" | "closed";
 export type AcademyAccessPolicy = "dynamic" | "grandfathered";
 export type AcademyPricingModel = "free" | "paid" | "included";
 

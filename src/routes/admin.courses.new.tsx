@@ -4,6 +4,12 @@ import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateAcademyCourse } from "@/features/admin/hooks/useAcademyAdminCourses";
 import { createCourseSchema, type CreateCourseFormData } from "@/features/admin/validators";
+import {
+  CATALOG_VISIBILITY_OPTIONS,
+  ENROLLMENT_POLICY_OPTIONS,
+  ACCESS_POLICY_OPTIONS,
+  PRICING_MODEL_OPTIONS,
+} from "@/features/admin/constants";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/courses/new")({
@@ -72,20 +78,21 @@ function CreateCoursePage() {
         params: { courseId: response.id },
       });
     } catch (error: unknown) {
-      console.error("[Create Course Error Detail]:", error);
+      console.error("[Create Course Error Detail]", error);
       const err = error as Record<string, unknown>;
       const msg = typeof err.message === "string" ? err.message : "";
       
       if (
+        msg.includes("courses_catalog_visibility_check") ||
         msg.includes("courses_access_policy_check") ||
         msg.includes("check constraint") ||
         msg.includes("violates check constraint")
       ) {
-        toast.error("Không thể tạo khóa học. Một trường cấu hình chưa đúng với quy định dữ liệu.");
+        toast.error("Không thể tạo khóa học. Vui lòng kiểm tra cấu hình hiển thị, đăng ký và quyền truy cập.");
       } else if (err.code === "DUPLICATE_SLUG" || msg.includes("duplicate key") || msg.includes("already exists")) {
         toast.error("Đường dẫn (slug) này đã tồn tại, vui lòng chọn đường dẫn khác.");
       } else {
-        toast.error("Không thể tạo khóa học. Một trường cấu hình chưa đúng với quy định dữ liệu.");
+        toast.error("Không thể tạo khóa học. Vui lòng kiểm tra cấu hình hiển thị, đăng ký và quyền truy cập.");
       }
     }
   };
@@ -165,9 +172,11 @@ function CreateCoursePage() {
                 {...register("catalog_visibility")}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
               >
-                <option value="private">Riêng tư (Ẩn khỏi danh mục)</option>
-                <option value="unlisted">Không công khai (Chỉ mở qua link direct)</option>
-                <option value="public">Công khai (Hiển thị trong danh mục)</option>
+                {CATALOG_VISIBILITY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {errors.catalog_visibility && (
                 <p className="text-sm text-destructive">{errors.catalog_visibility.message}</p>
@@ -183,9 +192,11 @@ function CreateCoursePage() {
                 {...register("enrollment_policy")}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
               >
-                <option value="closed">Đóng (Quản trị viên mời/gán lớp)</option>
-                <option value="approval_required">Cần xét duyệt (Đăng ký chờ Admin duyệt)</option>
-                <option value="open">Mở (Tự do đăng ký)</option>
+                {ENROLLMENT_POLICY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {errors.enrollment_policy && (
                 <p className="text-sm text-destructive">{errors.enrollment_policy.message}</p>
@@ -201,8 +212,11 @@ function CreateCoursePage() {
                 {...register("access_policy")}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
               >
-                <option value="dynamic">Động (Dynamic - Theo vai trò & quyền hạn)</option>
-                <option value="grandfathered">Đã cấp quyền trước đây (Grandfathered)</option>
+                {ACCESS_POLICY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {errors.access_policy && (
                 <p className="text-sm text-destructive">{errors.access_policy.message}</p>
@@ -218,9 +232,11 @@ function CreateCoursePage() {
                 {...register("pricing_model")}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
               >
-                <option value="included">Đã bao gồm (Included in tier/sub)</option>
-                <option value="free">Miễn phí (Free)</option>
-                <option value="paid">Trả phí (Paid)</option>
+                {PRICING_MODEL_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
               {errors.pricing_model && (
                 <p className="text-sm text-destructive">{errors.pricing_model.message}</p>

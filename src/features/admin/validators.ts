@@ -34,8 +34,8 @@ export const createCourseSchema = z.object({
     .regex(slugRegex, "Slug must contain only lowercase letters, numbers, and single hyphens"),
   description: z.string().max(2000, "Description is too long").trim().optional().nullable(),
   category_id: z.preprocess((val) => val === "" ? null : val, z.string().uuid("Invalid category").optional().nullable()),
-  catalog_visibility: z.enum(["public", "unlisted", "private"]),
-  enrollment_policy: z.enum(["open", "approval_required", "closed"]),
+  catalog_visibility: z.enum(["public", "tier", "private"]),
+  enrollment_policy: z.enum(["open", "approval", "assigned", "closed"]),
   access_policy: z.enum(["dynamic", "grandfathered"]),
   pricing_model: z.enum(["free", "paid", "included"]),
   cover_url: z.string().optional().nullable().or(z.literal("")),
@@ -46,8 +46,8 @@ export type CreateCourseFormData = z.infer<typeof createCourseSchema>;
 
 export const updateCourseSchema = createCourseSchema.extend({
   // Override defaults to ensure they are required during update
-  catalog_visibility: z.enum(["public", "unlisted", "private"]),
-  enrollment_policy: z.enum(["open", "approval_required", "closed"]),
+  catalog_visibility: z.enum(["public", "tier", "private"]),
+  enrollment_policy: z.enum(["open", "approval", "assigned", "closed"]),
   access_policy: z.enum(["dynamic", "grandfathered"]),
   pricing_model: z.enum(["free", "paid", "included"]),
   cover_url: z.string().optional().nullable().or(z.literal("")),

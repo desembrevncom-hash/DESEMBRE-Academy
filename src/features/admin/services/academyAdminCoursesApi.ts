@@ -178,8 +178,7 @@ export const academyAdminCoursesApi = {
   },
 
   async createCourse(input: CreateAcademyCourseInput): Promise<{ id: string }> {
-    const client = getClientOrThrow();
-    const { data, error } = await client.rpc("admin_create_academy_course", {
+    const payload = {
       p_title: input.p_title,
       p_slug: input.p_slug,
       p_description: input.p_description || null,
@@ -188,7 +187,12 @@ export const academyAdminCoursesApi = {
       p_enrollment_policy: input.p_enrollment_policy || "closed",
       p_access_policy: input.p_access_policy || "dynamic",
       p_pricing_model: input.p_pricing_model || "included",
-    });
+    };
+
+    console.log("[Create Course Payload]", payload);
+
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_create_academy_course", payload);
 
     if (error) {
       handleRpcError(error);
@@ -206,18 +210,22 @@ export const academyAdminCoursesApi = {
   },
 
   async updateCourse(input: UpdateAcademyCourseInput): Promise<{ success: boolean }> {
-    const client = getClientOrThrow();
-    const { data, error } = await client.rpc("admin_update_academy_course", {
+    const payload = {
       p_course_id: input.p_course_id,
       p_title: input.p_title,
       p_slug: input.p_slug,
       p_description: input.p_description || null,
       p_category_id: input.p_category_id || null,
-      p_catalog_visibility: input.p_catalog_visibility,
-      p_enrollment_policy: input.p_enrollment_policy,
-      p_access_policy: input.p_access_policy,
-      p_pricing_model: input.p_pricing_model,
-    });
+      p_catalog_visibility: input.p_catalog_visibility || "private",
+      p_enrollment_policy: input.p_enrollment_policy || "closed",
+      p_access_policy: input.p_access_policy || "dynamic",
+      p_pricing_model: input.p_pricing_model || "included",
+    };
+
+    console.log("[Update Course Payload]", payload);
+
+    const client = getClientOrThrow();
+    const { data, error } = await client.rpc("admin_update_academy_course", payload);
 
     if (error) {
       handleRpcError(error);

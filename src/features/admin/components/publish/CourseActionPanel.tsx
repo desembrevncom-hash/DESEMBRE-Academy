@@ -84,7 +84,7 @@ export function CourseActionPanel() {
         return <Globe className="h-4 w-4" />;
       case "private":
         return <Lock className="h-4 w-4" />;
-      case "unlisted":
+      case "tier":
         return <EyeOff className="h-4 w-4" />;
     }
   };
