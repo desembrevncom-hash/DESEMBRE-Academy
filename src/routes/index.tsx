@@ -22,6 +22,15 @@ import { Loader2, AlertCircle } from "lucide-react";
 import heroImg from "@/assets/hero-banner.jpg";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "DESEMBRE Academy — Viện Đào Tạo Thẩm Mỹ & Da Liễu Chuẩn Hàn Quốc" },
+      { name: "description", content: "Viện đào tạo thẩm mỹ da liễu chuẩn Y Khoa Hàn Quốc hàng đầu tại Việt Nam. Đào tạo kỹ thuật viên, chủ Spa chuyên nghiệp." },
+      { property: "og:title", content: "DESEMBRE Academy — Viện Đào Tạo Thẩm Mỹ & Da Liễu Chuẩn Hàn Quốc" },
+      { property: "og:description", content: "Học nghề Spa chuyên nghiệp, cập nhật công nghệ trị liệu da chuẩn y khoa cùng chuyên gia DESEMBRE Academy." },
+      { property: "og:type", content: "website" },
+    ],
+  }),
   component: Home,
 });
 

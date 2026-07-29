@@ -7,6 +7,7 @@ import { InstructorProfileHero } from "@/features/public-training/components/Ins
 import { TrainingScheduleCard } from "@/features/public-training/components/TrainingScheduleCard";
 import { RegistrationForm } from "@/features/public-training/components/RegistrationForm";
 import { RegistrationSuccess } from "@/features/public-training/components/RegistrationSuccess";
+import { PublicStickyCTA } from "@/components/layout/PublicStickyCTA";
 import { PublicEmptyState } from "@/features/public-training/components/PublicEmptyState";
 import { Loader2, User, Award, CheckCircle2, Calendar, Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,11 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/giang-vien/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `Giảng viên ${params.slug} | DESEMBRE Academy` },
+      { title: `Giảng viên ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Academy` },
       { name: "description", content: "Chuyên gia đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Academy." },
+      { property: "og:title", content: `Giảng viên ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Academy` },
+      { property: "og:description", content: "Hồ sơ chuyên môn, thành tựu và danh sách lớp đào tạo do giảng viên phụ trách." },
+      { property: "og:type", content: "profile" },
     ],
   }),
   component: PublicInstructorProfilePage,
@@ -194,6 +198,20 @@ function PublicInstructorProfilePage() {
         <RegistrationSuccess
           batchTitle={successBatchTitle}
           onClose={() => setSuccessBatchTitle(null)}
+        />
+      )}
+
+      {/* Mobile Sticky CTA */}
+      {!registeringBatch && (
+        <PublicStickyCTA
+          primaryLabel="Xem lịch khai giảng"
+          onPrimaryClick={() => {
+            if (batches.length > 0) {
+              setRegisteringBatch(batches[0]);
+            } else {
+              window.location.href = "/lich-khai-giang";
+            }
+          }}
         />
       )}
     </div>

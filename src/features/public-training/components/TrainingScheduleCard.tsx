@@ -37,6 +37,10 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
   const instructor = batch.instructor;
   const courseSummary = batch.course?.summary || batch.description;
 
+  const isExpired = batch.registration_closes_at
+    ? new Date(batch.registration_closes_at).getTime() < Date.now()
+    : false;
+
   return (
     <div className="group bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-7 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative overflow-hidden">
       {/* Top Bar: Badges */}
@@ -49,7 +53,11 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
           </span>
 
           {/* Registration Status Badge */}
-          {isFull ? (
+          {isExpired ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+              Đã hết hạn đăng ký
+            </span>
+          ) : isFull ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
               Đã đủ chỗ
             </span>
@@ -242,7 +250,14 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
             </div>
           )}
 
-          {isFull ? (
+          {isExpired ? (
+            <Button
+              disabled
+              className="w-full h-14 rounded-2xl text-sm font-semibold bg-slate-200 text-slate-500 cursor-not-allowed"
+            >
+              Đã hết hạn đăng ký
+            </Button>
+          ) : isFull ? (
             <Button
               disabled
               className="w-full h-14 rounded-2xl text-sm font-semibold bg-slate-200 text-slate-500 cursor-not-allowed"
@@ -254,7 +269,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
               onClick={() => onRegister(batch)}
               className="w-full h-14 rounded-2xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/25 transition-all duration-200 gap-2"
             >
-              <span>Đăng ký tham gia</span>
+              <span>Đăng ký học</span>
               <ArrowRight className="ml-1 w-4 h-4" />
             </Button>
           )}

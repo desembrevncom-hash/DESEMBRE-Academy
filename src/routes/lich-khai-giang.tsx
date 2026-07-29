@@ -11,6 +11,7 @@ import { TrainingFilters } from "@/features/public-training/components/TrainingF
 import { TrainingScheduleCard } from "@/features/public-training/components/TrainingScheduleCard";
 import { RegistrationForm } from "@/features/public-training/components/RegistrationForm";
 import { RegistrationSuccess } from "@/features/public-training/components/RegistrationSuccess";
+import { PublicStickyCTA } from "@/components/layout/PublicStickyCTA";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 export const Route = createFileRoute("/lich-khai-giang")({
@@ -18,7 +19,10 @@ export const Route = createFileRoute("/lich-khai-giang")({
   head: () => ({
     meta: [
       { title: "Lịch Khai Giảng | DESEMBRE Academy" },
-      { name: "description", content: "Lịch khai giảng các khóa đào tạo spa, thẩm mỹ, quản trị kinh doanh spa chuẩn Hàn Quốc mới nhất tại DESEMBRE Academy." }
+      { name: "description", content: "Lịch khai giảng các khóa đào tạo spa, thẩm mỹ, quản trị kinh doanh spa chuẩn Hàn Quốc mới nhất tại DESEMBRE Academy." },
+      { property: "og:title", content: "Lịch Khai Giảng | DESEMBRE Academy" },
+      { property: "og:description", content: "Xem lịch khai giảng mới nhất các lớp đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Academy." },
+      { property: "og:type", content: "website" },
     ]
   })
 });
@@ -225,6 +229,20 @@ function PublicCalendarPage() {
           batchTitle={successBatchTitle}
           isDuplicate={isDuplicateRegistration}
           onClose={() => setSuccessBatchTitle(null)}
+        />
+      )}
+
+      {/* Mobile Sticky CTA */}
+      {!registeringBatch && (
+        <PublicStickyCTA
+          primaryLabel="Đăng ký học"
+          onPrimaryClick={() => {
+            if (filteredBatches.length > 0) {
+              setRegisteringBatch(filteredBatches[0]);
+            } else {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
         />
       )}
     </div>

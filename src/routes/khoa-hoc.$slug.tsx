@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useMemo } from "react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { getPublicCourseBySlug, PublicCourseDetail } from "@/features/public-training/services/publicCourseDetailApi";
@@ -6,8 +6,10 @@ import { PublicCourseBatch } from "@/features/public-training/services/publicTra
 import { CourseDetailHero } from "@/features/public-training/components/CourseDetailHero";
 import { CourseUpcomingBatchSpotlight } from "@/features/public-training/components/CourseUpcomingBatchSpotlight";
 import { CourseDetailAccordion, CourseDetailAccordionRef } from "@/features/public-training/components/CourseDetailAccordion";
+import { TrainingScheduleCard } from "@/features/public-training/components/TrainingScheduleCard";
 import { RegistrationForm } from "@/features/public-training/components/RegistrationForm";
 import { RegistrationSuccess } from "@/features/public-training/components/RegistrationSuccess";
+import { PublicStickyCTA } from "@/components/layout/PublicStickyCTA";
 import { PublicEmptyState } from "@/features/public-training/components/PublicEmptyState";
 import { Loader2, BookOpen, Calendar, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,8 +18,11 @@ import { isDemoRecord } from "@/features/admin/utils/demoData";
 export const Route = createFileRoute("/khoa-hoc/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `${params.slug} | DESEMBRE Academy` },
+      { title: `Khóa học ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Academy` },
       { name: "description", content: "Khoá đào tạo chuyên sâu chuẩn Y Khoa & Thẩm mỹ cao cấp tại DESEMBRE Academy." },
+      { property: "og:title", content: `Khóa học ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Academy` },
+      { property: "og:description", content: "Chương trình đào tạo kỹ thuật viên và chủ Spa chuyên nghiệp cùng chuyên gia DESEMBRE Academy." },
+      { property: "og:type", content: "article" },
     ],
   }),
   component: PublicCourseDetailPage,
@@ -99,6 +104,15 @@ function PublicCourseDetailPage() {
     return [];
   }, [spotlightBatch, course]);
 
+  const otherOpenBatches = useMemo(() => {
+    if (!course || !course.batches) return [];
+    return course.batches.filter(
+      (b) =>
+        b.id !== spotlightBatch?.id &&
+        (b.registration_status || "").toLowerCase() === "open"
+    );
+  }, [course, spotlightBatch]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50">
@@ -126,14 +140,14 @@ function PublicCourseDetailPage() {
     );
   }
 
+  const navigate = useNavigate();
+
   const handleRegisterUpcoming = () => {
-    if (spotlightBatch) {
+    const isSpotlightOpen = spotlightBatch && (spotlightBatch.registration_status || "").toLowerCase() === "open";
+    if (isSpotlightOpen) {
       setRegisteringBatch(spotlightBatch);
     } else {
-      const el = document.getElementById("spotlight-batch-card");
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-      }
+      navigate({ to: "/lich-khai-giang" });
     }
   };
 
@@ -187,6 +201,33 @@ function PublicCourseDetailPage() {
           />
         </section>
 
+        {/* Other Open Batches Section (if multiple open batches exist) */}
+        {otherOpenBatches.length > 0 && (
+          <section className="space-y-6 pt-4">
+            <h3 className="text-xl font-bold text-slate-900 px-1">
+              Các lớp khai giảng khác ({otherOpenBatches.length})
+            </h3>
+            <div className="space-y-6">
+              {otherOpenBatches.map((batch) => (
+                <TrainingScheduleCard
+                  key={batch.id}
+                  batch={{
+                    ...batch,
+                    course: {
+                      id: course.id,
+                      title: course.title,
+                      slug: course.slug,
+                      cover_url: course.cover_url,
+                      summary: course.summary,
+                    },
+                  }}
+                  onRegister={(b) => setRegisteringBatch(b)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Bottom Quick CTA Banner */}
         <section className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
           <div className="space-y-1 text-center sm:text-left">
@@ -228,6 +269,18 @@ function PublicCourseDetailPage() {
         <RegistrationSuccess
           batchTitle={successBatchTitle}
           onClose={() => setSuccessBatchTitle(null)}
+        />
+      )}
+
+      {/* Mobile Sticky CTA */}
+      {!registeringBatch && (
+        <PublicStickyCTA
+          primaryLabel={
+            spotlightBatch && (spotlightBatch.registration_status || "").toLowerCase() === "open"
+              ? "Đăng ký học"
+              : "Xem lịch khai giảng"
+          }
+          onPrimaryClick={handleRegisterUpcoming}
         />
       )}
     </div>
