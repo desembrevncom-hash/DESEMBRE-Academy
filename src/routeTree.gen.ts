@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SynergisticProtocolRouteImport } from './routes/synergistic-protocol'
 import { Route as StudentRouteImport } from './routes/student'
 import { Route as PendingReviewRouteImport } from './routes/pending-review'
 import { Route as LichKhaiGiangRouteImport } from './routes/lich-khai-giang'
@@ -50,6 +51,11 @@ import { Route as AdminCoursesCourseIdContentRouteImport } from './routes/admin.
 import { Route as AdminBatchesBatchIdRegistrationsRouteImport } from './routes/admin.batches.$batchId.registrations'
 import { Route as StudentCoursesSlugLessonsLessonIdRouteImport } from './routes/student.courses.$slug.lessons.$lessonId'
 
+const SynergisticProtocolRoute = SynergisticProtocolRouteImport.update({
+  id: '/synergistic-protocol',
+  path: '/synergistic-protocol',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudentRoute = StudentRouteImport.update({
   id: '/student',
   path: '/student',
@@ -266,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/lich-khai-giang': typeof LichKhaiGiangRoute
   '/pending-review': typeof PendingReviewRoute
   '/student': typeof StudentRouteWithChildren
+  '/synergistic-protocol': typeof SynergisticProtocolRoute
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
@@ -306,6 +313,7 @@ export interface FileRoutesByTo {
   '/blocked': typeof BlockedRoute
   '/lich-khai-giang': typeof LichKhaiGiangRoute
   '/pending-review': typeof PendingReviewRoute
+  '/synergistic-protocol': typeof SynergisticProtocolRoute
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
@@ -346,6 +354,7 @@ export interface FileRoutesById {
   '/lich-khai-giang': typeof LichKhaiGiangRoute
   '/pending-review': typeof PendingReviewRoute
   '/student': typeof StudentRouteWithChildren
+  '/synergistic-protocol': typeof SynergisticProtocolRoute
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
@@ -390,6 +399,7 @@ export interface FileRouteTypes {
     | '/lich-khai-giang'
     | '/pending-review'
     | '/student'
+    | '/synergistic-protocol'
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
@@ -430,6 +440,7 @@ export interface FileRouteTypes {
     | '/blocked'
     | '/lich-khai-giang'
     | '/pending-review'
+    | '/synergistic-protocol'
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
@@ -469,6 +480,7 @@ export interface FileRouteTypes {
     | '/lich-khai-giang'
     | '/pending-review'
     | '/student'
+    | '/synergistic-protocol'
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
@@ -512,6 +524,7 @@ export interface RootRouteChildren {
   LichKhaiGiangRoute: typeof LichKhaiGiangRoute
   PendingReviewRoute: typeof PendingReviewRoute
   StudentRoute: typeof StudentRouteWithChildren
+  SynergisticProtocolRoute: typeof SynergisticProtocolRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthPhoneRoute: typeof AuthPhoneRoute
   AuthVerifyOtpRoute: typeof AuthVerifyOtpRoute
@@ -523,6 +536,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/synergistic-protocol': {
+      id: '/synergistic-protocol'
+      path: '/synergistic-protocol'
+      fullPath: '/synergistic-protocol'
+      preLoaderRoute: typeof SynergisticProtocolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/student': {
       id: '/student'
       path: '/student'
@@ -920,6 +940,7 @@ const rootRouteChildren: RootRouteChildren = {
   LichKhaiGiangRoute: LichKhaiGiangRoute,
   PendingReviewRoute: PendingReviewRoute,
   StudentRoute: StudentRouteWithChildren,
+  SynergisticProtocolRoute: SynergisticProtocolRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthPhoneRoute: AuthPhoneRoute,
   AuthVerifyOtpRoute: AuthVerifyOtpRoute,
