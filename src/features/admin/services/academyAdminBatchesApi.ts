@@ -1,9 +1,13 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getSupabaseEnvironment } from "@/lib/supabase/env";
 
 export async function adminGetCourseBatches() {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
   
+  const env = getSupabaseEnvironment();
+  console.log("[Admin Batches project]", env.url);
+
   const { data, error } = await supabase.rpc("admin_get_course_batches");
   if (error) {
     console.warn("[adminGetCourseBatches RPC error, falling back to table query]:", error);
@@ -14,8 +18,10 @@ export async function adminGetCourseBatches() {
       .order("created_at", { ascending: false });
 
     if (fallbackErr) throw fallbackErr;
+    console.log("[Admin Batches raw]", fallbackData);
     return fallbackData;
   }
+  console.log("[Admin Batches raw]", data);
   return data;
 }
 

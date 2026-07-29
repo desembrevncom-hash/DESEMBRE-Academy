@@ -64,6 +64,10 @@ export async function getPublicTrainingSchedule(): Promise<PublicCourseBatch[]> 
     return [];
   }
 
+  const { getSupabaseEnvironment } = await import("@/lib/supabase/env");
+  const env = getSupabaseEnvironment();
+  console.log("[Public Training RPC project]", env.url);
+
   const { data, error } = await supabase.rpc("public_get_training_schedule");
 
   if (error) {

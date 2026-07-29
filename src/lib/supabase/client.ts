@@ -10,6 +10,7 @@ export function getSupabaseBrowserClient(): SupabaseClient | null {
 
   if (!browserClient) {
     const environment = getSupabaseEnvironment();
+    console.log("[Academy Supabase URL]", environment.url);
 
     browserClient = createClient(
       environment.url,
