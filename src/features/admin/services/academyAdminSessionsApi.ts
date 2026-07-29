@@ -63,6 +63,11 @@ export async function adminGetBatchSessions(batchId: string): Promise<AdminSessi
   return (data || []) as AdminSession[];
 }
 
+export const getBatchSessions = adminGetBatchSessions;
+export const createBatchSession = adminCreateSession;
+export const updateBatchSession = adminUpdateSession;
+export const deleteBatchSession = adminDeleteSession;
+
 export async function adminCreateSession(payload: CreateSessionPayload): Promise<string> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");

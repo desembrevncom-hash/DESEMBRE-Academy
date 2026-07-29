@@ -261,8 +261,7 @@ function SessionsSection({ batchId, onCountChange }: { batchId: string, onCountC
 
       {!loading && !error && sessions.length === 0 && !showForm && (
         <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/20">
-          <p className="font-semibold text-slate-700">Chưa có buổi học nào cho lớp này.</p>
-          <p className="text-sm mt-1">Bạn có thể thêm buổi học sau khi tạo lớp.</p>
+          <p className="font-semibold text-slate-700">Chưa có buổi học nào. Hãy thêm lịch học để học viên biết thời gian tham gia.</p>
         </div>
       )}
 
