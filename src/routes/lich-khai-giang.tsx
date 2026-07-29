@@ -69,7 +69,7 @@ function PublicCalendarPage() {
 
   // Filter batches by format and month
   const filteredBatches = useMemo(() => {
-    return batches.filter((b) => {
+    const res = batches.filter((b) => {
       // Format filter
       if (selectedFormat !== "ALL") {
         const fmt = (b.training_format || "").toLowerCase();
@@ -88,6 +88,10 @@ function PublicCalendarPage() {
 
       return true;
     });
+
+    console.log("[Public Training] raw batches", batches);
+    console.log("[Public Training] filtered batches", res);
+    return res;
   }, [batches, selectedFormat, selectedMonth]);
 
   const handleResetFilters = () => {
