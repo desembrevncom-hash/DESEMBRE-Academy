@@ -1,15 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { getPublicCourseBySlug, PublicCourseDetail } from "@/features/public-training/services/publicCourseDetailApi";
 import { PublicCourseBatch } from "@/features/public-training/services/publicTrainingApi";
 import { CourseDetailHero } from "@/features/public-training/components/CourseDetailHero";
-import { PublicInstructorCard } from "@/features/public-training/components/PublicInstructorCard";
-import { TrainingScheduleCard } from "@/features/public-training/components/TrainingScheduleCard";
+import { CourseUpcomingBatchSpotlight } from "@/features/public-training/components/CourseUpcomingBatchSpotlight";
+import { CourseDetailAccordion, CourseDetailAccordionRef } from "@/features/public-training/components/CourseDetailAccordion";
 import { RegistrationForm } from "@/features/public-training/components/RegistrationForm";
 import { RegistrationSuccess } from "@/features/public-training/components/RegistrationSuccess";
 import { PublicEmptyState } from "@/features/public-training/components/PublicEmptyState";
-import { Loader2, BookOpen, CheckCircle2, Sparkles, Calendar } from "lucide-react";
+import { Loader2, BookOpen, Calendar, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 
@@ -31,6 +31,8 @@ function PublicCourseDetailPage() {
 
   const [registeringBatch, setRegisteringBatch] = useState<PublicCourseBatch | null>(null);
   const [successBatchTitle, setSuccessBatchTitle] = useState<string | null>(null);
+
+  const accordionRef = useRef<CourseDetailAccordionRef>(null);
 
   const fetchDetail = async () => {
     try {
@@ -56,6 +58,46 @@ function PublicCourseDetailPage() {
   useEffect(() => {
     fetchDetail();
   }, [slug]);
+
+  // Compute spotlight batch based on rules:
+  // 1. Prioritize open batches
+  // 2. Pick nearest start_date
+  // 3. Fallback to nearest draft/closed batch if no open batch
+  const spotlightBatch = useMemo(() => {
+    if (!course || !course.batches || course.batches.length === 0) return null;
+
+    const openBatches = course.batches.filter(
+      (b) => (b.registration_status || "").toLowerCase() === "open"
+    );
+
+    const sortFn = (a: PublicCourseBatch, b: PublicCourseBatch) => {
+      if (!a.start_date) return 1;
+      if (!b.start_date) return -1;
+      return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
+    };
+
+    if (openBatches.length > 0) {
+      return [...openBatches].sort(sortFn)[0];
+    }
+
+    return [...course.batches].sort(sortFn)[0];
+  }, [course]);
+
+  // Aggregate sessions for accordion:
+  const spotlightSessions = useMemo(() => {
+    if (spotlightBatch?.sessions && spotlightBatch.sessions.length > 0) {
+      return spotlightBatch.sessions;
+    }
+    // Fallback: collect any sessions from other batches
+    if (course?.batches) {
+      for (const b of course.batches) {
+        if (b.sessions && b.sessions.length > 0) {
+          return b.sessions;
+        }
+      }
+    }
+    return [];
+  }, [spotlightBatch, course]);
 
   if (loading) {
     return (
@@ -84,8 +126,22 @@ function PublicCourseDetailPage() {
     );
   }
 
-  const batches = course.batches || [];
-  const primaryInstructor = batches.find((b) => b.instructor != null)?.instructor || null;
+  const handleRegisterUpcoming = () => {
+    if (spotlightBatch) {
+      setRegisteringBatch(spotlightBatch);
+    } else {
+      const el = document.getElementById("spotlight-batch-card");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
+  const handleViewScheduleDetails = () => {
+    if (accordionRef.current) {
+      accordionRef.current.openSchedule();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50/60 pb-24 font-sans antialiased text-slate-900">
@@ -96,55 +152,17 @@ function PublicCourseDetailPage() {
         title={course.title}
         summary={course.summary}
         coverUrl={course.cover_url}
-        batchCount={batches.length}
+        onRegisterUpcoming={handleRegisterUpcoming}
       />
 
-      <main className="container mx-auto px-4 max-w-5xl py-12 space-y-12">
-        {/* Overview: Bạn sẽ học được gì? */}
-        <section className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600">
-            <Sparkles className="w-4 h-4" />
-            <span>Nội dung chương trình</span>
-          </div>
-
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
-            Giá trị nổi bật của khóa học
-          </h2>
-
-          {course.description ? (
-            <div className="prose prose-slate max-w-none text-sm leading-relaxed text-slate-600 whitespace-pre-line">
-              {course.description}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500 leading-relaxed italic">
-              Nội dung chi tiết chương trình đào tạo sẽ được đội ngũ DESEMBRE Academy tư vấn theo đúng nhu cầu tay nghề của học viên.
-            </p>
-          )}
-        </section>
-
-        {/* Instructor Preview Section */}
+      <main className="container mx-auto px-4 max-w-4xl py-8 sm:py-12 space-y-8 sm:space-y-10">
+        {/* Spotlight Section: Lớp khai giảng gần nhất */}
         <section className="space-y-4">
-          <h2 className="text-lg font-extrabold text-slate-900 px-1">
-            Giảng viên hướng dẫn
-          </h2>
-          <PublicInstructorCard instructor={primaryInstructor} />
-        </section>
-
-        {/* Upcoming Batches Section */}
-        <section id="batches-section" className="space-y-6">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              Các lớp khai giảng sắp tới ({batches.length})
-            </h2>
-          </div>
-
-          {batches.length > 0 ? (
-            <div className="space-y-6">
-              {batches.map((batch) => (
-                <TrainingScheduleCard
-                  key={batch.id}
-                  batch={{
-                    ...batch,
+          <CourseUpcomingBatchSpotlight
+            batch={
+              spotlightBatch
+                ? {
+                    ...spotlightBatch,
                     course: {
                       id: course.id,
                       title: course.title,
@@ -152,23 +170,43 @@ function PublicCourseDetailPage() {
                       cover_url: course.cover_url,
                       summary: course.summary,
                     },
-                  }}
-                  onRegister={(b) => setRegisteringBatch(b)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 border border-slate-200/80 rounded-3xl bg-white p-6 shadow-sm space-y-4">
-              <Calendar className="h-10 w-10 text-slate-400 mx-auto" />
-              <h3 className="text-lg font-bold text-slate-900">Chưa có lịch khai giảng mới cho khóa học này</h3>
-              <p className="text-sm text-slate-500 max-w-md mx-auto">
-                Vui lòng xem thêm các khóa học khác hoặc đăng ký để nhận tư vấn khi có lớp mới.
-              </p>
-              <Button asChild className="rounded-xl px-6 font-semibold bg-indigo-600 hover:bg-indigo-700">
-                <Link to="/lich-khai-giang">Xem tất cả lịch khai giảng</Link>
-              </Button>
-            </div>
-          )}
+                  }
+                : null
+            }
+            onRegister={(b) => setRegisteringBatch(b)}
+            onViewScheduleDetails={handleViewScheduleDetails}
+          />
+        </section>
+
+        {/* Progressive Disclosure Section: Accordions */}
+        <section className="space-y-4">
+          <CourseDetailAccordion
+            ref={accordionRef}
+            description={course.description}
+            sessions={spotlightSessions}
+          />
+        </section>
+
+        {/* Bottom Quick CTA Banner */}
+        <section className="bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
+          <div className="space-y-1 text-center sm:text-left">
+            <h4 className="text-lg sm:text-xl font-bold">
+              Cần tư vấn thêm về khóa học {course.title}?
+            </h4>
+            <p className="text-xs sm:text-sm text-indigo-200/80">
+              Chuyên viên đào tạo DESEMBRE sẵn sàng giải đáp thắc mắc lộ trình và học phí.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Button
+              onClick={handleRegisterUpcoming}
+              className="w-full sm:w-auto h-12 px-6 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <span>Đăng ký giữ chỗ</span>
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
         </section>
       </main>
 
