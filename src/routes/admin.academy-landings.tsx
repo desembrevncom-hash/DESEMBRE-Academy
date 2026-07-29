@@ -49,15 +49,28 @@ function AdminAcademyLandingsPage() {
     try {
       setLoading(true);
       setError(null);
-      const [landingsData, coursesData] = await Promise.all([
-        getLandingPages(),
-        academyAdminCoursesApi.listCourses(),
-      ]);
+
+      let landingsData: AcademyLandingPage[] = [];
+      let coursesData: AcademyAdminCourseListItem[] = [];
+
+      try {
+        landingsData = await getLandingPages();
+      } catch (err: any) {
+        console.error("Failed to load landing pages:", err);
+        setError(err.message || "Không thể tải danh sách landing pages từ Supabase.");
+      }
+
+      try {
+        coursesData = await academyAdminCoursesApi.listCourses();
+      } catch (err: any) {
+        console.warn("Failed to load courses for dropdown:", err);
+      }
+
       setLandings(landingsData);
       setCourses(coursesData);
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Không thể tải danh sách landing pages.");
+      console.error("loadData error:", err);
+      setError(err.message || "Lỗi không xác định khi tải dữ liệu.");
     } finally {
       setLoading(false);
     }
@@ -161,8 +174,19 @@ function AdminAcademyLandingsPage() {
           )}
 
           {!loading && error && (
-            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-sm">
-              {error}
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+              <div>
+                <p className="font-bold">Lỗi kết nối / Truy vấn dữ liệu</p>
+                <p className="text-xs mt-0.5 text-rose-600 font-mono">{error}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadData}
+                className="rounded-xl border-rose-200 text-rose-700 hover:bg-rose-100 shrink-0 font-semibold"
+              >
+                Thử lại
+              </Button>
             </div>
           )}
 

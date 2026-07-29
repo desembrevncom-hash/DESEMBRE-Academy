@@ -93,11 +93,23 @@ export async function getLandingPages(): Promise<AcademyLandingPage[]> {
         cover_url
       )
     `)
-    .order("created_at", { ascending: false });
+    .order("updated_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching landing pages:", error);
-    throw error;
+    console.error("Error fetching landing pages with course join:", error);
+
+    // Fallback: try querying without relation join if PostgREST relation cache fails
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("academy_landing_pages")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (fallbackError) {
+      console.error("Error fetching landing pages directly:", fallbackError);
+      throw fallbackError;
+    }
+
+    return (fallbackData || []).map(normalizeLandingRecord);
   }
 
   return (data || []).map(normalizeLandingRecord);
@@ -119,19 +131,29 @@ export async function getLandingPageById(id: string): Promise<AcademyLandingPage
       )
     `)
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
   if (error) {
-    if (error.code === "PGRST116") return null;
-    throw error;
+    console.error(`Error fetching landing page by id '${id}':`, error);
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("academy_landing_pages")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fallbackError || !fallbackData) return null;
+    return normalizeLandingRecord(fallbackData);
   }
 
+  if (!data) return null;
   return normalizeLandingRecord(data);
 }
 
 export async function getLandingPageBySlug(slug: string): Promise<AcademyLandingPage | null> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
+
+  const normalizedSlug = slug.toLowerCase().trim();
 
   const { data, error } = await supabase
     .from("academy_landing_pages")
@@ -144,14 +166,22 @@ export async function getLandingPageBySlug(slug: string): Promise<AcademyLanding
         cover_url
       )
     `)
-    .eq("slug", slug.toLowerCase().trim())
-    .single();
+    .eq("slug", normalizedSlug)
+    .maybeSingle();
 
   if (error) {
-    if (error.code === "PGRST116") return null;
-    throw error;
+    console.error(`Error fetching landing page by slug '${slug}':`, error);
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from("academy_landing_pages")
+      .select("*")
+      .eq("slug", normalizedSlug)
+      .maybeSingle();
+
+    if (fallbackError || !fallbackData) return null;
+    return normalizeLandingRecord(fallbackData);
   }
 
+  if (!data) return null;
   return normalizeLandingRecord(data);
 }
 
