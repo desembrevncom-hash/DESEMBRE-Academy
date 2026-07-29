@@ -15,6 +15,7 @@ export interface PublicSessionInfo {
   ends_at: string | null;
   location_type: string | null;
   location_detail: string | null;
+  description?: string | null;
 }
 
 export interface PublicCourseBatch {
