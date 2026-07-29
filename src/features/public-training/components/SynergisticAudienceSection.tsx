@@ -1,6 +1,12 @@
-import { Users, Building2, Stethoscope, MessageSquare, Sparkles } from "lucide-react";
+import { Users, Building2, Stethoscope, MessageSquare, Sparkles, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export function SynergisticAudienceSection() {
+interface SynergisticAudienceSectionProps {
+  onScrollToSchedule: () => void;
+  onOpenConsult: () => void;
+}
+
+export function SynergisticAudienceSection({ onScrollToSchedule, onOpenConsult }: SynergisticAudienceSectionProps) {
   const audiences = [
     {
       icon: Building2,
@@ -63,6 +69,29 @@ export function SynergisticAudienceSection() {
             </div>
           );
         })}
+      </div>
+
+      {/* Section CTA Footer */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100 text-center sm:text-left">
+        <span className="text-xs text-slate-500 font-medium">Bạn thuộc nhóm đối tượng trên?</span>
+        <div className="flex flex-wrap items-center justify-center gap-2.5 w-full sm:w-auto">
+          <Button
+            onClick={onScrollToSchedule}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50"
+          >
+            <span>Xem lớp đang mở</span>
+            <ArrowRight className="ml-1 w-3.5 h-3.5" />
+          </Button>
+          <Button
+            onClick={onOpenConsult}
+            size="sm"
+            className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+          >
+            Nhận tư vấn trước
+          </Button>
+        </div>
       </div>
     </section>
   );

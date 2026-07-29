@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { getPublicTrainingSchedule, PublicCourseBatch } from "@/features/public-training/services/publicTrainingApi";
@@ -7,12 +7,14 @@ import { SynergisticProtocolHero } from "@/features/public-training/components/S
 import { SynergisticAudienceSection } from "@/features/public-training/components/SynergisticAudienceSection";
 import { SynergisticOutcomeSection } from "@/features/public-training/components/SynergisticOutcomeSection";
 import { SynergisticSessionSection } from "@/features/public-training/components/SynergisticSessionSection";
+import { SynergisticTrustSection } from "@/features/public-training/components/SynergisticTrustSection";
 import { SynergisticFaqSection } from "@/features/public-training/components/SynergisticFaqSection";
 import { CompactInstructorCard } from "@/features/public-training/components/CompactInstructorCard";
 import { TrainingScheduleCard } from "@/features/public-training/components/TrainingScheduleCard";
 import { RegistrationForm } from "@/features/public-training/components/RegistrationForm";
 import { RegistrationSuccess } from "@/features/public-training/components/RegistrationSuccess";
 import { PublicStickyCTA } from "@/components/layout/PublicStickyCTA";
+import { trackLandingEvent } from "@/features/public-training/utils/landingTracking";
 import { Loader2, Calendar, MessageSquare, ArrowRight, AlertCircle, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
@@ -36,6 +38,7 @@ function SynergisticProtocolPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [registeringBatch, setRegisteringBatch] = useState<PublicCourseBatch | null>(null);
+  const [initialNotes, setInitialNotes] = useState<string | undefined>(undefined);
   const [successBatchTitle, setSuccessBatchTitle] = useState<string | null>(null);
   const [isDuplicateRegistration, setIsDuplicateRegistration] = useState(false);
 
@@ -67,6 +70,7 @@ function SynergisticProtocolPage() {
 
   useEffect(() => {
     fetchSchedule();
+    trackLandingEvent("synergistic_page_view", { url: "/synergistic-protocol" });
   }, []);
 
   const coverUrl = useMemo(() => {
@@ -90,25 +94,48 @@ function SynergisticProtocolPage() {
     return null;
   }, [batches]);
 
-  const handleOpenRegister = (batch: PublicCourseBatch) => {
+  const handleScrollToSchedule = useCallback(() => {
+    const el = document.getElementById("synergistic-schedule-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
+  const handleOpenRegister = useCallback((batch: PublicCourseBatch, notes?: string) => {
+    trackLandingEvent("synergistic_primary_cta_click", { batch_id: batch.id, batch_title: batch.title });
+    setInitialNotes(notes);
     setRegisteringBatch(batch);
-  };
+    trackLandingEvent("synergistic_registration_open", { batch_id: batch.id, has_notes: !!notes });
+  }, []);
+
+  const handleOpenConsult = useCallback(() => {
+    trackLandingEvent("synergistic_consult_cta_click", { type: "consult_soft_cta" });
+    if (batches.length > 0) {
+      handleOpenRegister(batches[0], "Tôi muốn được tư vấn thêm về SYNERGISTIC PROTOCOL trước khi đăng ký.");
+    } else {
+      window.open("https://zalo.me", "_blank");
+    }
+  }, [batches, handleOpenRegister]);
 
   const handleCloseRegister = () => {
     setRegisteringBatch(null);
+    setInitialNotes(undefined);
   };
 
   const handleSuccess = (isDuplicate?: boolean) => {
     if (registeringBatch) {
-      setSuccessBatchTitle(registeringBatch.course?.title || registeringBatch.title);
+      const title = registeringBatch.course?.title || registeringBatch.title;
+      setSuccessBatchTitle(title);
+      if (isDuplicate) {
+        trackLandingEvent("synergistic_duplicate_registration", { batch_title: title });
+      } else {
+        trackLandingEvent("synergistic_registration_success", { batch_title: title });
+      }
     }
     setIsDuplicateRegistration(!!isDuplicate);
     setRegisteringBatch(null);
+    setInitialNotes(undefined);
     fetchSchedule();
-  };
-
-  const handleConsult = () => {
-    window.open("https://zalo.me", "_blank");
   };
 
   return (
@@ -120,15 +147,28 @@ function SynergisticProtocolPage() {
 
       <main className="container mx-auto px-4 max-w-5xl py-10 sm:py-14 space-y-10 sm:space-y-12">
         {/* 1. Audience Section */}
-        <SynergisticAudienceSection />
+        <SynergisticAudienceSection
+          onScrollToSchedule={handleScrollToSchedule}
+          onOpenConsult={handleOpenConsult}
+        />
 
         {/* 2. Outcome Section */}
-        <SynergisticOutcomeSection />
+        <SynergisticOutcomeSection
+          onScrollToSchedule={handleScrollToSchedule}
+          onOpenConsult={handleOpenConsult}
+        />
 
         {/* 3. Session Content Section */}
-        <SynergisticSessionSection sessions={activeSessions} />
+        <SynergisticSessionSection
+          sessions={activeSessions}
+          onScrollToSchedule={handleScrollToSchedule}
+          onOpenConsult={handleOpenConsult}
+        />
 
-        {/* 4. Instructor Section */}
+        {/* 4. Trust & Social Proof Section */}
+        <SynergisticTrustSection />
+
+        {/* 5. Instructor Section */}
         <section className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600">
@@ -148,7 +188,7 @@ function SynergisticProtocolPage() {
           </div>
         </section>
 
-        {/* 5. Open Batches Section */}
+        {/* 6. Open Batches Section */}
         <section id="synergistic-schedule-section" className="space-y-6">
           {/* Loading State */}
           {loading && (
@@ -196,7 +236,7 @@ function SynergisticProtocolPage() {
                   </Link>
                 </Button>
 
-                <Button onClick={handleConsult} variant="outline" className="rounded-xl px-6 h-11 font-semibold border-slate-200">
+                <Button onClick={handleOpenConsult} variant="outline" className="rounded-xl px-6 h-11 font-semibold border-slate-200">
                   <MessageSquare className="mr-2 w-4 h-4 text-indigo-600" />
                   <span>Tư vấn lộ trình</span>
                 </Button>
@@ -220,15 +260,18 @@ function SynergisticProtocolPage() {
                 <TrainingScheduleCard
                   key={batch.id}
                   batch={batch}
-                  onRegister={handleOpenRegister}
+                  onRegister={(b) => handleOpenRegister(b)}
                 />
               ))}
             </div>
           )}
         </section>
 
-        {/* 6. FAQ Section */}
-        <SynergisticFaqSection />
+        {/* 7. FAQ Section */}
+        <SynergisticFaqSection
+          onScrollToSchedule={handleScrollToSchedule}
+          onOpenConsult={handleOpenConsult}
+        />
       </main>
 
       <SiteFooter />
@@ -237,6 +280,7 @@ function SynergisticProtocolPage() {
       {registeringBatch && (
         <RegistrationForm
           batch={registeringBatch}
+          initialNotes={initialNotes}
           onClose={handleCloseRegister}
           onSuccess={handleSuccess}
         />
@@ -257,11 +301,12 @@ function SynergisticProtocolPage() {
           primaryLabel="Đăng ký học"
           onPrimaryClick={() => {
             if (batches.length > 0) {
-              setRegisteringBatch(batches[0]);
+              handleOpenRegister(batches[0]);
             } else {
-              window.scrollTo({ top: 0, behavior: "smooth" });
+              handleScrollToSchedule();
             }
           }}
+          onConsultClick={handleOpenConsult}
         />
       )}
     </div>

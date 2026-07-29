@@ -1,12 +1,15 @@
 import { PublicSessionInfo } from "../services/publicTrainingApi";
 import { formatDateSafe, formatTimeRange } from "../utils/formatters";
-import { Calendar, Clock, MapPin, BookOpen, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, MapPin, BookOpen, CheckCircle2, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface SynergisticSessionSectionProps {
   sessions: PublicSessionInfo[];
+  onScrollToSchedule: () => void;
+  onOpenConsult: () => void;
 }
 
-export function SynergisticSessionSection({ sessions }: SynergisticSessionSectionProps) {
+export function SynergisticSessionSection({ sessions, onScrollToSchedule, onOpenConsult }: SynergisticSessionSectionProps) {
   const fallbackCurriculum = [
     {
       session: "Buổi 1",
@@ -118,6 +121,29 @@ export function SynergisticSessionSection({ sessions }: SynergisticSessionSectio
           </div>
         </div>
       )}
+
+      {/* Section CTA Footer */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100 text-center sm:text-left">
+        <span className="text-xs text-slate-500 font-medium">Bạn muốn xem thời gian khai giảng cụ thể?</span>
+        <div className="flex flex-wrap items-center justify-center gap-2.5 w-full sm:w-auto">
+          <Button
+            onClick={onScrollToSchedule}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50"
+          >
+            <span>Xem lớp đang mở</span>
+            <ArrowRight className="ml-1 w-3.5 h-3.5" />
+          </Button>
+          <Button
+            onClick={onOpenConsult}
+            size="sm"
+            className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+          >
+            Nhận tư vấn trước
+          </Button>
+        </div>
+      </div>
     </section>
   );
 }

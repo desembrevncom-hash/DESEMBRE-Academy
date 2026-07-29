@@ -1,6 +1,12 @@
-import { CheckCircle2, Award, Zap, ShieldAlert, TrendingUp, ThumbsUp, Layers } from "lucide-react";
+import { CheckCircle2, Award, Zap, ShieldAlert, TrendingUp, ThumbsUp, Layers, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export function SynergisticOutcomeSection() {
+interface SynergisticOutcomeSectionProps {
+  onScrollToSchedule: () => void;
+  onOpenConsult: () => void;
+}
+
+export function SynergisticOutcomeSection({ onScrollToSchedule, onOpenConsult }: SynergisticOutcomeSectionProps) {
   const outcomes = [
     {
       icon: Zap,
@@ -69,6 +75,29 @@ export function SynergisticOutcomeSection() {
             </div>
           );
         })}
+      </div>
+
+      {/* Section CTA Footer */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-white/10 text-center sm:text-left">
+        <span className="text-xs text-indigo-200/80 font-medium">Sẵn sàng nâng cao kỹ năng ứng dụng?</span>
+        <div className="flex flex-wrap items-center justify-center gap-2.5 w-full sm:w-auto">
+          <Button
+            onClick={onScrollToSchedule}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            <span>Xem lớp đang mở</span>
+            <ArrowRight className="ml-1 w-3.5 h-3.5" />
+          </Button>
+          <Button
+            onClick={onOpenConsult}
+            size="sm"
+            className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/30"
+          >
+            Nhận tư vấn trước
+          </Button>
+        </div>
       </div>
     </section>
   );

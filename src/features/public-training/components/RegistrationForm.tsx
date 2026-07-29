@@ -21,9 +21,10 @@ interface RegistrationFormProps {
   batch: PublicCourseBatch;
   onClose: () => void;
   onSuccess: (isDuplicate?: boolean) => void;
+  initialNotes?: string;
 }
 
-export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationFormProps) {
+export function RegistrationForm({ batch, onClose, onSuccess, initialNotes }: RegistrationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -39,7 +40,7 @@ export function RegistrationForm({ batch, onClose, onSuccess }: RegistrationForm
       fullName: "",
       phone: "",
       email: "",
-      notes: "",
+      notes: initialNotes || "",
     },
   });
 
