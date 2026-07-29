@@ -355,9 +355,8 @@ function CourseSettingsPage() {
                 disabled={isReadOnly}
                 className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
               >
-                <option value="dynamic">Động (Dynamic) - Theo role (Free, Plus, Premium...)</option>
-                <option value="free">Miễn phí (Free) - Mở cho mọi học viên đã ghi danh</option>
-                <option value="paid">Trả phí (Paid) - Yêu cầu mua</option>
+                <option value="dynamic">Động (Dynamic) - Theo vai trò & quyền hạn</option>
+                <option value="grandfathered">Đã cấp quyền trước đây (Grandfathered)</option>
               </select>
               {errors.access_policy && (
                 <p className="text-sm text-destructive">{errors.access_policy.message}</p>
@@ -376,8 +375,7 @@ function CourseSettingsPage() {
               >
                 <option value="included">Đã bao gồm (Included in sub/tier)</option>
                 <option value="free">Miễn phí (Free)</option>
-                <option value="one_time">Mua một lần (One-time)</option>
-                <option value="subscription">Trả phí định kỳ (Subscription)</option>
+                <option value="paid">Trả phí (Paid)</option>
               </select>
               {errors.pricing_model && (
                 <p className="text-sm text-destructive">{errors.pricing_model.message}</p>

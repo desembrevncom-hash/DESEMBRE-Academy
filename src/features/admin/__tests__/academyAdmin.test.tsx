@@ -62,7 +62,7 @@ describe("Academy Admin M6B.1 Tests", () => {
       p_category_id: null,
       p_catalog_visibility: "public" as const,
       p_enrollment_policy: "open" as const,
-      p_access_policy: "free" as const,
+      p_access_policy: "dynamic" as const,
       p_pricing_model: "free" as const,
     };
 

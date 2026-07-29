@@ -36,8 +36,8 @@ export const createCourseSchema = z.object({
   category_id: z.preprocess((val) => val === "" ? null : val, z.string().uuid("Invalid category").optional().nullable()),
   catalog_visibility: z.enum(["public", "unlisted", "private"]),
   enrollment_policy: z.enum(["open", "approval_required", "closed"]),
-  access_policy: z.enum(["free", "paid", "dynamic"]),
-  pricing_model: z.enum(["free", "one_time", "subscription", "included"]),
+  access_policy: z.enum(["dynamic", "grandfathered"]),
+  pricing_model: z.enum(["free", "paid", "included"]),
   cover_url: z.string().optional().nullable().or(z.literal("")),
   summary: z.string().max(1000, "Tóm tắt quá dài").optional().nullable(),
 });
@@ -48,8 +48,8 @@ export const updateCourseSchema = createCourseSchema.extend({
   // Override defaults to ensure they are required during update
   catalog_visibility: z.enum(["public", "unlisted", "private"]),
   enrollment_policy: z.enum(["open", "approval_required", "closed"]),
-  access_policy: z.enum(["free", "paid", "dynamic"]),
-  pricing_model: z.enum(["free", "one_time", "subscription", "included"]),
+  access_policy: z.enum(["dynamic", "grandfathered"]),
+  pricing_model: z.enum(["free", "paid", "included"]),
   cover_url: z.string().optional().nullable().or(z.literal("")),
   summary: z.string().max(1000, "Tóm tắt quá dài").optional().nullable(),
 });

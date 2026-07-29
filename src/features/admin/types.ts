@@ -1,8 +1,8 @@
 export type AcademyCourseStatus = "draft" | "published" | "archived";
 export type AcademyCatalogVisibility = "public" | "unlisted" | "private";
 export type AcademyEnrollmentPolicy = "open" | "approval_required" | "closed";
-export type AcademyAccessPolicy = "free" | "paid" | "dynamic";
-export type AcademyPricingModel = "free" | "one_time" | "subscription" | "included";
+export type AcademyAccessPolicy = "dynamic" | "grandfathered";
+export type AcademyPricingModel = "free" | "paid" | "included";
 
 export interface AcademyAdminCourseListItem {
   id: string;
