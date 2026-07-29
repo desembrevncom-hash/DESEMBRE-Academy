@@ -40,7 +40,7 @@ function AdminBatchesNewPage() {
       training_format: "office",
       instructor_id: "",
       max_participants: "",
-      registration_status: "OPEN",
+      registration_status: "open",
       registration_closes_at: "",
       start_date: "",
       end_date: "",
@@ -223,9 +223,9 @@ function AdminBatchesNewPage() {
                 {...register("registration_status")}
                 className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <option value="OPEN">Đang mở đăng ký (Open)</option>
-                <option value="DRAFT">Bản nháp (Draft)</option>
-                <option value="CLOSED">Đã đóng (Closed)</option>
+                <option value="open">Đang mở đăng ký</option>
+                <option value="draft">Bản nháp</option>
+                <option value="closed">Đã đóng</option>
               </select>
             </div>
 

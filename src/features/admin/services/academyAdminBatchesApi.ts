@@ -29,6 +29,8 @@ export async function adminCreateCourseBatch(payload: any) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
   
+  const regStatus = (payload.registration_status || "open").toString().toLowerCase().trim();
+
   try {
     const { data, error } = await supabase.rpc("admin_create_course_batch", {
       p_course_id: payload.course_id,
@@ -36,7 +38,7 @@ export async function adminCreateCourseBatch(payload: any) {
       p_slug: payload.slug,
       p_training_format: payload.training_format,
       p_max_participants: payload.max_participants || null,
-      p_registration_status: payload.registration_status || "open",
+      p_registration_status: regStatus,
       p_start_date: payload.start_date || null,
       p_end_date: payload.end_date || null,
       p_description: payload.description || null,
@@ -59,7 +61,7 @@ export async function adminCreateCourseBatch(payload: any) {
       slug: payload.slug,
       training_format: payload.training_format,
       max_participants: payload.max_participants || null,
-      registration_status: payload.registration_status || "open",
+      registration_status: regStatus,
       start_date: payload.start_date || null,
       end_date: payload.end_date || null,
       description: payload.description || null,
@@ -77,6 +79,8 @@ export async function adminUpdateCourseBatch(id: string, payload: any) {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
   
+  const regStatus = (payload.registration_status || "open").toString().toLowerCase().trim();
+
   try {
     const { data, error } = await supabase.rpc("admin_update_course_batch", {
       p_batch_id: id,
@@ -85,7 +89,7 @@ export async function adminUpdateCourseBatch(id: string, payload: any) {
       p_slug: payload.slug,
       p_training_format: payload.training_format,
       p_max_participants: payload.max_participants || null,
-      p_registration_status: payload.registration_status || "open",
+      p_registration_status: regStatus,
       p_start_date: payload.start_date || null,
       p_end_date: payload.end_date || null,
       p_description: payload.description || null,
@@ -108,7 +112,7 @@ export async function adminUpdateCourseBatch(id: string, payload: any) {
       slug: payload.slug,
       training_format: payload.training_format,
       max_participants: payload.max_participants || null,
-      registration_status: payload.registration_status || "open",
+      registration_status: regStatus,
       start_date: payload.start_date || null,
       end_date: payload.end_date || null,
       description: payload.description || null,

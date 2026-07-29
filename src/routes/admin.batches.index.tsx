@@ -64,7 +64,7 @@ function AdminBatchesIndexPage() {
         end_date: batch.end_date,
         registration_closes_at: batch.registration_closes_at,
         description: batch.description,
-        registration_status: "CLOSED",
+        registration_status: "closed",
       });
       const data = await adminGetCourseBatches();
       setBatches(data || []);

@@ -25,7 +25,7 @@ export const Route = createFileRoute("/admin/batches/$batchId/")({
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 function normalizeBatchStatus(value?: string | null) {
-  return (value || "DRAFT").toUpperCase();
+  return (value || "draft").toLowerCase().trim();
 }
 function toDateInputValue(value?: string | null) {
   if (!value) return "";
@@ -357,7 +357,7 @@ function AdminBatchesEditPage() {
       training_format: "office",
       instructor_id: "",
       max_participants: "",
-      registration_status: "OPEN",
+      registration_status: "open",
       registration_closes_at: "",
       start_date: "",
       end_date: "",
@@ -545,9 +545,9 @@ function AdminBatchesEditPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Trạng thái đăng ký</label>
               <select {...register("registration_status")} className={selectCls}>
-                <option value="OPEN">Đang mở đăng ký (Open)</option>
-                <option value="DRAFT">Bản nháp (Draft)</option>
-                <option value="CLOSED">Đã đóng (Closed)</option>
+                <option value="open">Đang mở đăng ký</option>
+                <option value="draft">Bản nháp</option>
+                <option value="closed">Đã đóng</option>
               </select>
             </div>
             <div className="space-y-2">
