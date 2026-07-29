@@ -119,7 +119,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 <span>
                   Sĩ số:{" "}
                   <strong className="text-slate-900 font-bold">
-                    {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Chỉ tiêu giới hạn"}
+                    {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Liên hệ để tư vấn sĩ số"}
                   </strong>
                 </span>
               </div>
