@@ -197,10 +197,13 @@ function PublicCalendarPage() {
         {/* Schedule List */}
         {!loading && !error && filteredBatches.length > 0 && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between px-1">
-              <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                Các lớp khai giảng sắp tới ({filteredBatches.length})
+            <div className="px-1 space-y-1">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                Lớp khai giảng đang mở ({filteredBatches.length})
               </h2>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Chọn lớp phù hợp và gửi thông tin để DESEMBRE Academy xác nhận qua Zalo/điện thoại.
+              </p>
             </div>
 
             {filteredBatches.map((batch) => (
