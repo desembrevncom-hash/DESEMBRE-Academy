@@ -81,7 +81,7 @@ function AdminCourseList() {
           <option value="published">Công khai</option>
           <option value="draft">Bản nháp</option>
           <option value="archived">Đã lưu trữ</option>
-          <option value="demo">Dữ liệu test/demo</option>
+          <option value="demo">Dữ liệu test/smoke</option>
         </select>
       </div>
 

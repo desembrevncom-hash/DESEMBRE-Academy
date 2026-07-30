@@ -97,7 +97,7 @@ function AdminBatchesIndexPage() {
           <option value="open">Đang mở đăng ký</option>
           <option value="draft">Bản nháp</option>
           <option value="closed">Đã đóng</option>
-          <option value="demo">Dữ liệu test/demo</option>
+          <option value="demo">Dữ liệu test/smoke</option>
         </select>
       </div>
 
