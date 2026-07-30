@@ -32,7 +32,7 @@ export function SynergisticProtocolHero({ coverUrl }: SynergisticProtocolHeroPro
           <div className="lg:col-span-7 space-y-5 text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold backdrop-blur-md shadow-lg shadow-indigo-950/40">
               <GraduationCap className="h-4 w-4 text-indigo-400" />
-              <span>DESEMBRE ACADEMY • KHÓA ĐÀO TẠO CHUYÊN SÂU</span>
+              <span>DESEMBRE TRAINING CENTER • KHÓA ĐÀO TẠO CHUYÊN SÂU</span>
               <Sparkles className="h-3.5 w-3.5 text-amber-300" />
             </div>
 

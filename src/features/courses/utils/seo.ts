@@ -26,13 +26,13 @@ export type CourseMetaForSeo = {
 export function buildCourseHeadMeta(meta: CourseMetaForSeo): Array<Record<string, string>> {
   if (!meta) return [];
 
-  const title = meta.marketing?.seo_title || meta.title || "DESEMBRE Academy";
+  const title = meta.marketing?.seo_title || meta.title || "DESEMBRE Training Center";
   const description =
     meta.marketing?.seo_description ||
     meta.marketing?.short_description ||
     meta.description ||
     "";
-  const fullTitle = `${title} — DESEMBRE Academy`;
+  const fullTitle = `${title} — DESEMBRE Training Center`;
 
   // Validate thumbnail: chỉ chấp nhận https://
   const thumbUrl = meta.marketing?.thumbnail_url;
@@ -91,7 +91,7 @@ export function applyCourseSeoMeta(course: CourseOutline["course"]) {
   const seoImageAlt = course.marketing?.thumbnail_alt || seoTitle;
 
   // Cập nhật title
-  document.title = `${seoTitle} — DESEMBRE Academy`;
+  document.title = `${seoTitle} — DESEMBRE Training Center`;
 
   // Helper: update existing tag hoặc create mới — không bao giờ duplicate
   const setMeta = (name: string, content: string, isProperty = false) => {

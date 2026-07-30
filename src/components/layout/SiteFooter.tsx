@@ -11,11 +11,11 @@ export function SiteFooter() {
             </div>
             <div className="leading-tight">
               <div className="text-sm font-bold">DESEMBRE</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Academy</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Training Center</div>
             </div>
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            Nền tảng đào tạo dành cho khách hàng, đối tác và đội ngũ DESEMBRE.
+            Trung tâm đào tạo dành cho khách hàng, đối tác và đội ngũ DESEMBRE.
           </p>
         </div>
         <div>
@@ -38,7 +38,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} DESEMBRE Academy. Học đúng kiến thức. Phát triển đúng hướng.
+        © {new Date().getFullYear()} DESEMBRE Training Center. Học đúng kiến thức. Phát triển đúng hướng.
       </div>
     </footer>
   );

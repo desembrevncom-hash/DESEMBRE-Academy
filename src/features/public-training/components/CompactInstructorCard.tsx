@@ -19,7 +19,7 @@ export function CompactInstructorCard({ instructor }: CompactInstructorCardProps
             Giảng viên phụ trách
           </div>
           <div className="font-bold text-slate-900 text-sm truncate">
-            Đội ngũ chuyên gia DESEMBRE Academy
+            Đội ngũ chuyên gia DESEMBRE Training Center
           </div>
           <div className="text-slate-500 truncate text-[11px]">
             Chuyên gia Da liễu & Thẩm mỹ cao cấp

@@ -22,7 +22,7 @@ export function TrainingHero() {
         {/* Brand Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold mb-3 backdrop-blur-md shadow-lg shadow-indigo-950/40">
           <GraduationCap className="h-3.5 w-3.5 text-indigo-400" />
-          <span>DESEMBRE ACADEMY</span>
+          <span>DESEMBRE TRAINING CENTER</span>
           <Sparkles className="h-3 w-3 text-amber-300" />
         </div>
 

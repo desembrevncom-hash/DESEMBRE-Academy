@@ -22,7 +22,7 @@ export function AcademyLogo({ className, variant = "normal" }: AcademyLogoProps)
       </div>
       <div className="leading-none flex flex-col justify-center">
         <div className="text-[14px] md:text-[15px] font-bold tracking-tight text-slate-900">DESEMBRE</div>
-        <div className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.15em] text-teal-600/80 mt-0.5">Academy</div>
+        <div className="text-[9px] md:text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-600/80 mt-0.5">Training Center</div>
       </div>
     </div>
   );

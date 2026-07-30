@@ -18,10 +18,10 @@ import { isDemoRecord } from "@/features/admin/utils/demoData";
 export const Route = createFileRoute("/khoa-hoc/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `Khóa học ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Academy` },
-      { name: "description", content: "Khoá đào tạo chuyên sâu chuẩn Y Khoa & Thẩm mỹ cao cấp tại DESEMBRE Academy." },
-      { property: "og:title", content: `Khóa học ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Academy` },
-      { property: "og:description", content: "Chương trình đào tạo kỹ thuật viên và chủ Spa chuyên nghiệp cùng chuyên gia DESEMBRE Academy." },
+      { title: `Khóa học ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center` },
+      { name: "description", content: "Khoá đào tạo chuyên sâu chuẩn Y Khoa & Thẩm mỹ cao cấp tại DESEMBRE Training Center." },
+      { property: "og:title", content: `Khóa học ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center` },
+      { property: "og:description", content: "Chương trình đào tạo kỹ thuật viên và chủ Spa chuyên nghiệp cùng chuyên gia DESEMBRE Training Center." },
       { property: "og:type", content: "article" },
     ],
   }),

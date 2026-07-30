@@ -24,10 +24,10 @@ import heroImg from "@/assets/hero-banner.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "DESEMBRE Academy — Viện Đào Tạo Thẩm Mỹ & Da Liễu Chuẩn Hàn Quốc" },
+      { title: "DESEMBRE Training Center — Viện Đào Tạo Thẩm Mỹ & Da Liễu Chuẩn Hàn Quốc" },
       { name: "description", content: "Viện đào tạo thẩm mỹ da liễu chuẩn Y Khoa Hàn Quốc hàng đầu tại Việt Nam. Đào tạo kỹ thuật viên, chủ Spa chuyên nghiệp." },
-      { property: "og:title", content: "DESEMBRE Academy — Viện Đào Tạo Thẩm Mỹ & Da Liễu Chuẩn Hàn Quốc" },
-      { property: "og:description", content: "Học nghề Spa chuyên nghiệp, cập nhật công nghệ trị liệu da chuẩn y khoa cùng chuyên gia DESEMBRE Academy." },
+      { property: "og:title", content: "DESEMBRE Training Center — Viện Đào Tạo Thẩm Mỹ & Da Liễu Chuẩn Hàn Quốc" },
+      { property: "og:description", content: "Học nghề Spa chuyên nghiệp, cập nhật công nghệ trị liệu da chuẩn y khoa cùng chuyên gia DESEMBRE Training Center." },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -101,7 +101,7 @@ function Home() {
           <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:gap-6 lg:p-14">
             <div className="flex flex-col justify-center">
               <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 backdrop-blur px-3 py-1 text-xs font-medium text-primary-dark">
-                <Sparkles className="h-3.5 w-3.5" /> DESEMBRE Academy
+                <Sparkles className="h-3.5 w-3.5" /> DESEMBRE Training Center
               </span>
               <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight">
                 Học đúng kiến thức.
@@ -109,7 +109,7 @@ function Home() {
                 <span className="text-primary-dark">Phát triển đúng hướng.</span>
               </h1>
               <p className="mt-5 max-w-lg text-base text-muted-foreground">
-                Nền tảng đào tạo dành cho khách hàng, đối tác và đội ngũ DESEMBRE. Xây dựng năng lực
+                Trung tâm đào tạo dành cho khách hàng, đối tác và đội ngũ DESEMBRE. Xây dựng năng lực
                 với các khóa học thực chiến từ chuyên gia hàng đầu.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
@@ -143,7 +143,7 @@ function Home() {
               <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl bg-primary/10">
                 <img
                   src={heroImg}
-                  alt="Giảng viên chuyên nghiệp DESEMBRE Academy"
+                  alt="Giảng viên chuyên nghiệp DESEMBRE Training Center"
                   width={1024}
                   height={1280}
                   className="h-full w-full object-cover"

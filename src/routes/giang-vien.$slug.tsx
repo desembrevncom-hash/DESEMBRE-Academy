@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/giang-vien/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `Giảng viên ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Academy` },
-      { name: "description", content: "Chuyên gia đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Academy." },
-      { property: "og:title", content: `Giảng viên ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Academy` },
+      { title: `Giảng viên ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center` },
+      { name: "description", content: "Chuyên gia đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Training Center." },
+      { property: "og:title", content: `Giảng viên ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center` },
       { property: "og:description", content: "Hồ sơ chuyên môn, thành tựu và danh sách lớp đào tạo do giảng viên phụ trách." },
       { property: "og:type", content: "profile" },
     ],

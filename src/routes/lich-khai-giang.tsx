@@ -18,10 +18,10 @@ export const Route = createFileRoute("/lich-khai-giang")({
   component: PublicCalendarPage,
   head: () => ({
     meta: [
-      { title: "Lịch Khai Giảng | DESEMBRE Academy" },
-      { name: "description", content: "Lịch khai giảng các khóa đào tạo spa, thẩm mỹ, quản trị kinh doanh spa chuẩn Hàn Quốc mới nhất tại DESEMBRE Academy." },
-      { property: "og:title", content: "Lịch Khai Giảng | DESEMBRE Academy" },
-      { property: "og:description", content: "Xem lịch khai giảng mới nhất các lớp đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Academy." },
+      { title: "Lịch Khai Giảng | DESEMBRE Training Center" },
+      { name: "description", content: "Lịch khai giảng các khóa đào tạo spa, thẩm mỹ, quản trị kinh doanh spa chuẩn Hàn Quốc mới nhất tại DESEMBRE Training Center." },
+      { property: "og:title", content: "Lịch Khai Giảng | DESEMBRE Training Center" },
+      { property: "og:description", content: "Xem lịch khai giảng mới nhất các lớp đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Training Center." },
       { property: "og:type", content: "website" },
     ]
   })

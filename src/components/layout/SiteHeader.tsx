@@ -34,7 +34,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-4 z-50 w-full px-4 pointer-events-none">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 rounded-full border border-teal-100 bg-white/90 px-5 shadow-sm backdrop-blur pointer-events-auto">
-        <Link to="/" className="shrink-0" aria-label="DESEMBRE Academy Home">
+        <Link to="/" className="shrink-0" aria-label="DESEMBRE Training Center Home">
           <AcademyLogo />
         </Link>
 

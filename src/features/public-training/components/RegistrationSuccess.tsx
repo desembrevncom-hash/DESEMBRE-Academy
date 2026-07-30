@@ -33,19 +33,19 @@ export function RegistrationSuccess({ batchTitle, isDuplicate, onClose }: Regist
           <h3 className="text-2xl font-extrabold text-slate-900 leading-tight">
             {isDuplicate
               ? "Bạn đã đăng ký lớp học này trước đó!"
-              : "DESEMBRE Academy đã nhận thông tin đăng ký của bạn!"}
+              : "DESEMBRE Training Center đã nhận thông tin đăng ký của bạn!"}
           </h3>
 
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-1">
             {isDuplicate ? (
               <>
-                Bạn đã đăng ký lớp <span className="font-bold text-slate-900">{batchTitle}</span> trước đó. DESEMBRE Academy sẽ liên hệ xác nhận trong thời gian sớm nhất. Vui lòng theo dõi Zalo/SĐT đã đăng ký.
+                Bạn đã đăng ký lớp <span className="font-bold text-slate-900">{batchTitle}</span> trước đó. DESEMBRE Training Center sẽ liên hệ xác nhận trong thời gian sớm nhất. Vui lòng theo dõi Zalo/SĐT đã đăng ký.
               </>
             ) : (
               <>
                 Cảm ơn bạn đã đăng ký tham gia lớp học{" "}
                 <span className="font-bold text-slate-900">{batchTitle}</span>.{" "}
-                Tư vấn viên DESEMBRE Academy sẽ liên hệ xác nhận qua Zalo/SĐT trong thời gian sớm nhất.
+                Tư vấn viên DESEMBRE Training Center sẽ liên hệ xác nhận qua Zalo/SĐT trong thời gian sớm nhất.
               </>
             )}
           </p>
@@ -59,7 +59,7 @@ export function RegistrationSuccess({ batchTitle, isDuplicate, onClose }: Regist
           </div>
 
           <ol className="list-decimal pl-4 space-y-1.5 text-slate-600">
-            <li>Bộ phận tư vấn DESEMBRE Academy sẽ kiểm tra thông tin.</li>
+            <li>Bộ phận tư vấn DESEMBRE Training Center sẽ kiểm tra thông tin.</li>
             <li>Bạn sẽ nhận xác nhận qua Zalo hoặc điện thoại trong thời gian sớm nhất.</li>
             <li>Vui lòng giữ liên lạc để hoàn tất vị trí và nhận tài liệu chuẩn bị.</li>
           </ol>

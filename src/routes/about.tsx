@@ -20,16 +20,16 @@ import heroImg from "@/assets/hero-instructor.jpg";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "Về chúng tôi — DESEMBRE Academy" },
+      { title: "Về chúng tôi — DESEMBRE Training Center" },
       {
         name: "description",
         content:
-          "Tìm hiểu về DESEMBRE Academy, đội ngũ giảng viên và giá trị cốt lõi: Học đúng kiến thức. Phát triển đúng hướng.",
+          "Tìm hiểu về DESEMBRE Training Center, đội ngũ giảng viên và giá trị cốt lõi: Học đúng kiến thức. Phát triển đúng hướng.",
       },
-      { property: "og:title", content: "Về chúng tôi — DESEMBRE Academy" },
+      { property: "og:title", content: "Về chúng tôi — DESEMBRE Training Center" },
       {
         property: "og:description",
-        content: "Tìm hiểu về DESEMBRE Academy, đội ngũ giảng viên và giá trị cốt lõi.",
+        content: "Tìm hiểu về DESEMBRE Training Center, đội ngũ giảng viên và giá trị cốt lõi.",
       },
     ],
   }),
@@ -83,7 +83,7 @@ function AboutPage() {
           <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-2 lg:gap-6 lg:p-14">
             <div className="flex flex-col justify-center">
               <span className="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 backdrop-blur px-3 py-1 text-xs font-medium text-primary-dark">
-                <Sparkles className="h-3.5 w-3.5" /> DESEMBRE Academy
+                <Sparkles className="h-3.5 w-3.5" /> DESEMBRE Training Center
               </span>
               <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight">
                 Về chúng tôi
@@ -92,7 +92,7 @@ function AboutPage() {
                 Học đúng kiến thức. Phát triển đúng hướng.
               </p>
               <p className="mt-3 max-w-lg text-base text-muted-foreground">
-                DESEMBRE Academy là nền tảng đào tạo trực tuyến được xây dựng để trang bị kiến thức
+                DESEMBRE Training Center là trung tâm đào tạo trực tuyến được xây dựng để trang bị kiến thức
                 chuyên sâu cho khách hàng, đối tác và đội ngũ DESEMBRE. Chúng tôi tin rằng giáo dục
                 đúng cách không chỉ là truyền đạt thông tin — mà là thay đổi hành vi và tạo ra kết
                 quả thực.
@@ -103,7 +103,7 @@ function AboutPage() {
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-primary/10">
                 <img
                   src={heroImg}
-                  alt="Đội ngũ DESEMBRE Academy"
+                  alt="Đội ngũ DESEMBRE Training Center"
                   width={1024}
                   height={768}
                   className="h-full w-full object-cover"
@@ -146,7 +146,7 @@ function AboutPage() {
         <SectionHeading
           eyebrow="Giá trị cốt lõi"
           title="Những gì chúng tôi cam kết"
-          description="DESEMBRE Academy được xây dựng trên 4 trụ cột giá trị — định hướng mọi quyết định từ nội dung đến trải nghiệm học viên."
+          description="DESEMBRE Training Center được xây dựng trên 4 trụ cột giá trị — định hướng mọi quyết định từ nội dung đến trải nghiệm học viên."
           center
         />
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -207,11 +207,11 @@ function AboutPage() {
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-                Hành trình xây dựng DESEMBRE Academy
+                Hành trình xây dựng DESEMBRE Training Center
               </h2>
               <div className="mt-6 space-y-4 text-muted-foreground leading-relaxed">
                 <p>
-                  DESEMBRE Academy ra đời từ nhu cầu thực tế: đội ngũ ngày càng lớn, đối tác ngày
+                  DESEMBRE Training Center ra đời từ nhu cầu thực tế: đội ngũ ngày càng lớn, đối tác ngày
                   càng nhiều, và cách đào tạo truyền thống không đủ nhanh để đáp ứng. Chúng tôi cần
                   một nền tảng có thể đào tạo hàng nghìn người cùng lúc — nhưng vẫn đảm bảo chất
                   lượng và sự cá nhân hóa.
@@ -222,7 +222,7 @@ function AboutPage() {
                   đều được thiết kế dựa trên nguyên tắc: học xong phải làm được ngay.
                 </p>
                 <p>
-                  Hôm nay, DESEMBRE Academy không chỉ phục vụ nội bộ — mà còn mở cửa cho khách hàng
+                  Hôm nay, DESEMBRE Training Center không chỉ phục vụ nội bộ — mà còn mở cửa cho khách hàng
                   và đối tác muốn nâng cao năng lực trong lĩnh vực chăm sóc sắc đẹp, bán hàng và
                   quản trị.
                 </p>
@@ -259,7 +259,7 @@ function AboutPage() {
             Sẵn sàng cùng chúng tôi phát triển?
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Tham gia cộng đồng học viên DESEMBRE Academy — nơi tri thức được truyền đạt bởi những
+            Tham gia cộng đồng học viên DESEMBRE Training Center — nơi tri thức được truyền đạt bởi những
             chuyên gia hàng đầu.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">

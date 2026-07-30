@@ -58,7 +58,7 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
 
       // 2. Set Page Title & Meta Tags dynamically
       if (typeof document !== "undefined") {
-        document.title = landingData.seo_title || landingData.title || "DESEMBRE Academy";
+        document.title = landingData.seo_title || landingData.title || "DESEMBRE Training Center";
       }
 
       // 3. Fetch Public Batches & Filter by Course ID or fallback title/slug
@@ -242,7 +242,7 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
               Giảng viên phụ trách
             </h2>
             <p className="text-xs sm:text-sm text-slate-500">
-              Đội ngũ chuyên gia Da liễu & Thẩm mỹ giàu kinh nghiệm lâm sàng của DESEMBRE Academy.
+              Đội ngũ chuyên gia Da liễu & Thẩm mỹ giàu kinh nghiệm lâm sàng của DESEMBRE Training Center.
             </p>
           </div>
 
@@ -298,7 +298,7 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
                   Lớp {landing.title} đang mở đăng ký ({batches.length})
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500">
-                  Chọn lớp phù hợp và gửi thông tin để DESEMBRE Academy xác nhận qua Zalo/điện thoại.
+                  Chọn lớp phù hợp và gửi thông tin để DESEMBRE Training Center xác nhận qua Zalo/điện thoại.
                 </p>
               </div>
 

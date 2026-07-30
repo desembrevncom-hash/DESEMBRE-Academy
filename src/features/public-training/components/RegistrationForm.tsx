@@ -67,7 +67,7 @@ export function RegistrationForm({ batch, onClose, onSuccess, initialNotes }: Re
     }
   };
 
-  const instructorName = batch.instructor?.full_name || "Đội ngũ đào tạo DESEMBRE Academy";
+  const instructorName = batch.instructor?.full_name || "Đội ngũ đào tạo DESEMBRE Training Center";
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-stretch justify-end">
@@ -85,7 +85,7 @@ export function RegistrationForm({ batch, onClose, onSuccess, initialNotes }: Re
             <div className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider mb-0.5">
               ĐĂNG KÝ KHÓA HỌC
             </div>
-            <h2 className="text-lg font-bold">DESEMBRE Academy</h2>
+            <h2 className="text-lg font-bold">DESEMBRE Training Center</h2>
           </div>
           <button
             onClick={onClose}
