@@ -19,10 +19,18 @@ export async function getAdminCalendar() {
   if (!supabase) throw new Error("UNAUTHENTICATED");
 
   let rawSessions: any[] = [];
-  const { data: sessions, error } = await supabase.rpc("admin_get_calendar");
+  try {
+    const { data: sessions, error } = await supabase.rpc("admin_get_calendar");
+    if (!error && Array.isArray(sessions) && sessions.length > 0) {
+      rawSessions = sessions;
+    }
+  } catch (err) {
+    console.warn("[Calendar] admin_get_calendar RPC error or missing:", err);
+  }
 
-  if (error || !sessions) {
-    console.warn("[Calendar] getAdminCalendar RPC error or null, using table fallback query:", error);
+  // Fallback to table query if RPC errored or returned empty array
+  if (!rawSessions || rawSessions.length === 0) {
+    console.warn("[Calendar] getAdminCalendar RPC empty/error, using direct table fallback query...");
     const { data: fallbackData, error: fallbackErr } = await supabase
       .from("course_sessions")
       .select(`
@@ -38,6 +46,11 @@ export async function getAdminCalendar() {
             id,
             title,
             slug
+          ),
+          course:course_id (
+            id,
+            title,
+            slug
           )
         )
       `)
@@ -48,15 +61,14 @@ export async function getAdminCalendar() {
       throw fallbackErr;
     }
     rawSessions = fallbackData || [];
-  } else {
-    rawSessions = sessions;
   }
 
   return rawSessions.map((s: any) => {
     const batch = s.course_batches || s.batch || s.course_batch || {};
     const course = batch.courses || batch.course || s.course || s.courses || {};
     const instructor = batch.instructor || s.instructor || {};
-    const regStatus = (batch.registration_status || batch.status || "open").toString().toLowerCase().trim();
+    const rawSt = batch.registration_status || batch.status || s.registration_status || s.batch_status || "open";
+    const regStatus = (rawSt || "open").toString().toLowerCase().trim();
 
     return {
       ...s,

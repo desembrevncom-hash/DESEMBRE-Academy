@@ -143,16 +143,16 @@ function AdminCalendarPage() {
 
   const filtered = useMemo(() => {
     return sessions.filter(s => {
-      const batch = s.course_batches;
-      const course = batch?.courses;
-      if (!batch) return false;
+      const batch = s.course_batches || s.course_batch || s.batch || {};
+      const course = batch?.courses || batch?.course || s.course || s.courses || {};
 
       const isTestRecord = isDemoRecord(s) || isDemoRecord(batch) || isDemoRecord(course || {});
       if (filterStatus === "DEMO") return isTestRecord;
       if (isTestRecord) return false;
 
       const fmt = (batch.training_format || s.location_type || "").toLowerCase();
-      const status = (batch.registration_status || batch.status || "open").toLowerCase().trim();
+      const rawSt = batch.registration_status || batch.status || s.registration_status || s.batch_status || "open";
+      const status = (rawSt || "open").toString().toLowerCase().trim();
 
       const matchFmt = filterFormat === "ALL" || fmt === filterFormat.toLowerCase();
       
@@ -180,27 +180,40 @@ function AdminCalendarPage() {
   const monthSessions = useMemo(() => {
     const res = filtered.filter(s => s.starts_at && isSameMonth(parseISO(s.starts_at), currentDate));
 
-    if (process.env.NODE_ENV !== "production") {
-      console.debug("[Admin Calendar Flow]", {
-        rawSessionsLength: sessions.length,
-        sessionsAfterStatusFilterLength: filtered.length,
-        sessionsAfterMonthFilterLength: res.length,
-        selectedMonth: format(currentDate, "yyyy-MM"),
-        filterStatus,
-        filterFormat,
-        events: res.map(s => ({
-          session_id: s.id,
+    // ALWAYS log on dev and production for verification
+    console.log("[Admin Calendar Flow]", {
+      rawSessionsLength: sessions.length,
+      sessionsAfterStatusFilterLength: filtered.length,
+      sessionsAfterMonthFilterLength: res.length,
+      selectedMonth: format(currentDate, "yyyy-MM"),
+      filterStatus,
+      filterFormat,
+      sessions: sessions.map(s => {
+        const b = s.course_batches || s.course_batch || s.batch || {};
+        const c = b.courses || b.course || s.course || s.courses || {};
+        const rawSt = b.registration_status || b.status || s.registration_status || s.batch_status || "open";
+        const normSt = (rawSt || "open").toString().toLowerCase().trim();
+        const startsAt = s.starts_at;
+        let localDateKey = "N/A";
+        if (startsAt) {
+          try { localDateKey = format(parseISO(startsAt), "yyyy-MM-dd"); } catch (e) {}
+        }
+        return {
+          id: s.id,
+          title: s.title,
           starts_at: s.starts_at,
-          batch_title: s.course_batches?.title,
-          course_title: s.course_batches?.courses?.title,
-          batch_status: s.course_batches?.registration_status,
-          registration_status: s.course_batches?.registration_status,
-        })),
-      });
-    }
+          localDateKey,
+          batch_title: b.title || s.batch_title || "N/A",
+          batch_registration_status: b.registration_status,
+          batch_status: b.status,
+          normalizedBatchStatus: normSt,
+          course_title: c.title || s.course_title || "N/A",
+        };
+      }),
+    });
 
     return res;
-  }, [filtered, currentDate, sessions.length, filterStatus, filterFormat]);
+  }, [filtered, currentDate, sessions, filterStatus, filterFormat]);
 
   if (loading) {
     return (
