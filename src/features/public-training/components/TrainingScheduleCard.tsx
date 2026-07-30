@@ -77,22 +77,22 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
   return (
     <div className={`group bg-white border border-slate-200/90 ${formatMeta.cardBorderClass} rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative space-y-4 antialiased`}>
       {/* 1. Rich Cover Banner with Dark Gradient/Blur Overlay */}
-      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-md border border-white/10 min-h-[210px] sm:min-h-[230px] flex flex-col justify-between bg-slate-950">
+      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-md border border-white/10 min-h-[220px] sm:min-h-[250px] flex flex-col justify-between bg-slate-950">
         {/* Background Image (Cover URL) or Format Gradient Fallback */}
         {coverUrl && !imgError ? (
           <img
             src={coverUrl}
             alt={courseTitle}
             onError={() => setImgError(true)}
-            className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+            className="absolute inset-0 w-full h-full object-cover object-[center_right] group-hover:scale-105 transition-transform duration-700 pointer-events-none"
           />
         ) : (
           <div className={`absolute inset-0 bg-gradient-to-br ${formatMeta.bannerGradientClass} pointer-events-none`} />
         )}
 
         {/* Dual Gradient Overlays for 100% Crisp Text Contrast */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/40 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/70 to-slate-900/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent pointer-events-none" />
 
         {/* Banner Content Container (HTML Text Layer) */}
         <div className="relative z-10 space-y-3.5">
