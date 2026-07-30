@@ -4,7 +4,9 @@ export interface TrainingFormatMeta {
   label: string;
   shortLabel: string;
   colorClass: string;
+  cardBorderClass: string;
   badgeClass: string;
+  dateBoxClass: string;
   icon: any;
 }
 
@@ -13,55 +15,65 @@ export function getTrainingFormatMeta(formatInput: string | null | undefined): T
 
   if (fmt.includes("zoom") || fmt.includes("online")) {
     return {
-      label: "Online Zoom",
+      label: "ONLINE ZOOM",
       shortLabel: "Zoom",
       colorClass: "sky",
-      badgeClass: "bg-sky-50 text-sky-800 border-sky-200/90 font-bold",
+      cardBorderClass: "border-l-4 border-l-sky-500 hover:border-l-sky-600",
+      badgeClass: "bg-sky-600 text-white border-sky-600 shadow-xs font-extrabold uppercase tracking-wider",
+      dateBoxClass: "bg-gradient-to-b from-sky-500 to-sky-600 text-white border-sky-600 shadow-sm",
       icon: Video,
     };
   }
 
   if (fmt.includes("office") || fmt.includes("offline") || fmt.includes("person") || fmt.includes("hands")) {
     return {
-      label: "Học tại văn phòng",
+      label: "HỌC TẠI VĂN PHÒNG",
       shortLabel: "Offline",
       colorClass: "amber",
-      badgeClass: "bg-amber-50 text-amber-900 border-amber-200/90 font-bold",
+      cardBorderClass: "border-l-4 border-l-amber-500 hover:border-l-amber-600",
+      badgeClass: "bg-amber-600 text-white border-amber-600 shadow-xs font-extrabold uppercase tracking-wider",
+      dateBoxClass: "bg-gradient-to-b from-amber-500 to-amber-600 text-white border-amber-600 shadow-sm",
       icon: MapPin,
     };
   }
 
   if (fmt.includes("hybrid")) {
     return {
-      label: "Đào tạo Hybrid",
+      label: "HYBRID (ZOOM + OFFLINE)",
       shortLabel: "Hybrid",
       colorClass: "purple",
-      badgeClass: "bg-purple-50 text-purple-900 border-purple-200/90 font-bold",
+      cardBorderClass: "border-l-4 border-l-purple-500 hover:border-l-purple-600",
+      badgeClass: "bg-purple-600 text-white border-purple-600 shadow-xs font-extrabold uppercase tracking-wider",
+      dateBoxClass: "bg-gradient-to-b from-purple-500 to-purple-600 text-white border-purple-600 shadow-sm",
       icon: Users,
     };
   }
 
   if (fmt.includes("seminar")) {
     return {
-      label: "Seminar ngoài",
+      label: "SEMINAR NGOÀI",
       shortLabel: "Seminar",
       colorClass: "emerald",
-      badgeClass: "bg-emerald-50 text-emerald-900 border-emerald-200/90 font-bold",
+      cardBorderClass: "border-l-4 border-l-emerald-500 hover:border-l-emerald-600",
+      badgeClass: "bg-emerald-600 text-white border-emerald-600 shadow-xs font-extrabold uppercase tracking-wider",
+      dateBoxClass: "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white border-emerald-600 shadow-sm",
       icon: Calendar,
     };
   }
 
   return {
-    label: "Đào tạo Chuyên sâu",
+    label: "ĐÀO TẠO CHUYÊN SÂU",
     shortLabel: "Khóa học",
-    colorClass: "slate",
-    badgeClass: "bg-slate-50 text-slate-800 border-slate-200 font-bold",
+    colorClass: "indigo",
+    cardBorderClass: "border-l-4 border-l-indigo-500 hover:border-l-indigo-600",
+    badgeClass: "bg-indigo-600 text-white border-indigo-600 shadow-xs font-extrabold uppercase tracking-wider",
+    dateBoxClass: "bg-gradient-to-b from-indigo-600 to-indigo-700 text-white border-indigo-700 shadow-sm",
     icon: Award,
   };
 }
 
 /**
- * Smart batch title display helper (Requirement 3).
+ * Smart batch title display helper.
  * De-duplicates batch title if it repeats course title or is an auto-generated redundant string.
  */
 export function getCleanBatchDisplayTitle(
@@ -84,7 +96,7 @@ export function getCleanBatchDisplayTitle(
   );
 
   if (isRedundant || bTitle.length > 40) {
-    return startDateStr ? `Khóa khai giảng ngày ${startDateStr}` : "Lớp khai giảng chuẩn Y Khoa";
+    return startDateStr ? `Lớp khai giảng ngày ${startDateStr}` : "Lớp khai giảng mới";
   }
 
   return bTitle;

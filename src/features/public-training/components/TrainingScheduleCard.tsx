@@ -2,10 +2,10 @@ import { useState } from "react";
 import { PublicCourseBatch } from "../services/publicTrainingApi";
 import { formatDateSafe, formatTimeRange } from "../utils/formatters";
 import { getTrainingFormatMeta, getCleanBatchDisplayTitle } from "../utils/trainingFormat";
-import { CourseCardBanner } from "./CourseCardBanner";
 import { CompactInstructorCard } from "./CompactInstructorCard";
-import { Calendar, MapPin, Users, Clock, ArrowRight, ChevronDown, ChevronUp, MessageSquare, Tag } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ArrowRight, ChevronDown, ChevronUp, MessageSquare, Tag, Sparkles, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { parseISO, format } from "date-fns";
 
 interface TrainingScheduleCardProps {
   batch: PublicCourseBatch;
@@ -42,10 +42,31 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
   const hoursUntilClose = closeTime ? (closeTime - now) / 3600000 : null;
   const isUrgentClose = !isExpired && hoursUntilClose !== null && hoursUntilClose > 0 && hoursUntilClose <= 48;
 
+  // Extract date parts for poster date box
+  let startDayStr = "01";
+  let startMonthStr = "08";
+  let startYearStr = "2026";
+
+  if (batch.start_date) {
+    try {
+      const d = parseISO(batch.start_date);
+      startDayStr = format(d, "dd");
+      startMonthStr = format(d, "MM");
+      startYearStr = format(d, "yyyy");
+    } catch (e) {}
+  } else if (sessions.length > 0 && sessions[0].starts_at) {
+    try {
+      const d = parseISO(sessions[0].starts_at);
+      startDayStr = format(d, "dd");
+      startMonthStr = format(d, "MM");
+      startYearStr = format(d, "yyyy");
+    } catch (e) {}
+  }
+
   const cleanBatchTitle = getCleanBatchDisplayTitle(
     batch.title,
     courseTitle,
-    formatDateSafe(batch.start_date, "dd/MM/yyyy")
+    `${startDayStr}/${startMonthStr}/${startYearStr}`
   );
 
   const handleConsult = () => {
@@ -53,78 +74,103 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
   };
 
   return (
-    <div className="group bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative space-y-5 antialiased">
-      {/* 1. Course Banner (Main Course Title & Summary appear ONLY ONCE here) */}
-      <CourseCardBanner
-        title={courseTitle}
-        summary={courseSummary}
-        coverUrl={coverUrl}
-      />
+    <div className={`group bg-white border border-slate-200/90 ${formatMeta.cardBorderClass} rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative space-y-5 antialiased`}>
+      {/* 1. Schedule Poster Header (Compact & High Impact) */}
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="flex items-start gap-3.5 sm:gap-4 flex-1">
+          {/* Date Box (Poster Style) */}
+          <div className={`flex flex-col items-center justify-center px-3.5 py-2.5 rounded-2xl text-center shrink-0 min-w-[80px] ${formatMeta.dateBoxClass}`}>
+            <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">{startDayStr}</span>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider mt-1">THÁNG {startMonthStr}</span>
+            <span className="text-[9px] font-semibold opacity-90">{startYearStr}</span>
+          </div>
+
+          {/* Title & Format & Summary */}
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${formatMeta.badgeClass}`}>
+                <FormatIcon className="h-3.5 w-3.5 shrink-0" />
+                <span>{formatMeta.label}</span>
+              </span>
+
+              {isExpired ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+                  Đã hết hạn
+                </span>
+              ) : isFull ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                  Đã đủ chỗ
+                </span>
+              ) : isUrgentClose ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping" />
+                  Sắp hết hạn (&lt;48h)
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Đang mở đăng ký
+                </span>
+              )}
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug tracking-tight">
+              {courseTitle}
+            </h3>
+
+            {courseSummary && (
+              <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                {courseSummary}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Thumbnail Image (Compact Right Thumbnail if cover_url exists) */}
+        {coverUrl && (
+          <div className="w-full sm:w-36 h-24 rounded-2xl overflow-hidden shadow-sm shrink-0 border border-slate-200/80 bg-slate-950">
+            <img
+              src={coverUrl}
+              alt={courseTitle}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          </div>
+        )}
+      </div>
 
       {/* 2. Main Content Split: Left (Batch Details + Instructor + Sessions) & Right (CTA Column) */}
-      <div className="flex flex-col lg:flex-row lg:items-stretch gap-6 pt-1">
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-6">
         {/* Left Column */}
         <div className="flex-1 space-y-4">
           {/* Batch Info Header */}
           <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
-              {/* Clean Batch Tag / Display Title */}
+              {/* Clean Batch Display Title */}
               <div className="flex items-center gap-2">
                 <Tag className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span className="text-xs font-extrabold tracking-wide text-slate-800">
-                  Lớp: {cleanBatchTitle}
+                <span className="text-xs font-bold text-slate-800">
+                  {cleanBatchTitle}
                 </span>
               </div>
 
-              {/* Status & Visual Format Badges */}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${formatMeta.badgeClass}`}>
-                  <FormatIcon className="h-3.5 w-3.5 shrink-0" />
-                  <span>{formatMeta.label}</span>
+              {/* Sĩ số chỗ còn */}
+              <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
+                <Users className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                <span>
+                  {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Liên hệ tư vấn"}
                 </span>
-
-                {isExpired ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
-                    Đã hết hạn
-                  </span>
-                ) : isFull ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
-                    Đã đủ chỗ
-                  </span>
-                ) : isUrgentClose ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping" />
-                    Sắp hết hạn (&lt;48h)
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Đang mở đăng ký
-                  </span>
-                )}
               </div>
             </div>
 
-            {/* Batch Key Metadata */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700 font-medium">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span>
-                  Khai giảng:{" "}
-                  <strong className="text-slate-900 font-bold">
-                    {formatDateSafe(batch.start_date, "dd/MM/yyyy")}
-                  </strong>
-                </span>
+            {/* Key Value Props Badges */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-600 font-medium">
+              <div className="flex items-center gap-1.5">
+                <Award className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                <span>Chuẩn Y Khoa Hàn Quốc</span>
               </div>
-
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span>
-                  Sĩ số:{" "}
-                  <strong className="text-slate-900 font-bold">
-                    {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Liên hệ tư vấn"}
-                  </strong>
-                </span>
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>Hỗ trợ sản phẩm DESEMBRE</span>
               </div>
             </div>
           </div>
@@ -214,7 +260,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
               isExpired
                 ? "bg-rose-50 border-rose-200 text-rose-800"
                 : isUrgentClose
-                ? "bg-amber-50 border-amber-200 text-amber-900"
+                ? "bg-amber-50 border-amber-200 text-amber-900 font-bold"
                 : "bg-slate-50 border-slate-100 text-slate-700"
             }`}>
               <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5">
@@ -246,7 +292,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 onClick={() => onRegister(batch)}
                 className="w-full h-12 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 transition-all duration-200 gap-1.5"
               >
-                <span>Đăng ký học</span>
+                <span>Đăng ký học ngay</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             )}
