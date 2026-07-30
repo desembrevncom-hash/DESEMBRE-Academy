@@ -178,8 +178,29 @@ function AdminCalendarPage() {
 
   // Filter to current month for the grid
   const monthSessions = useMemo(() => {
-    return filtered.filter(s => s.starts_at && isSameMonth(parseISO(s.starts_at), currentDate));
-  }, [filtered, currentDate]);
+    const res = filtered.filter(s => s.starts_at && isSameMonth(parseISO(s.starts_at), currentDate));
+
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[Admin Calendar Flow]", {
+        rawSessionsLength: sessions.length,
+        sessionsAfterStatusFilterLength: filtered.length,
+        sessionsAfterMonthFilterLength: res.length,
+        selectedMonth: format(currentDate, "yyyy-MM"),
+        filterStatus,
+        filterFormat,
+        events: res.map(s => ({
+          session_id: s.id,
+          starts_at: s.starts_at,
+          batch_title: s.course_batches?.title,
+          course_title: s.course_batches?.courses?.title,
+          batch_status: s.course_batches?.registration_status,
+          registration_status: s.course_batches?.registration_status,
+        })),
+      });
+    }
+
+    return res;
+  }, [filtered, currentDate, sessions.length, filterStatus, filterFormat]);
 
   if (loading) {
     return (
@@ -208,8 +229,8 @@ function AdminCalendarPage() {
         onToday={handleToday}
       />
 
-      {/* B. Stats cards */}
-      <CalendarStats sessions={sessions} />
+      {/* B. Stats cards - uses filtered sessions for exact sync */}
+      <CalendarStats sessions={filtered} />
 
       {/* C. Filter bar */}
       <CalendarFilters
@@ -227,19 +248,17 @@ function AdminCalendarPage() {
       {/* D. Main 2-column content */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
         {/* Left: Calendar Grid */}
-        <div className="border rounded-lg overflow-x-auto bg-card">
-          {monthSessions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
-              <p className="font-medium text-muted-foreground">Không có buổi học nào trong tháng này</p>
-              <p className="text-sm text-muted-foreground mt-1">Thử điều chỉnh bộ lọc hoặc chuyển tháng.</p>
+        <div className="border rounded-lg overflow-x-auto bg-card p-2">
+          {monthSessions.length === 0 && (
+            <div className="mb-3 p-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md text-center font-medium">
+              Tháng {format(currentDate, "MM/yyyy")} chưa có buổi học nào. Bạn có thể chuyển tháng hoặc thêm buổi học mới.
             </div>
-          ) : (
-            <CalendarGrid
-              currentDate={currentDate}
-              sessions={monthSessions}
-              onSessionClick={setSelectedSession}
-            />
           )}
+          <CalendarGrid
+            currentDate={currentDate}
+            sessions={monthSessions}
+            onSessionClick={setSelectedSession}
+          />
         </div>
 
         {/* Right: Upcoming Sessions */}

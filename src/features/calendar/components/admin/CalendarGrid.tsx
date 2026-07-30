@@ -1,4 +1,4 @@
-import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, isToday, startOfMonth, startOfWeek } from "date-fns";
+import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek } from "date-fns";
 import { SessionCard } from "./SessionCard";
 
 interface CalendarGridProps {
@@ -28,7 +28,14 @@ export function CalendarGrid({ currentDate, sessions, onSessionClick }: Calendar
         ))}
         {days.map((day, idx) => {
           const dateStr = format(day, "yyyy-MM-dd");
-          const daySessions = sessions.filter(s => s.starts_at && s.starts_at.startsWith(dateStr));
+          const daySessions = sessions.filter(s => {
+            if (!s.starts_at) return false;
+            try {
+              return format(parseISO(s.starts_at), "yyyy-MM-dd") === dateStr;
+            } catch (e) {
+              return s.starts_at.startsWith(dateStr);
+            }
+          });
           const isCurrMonth = isSameMonth(day, monthStart);
           const isCurrDay = isToday(day);
 

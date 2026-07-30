@@ -18,16 +18,56 @@ export async function getAdminCalendar() {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
 
+  let rawSessions: any[] = [];
   const { data: sessions, error } = await supabase.rpc("admin_get_calendar");
 
-  if (error) {
-    console.error("[Calendar] getAdminCalendar sessions error:", error);
-    throw error;
+  if (error || !sessions) {
+    console.warn("[Calendar] getAdminCalendar RPC error or null, using table fallback query:", error);
+    const { data: fallbackData, error: fallbackErr } = await supabase
+      .from("course_sessions")
+      .select(`
+        *,
+        course_batches:batch_id (
+          id,
+          title,
+          slug,
+          registration_status,
+          status,
+          training_format,
+          courses:course_id (
+            id,
+            title,
+            slug
+          )
+        )
+      `)
+      .order("starts_at", { ascending: true });
+
+    if (fallbackErr) {
+      console.error("[Calendar] getAdminCalendar fallback error:", fallbackErr);
+      throw fallbackErr;
+    }
+    rawSessions = fallbackData || [];
+  } else {
+    rawSessions = sessions;
   }
 
-  const sessionsWithStudentCount = sessions || [];
+  return rawSessions.map((s: any) => {
+    const batch = s.course_batches || s.batch || s.course_batch || {};
+    const course = batch.courses || batch.course || s.course || s.courses || {};
+    const instructor = batch.instructor || s.instructor || {};
+    const regStatus = (batch.registration_status || batch.status || "open").toString().toLowerCase().trim();
 
-  return sessionsWithStudentCount;
+    return {
+      ...s,
+      course_batches: {
+        ...batch,
+        registration_status: regStatus,
+        courses: course,
+        instructor: instructor,
+      },
+    };
+  });
 }
 
 export type AttendanceStatus = 'not_marked' | 'present' | 'absent' | 'late' | 'excused';
