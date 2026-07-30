@@ -7,6 +7,7 @@ export interface TrainingFormatMeta {
   cardBorderClass: string;
   badgeClass: string;
   dateBoxClass: string;
+  bannerGradientClass: string;
   icon: any;
 }
 
@@ -19,8 +20,9 @@ export function getTrainingFormatMeta(formatInput: string | null | undefined): T
       shortLabel: "Zoom",
       colorClass: "sky",
       cardBorderClass: "border-l-4 border-l-sky-500 hover:border-l-sky-600",
-      badgeClass: "bg-sky-600 text-white border-sky-600 shadow-xs font-extrabold uppercase tracking-wider",
-      dateBoxClass: "bg-gradient-to-b from-sky-500 to-sky-600 text-white border-sky-600 shadow-sm",
+      badgeClass: "bg-sky-600 text-white border-sky-500 shadow-xs font-extrabold uppercase tracking-wider",
+      dateBoxClass: "bg-gradient-to-b from-sky-500 to-sky-600 text-white border-sky-400/40 shadow-md",
+      bannerGradientClass: "from-slate-950 via-sky-950 to-slate-900",
       icon: Video,
     };
   }
@@ -31,8 +33,9 @@ export function getTrainingFormatMeta(formatInput: string | null | undefined): T
       shortLabel: "Offline",
       colorClass: "amber",
       cardBorderClass: "border-l-4 border-l-amber-500 hover:border-l-amber-600",
-      badgeClass: "bg-amber-600 text-white border-amber-600 shadow-xs font-extrabold uppercase tracking-wider",
-      dateBoxClass: "bg-gradient-to-b from-amber-500 to-amber-600 text-white border-amber-600 shadow-sm",
+      badgeClass: "bg-amber-600 text-white border-amber-500 shadow-xs font-extrabold uppercase tracking-wider",
+      dateBoxClass: "bg-gradient-to-b from-amber-500 to-amber-600 text-white border-amber-400/40 shadow-md",
+      bannerGradientClass: "from-slate-950 via-amber-950 to-slate-900",
       icon: MapPin,
     };
   }
@@ -43,8 +46,9 @@ export function getTrainingFormatMeta(formatInput: string | null | undefined): T
       shortLabel: "Hybrid",
       colorClass: "purple",
       cardBorderClass: "border-l-4 border-l-purple-500 hover:border-l-purple-600",
-      badgeClass: "bg-purple-600 text-white border-purple-600 shadow-xs font-extrabold uppercase tracking-wider",
-      dateBoxClass: "bg-gradient-to-b from-purple-500 to-purple-600 text-white border-purple-600 shadow-sm",
+      badgeClass: "bg-purple-600 text-white border-purple-500 shadow-xs font-extrabold uppercase tracking-wider",
+      dateBoxClass: "bg-gradient-to-b from-purple-500 to-purple-600 text-white border-purple-400/40 shadow-md",
+      bannerGradientClass: "from-slate-950 via-purple-950 to-slate-900",
       icon: Users,
     };
   }
@@ -55,8 +59,9 @@ export function getTrainingFormatMeta(formatInput: string | null | undefined): T
       shortLabel: "Seminar",
       colorClass: "emerald",
       cardBorderClass: "border-l-4 border-l-emerald-500 hover:border-l-emerald-600",
-      badgeClass: "bg-emerald-600 text-white border-emerald-600 shadow-xs font-extrabold uppercase tracking-wider",
-      dateBoxClass: "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white border-emerald-600 shadow-sm",
+      badgeClass: "bg-emerald-600 text-white border-emerald-500 shadow-xs font-extrabold uppercase tracking-wider",
+      dateBoxClass: "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white border-emerald-400/40 shadow-md",
+      bannerGradientClass: "from-slate-950 via-emerald-950 to-slate-900",
       icon: Calendar,
     };
   }
@@ -66,8 +71,9 @@ export function getTrainingFormatMeta(formatInput: string | null | undefined): T
     shortLabel: "Khóa học",
     colorClass: "indigo",
     cardBorderClass: "border-l-4 border-l-indigo-500 hover:border-l-indigo-600",
-    badgeClass: "bg-indigo-600 text-white border-indigo-600 shadow-xs font-extrabold uppercase tracking-wider",
-    dateBoxClass: "bg-gradient-to-b from-indigo-600 to-indigo-700 text-white border-indigo-700 shadow-sm",
+    badgeClass: "bg-indigo-600 text-white border-indigo-500 shadow-xs font-extrabold uppercase tracking-wider",
+    dateBoxClass: "bg-gradient-to-b from-indigo-600 to-indigo-700 text-white border-indigo-400/40 shadow-md",
+    bannerGradientClass: "from-slate-950 via-indigo-950 to-slate-900",
     icon: Award,
   };
 }

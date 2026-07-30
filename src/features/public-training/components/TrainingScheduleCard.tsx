@@ -14,6 +14,7 @@ interface TrainingScheduleCardProps {
 
 export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const formatMeta = getTrainingFormatMeta(batch.training_format);
   const FormatIcon = formatMeta.icon;
@@ -74,77 +75,99 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
   };
 
   return (
-    <div className={`group bg-white border border-slate-200/90 ${formatMeta.cardBorderClass} rounded-3xl p-5 sm:p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative space-y-5 antialiased`}>
-      {/* 1. Schedule Poster Header (Compact & High Impact) */}
-      <div className="flex flex-col sm:flex-row items-start justify-between gap-4 border-b border-slate-100 pb-4">
-        <div className="flex items-start gap-3.5 sm:gap-4 flex-1">
-          {/* Date Box (Poster Style) */}
-          <div className={`flex flex-col items-center justify-center px-3.5 py-2.5 rounded-2xl text-center shrink-0 min-w-[80px] ${formatMeta.dateBoxClass}`}>
-            <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">{startDayStr}</span>
-            <span className="text-[10px] font-extrabold uppercase tracking-wider mt-1">THÁNG {startMonthStr}</span>
-            <span className="text-[9px] font-semibold opacity-90">{startYearStr}</span>
-          </div>
+    <div className={`group bg-white border border-slate-200/90 ${formatMeta.cardBorderClass} rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative space-y-4 antialiased`}>
+      {/* 1. Rich Cover Banner with Dark Gradient/Blur Overlay */}
+      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-md border border-white/10 min-h-[210px] sm:min-h-[230px] flex flex-col justify-between bg-slate-950">
+        {/* Background Image (Cover URL) or Format Gradient Fallback */}
+        {coverUrl && !imgError ? (
+          <img
+            src={coverUrl}
+            alt={courseTitle}
+            onError={() => setImgError(true)}
+            className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+          />
+        ) : (
+          <div className={`absolute inset-0 bg-gradient-to-br ${formatMeta.bannerGradientClass} pointer-events-none`} />
+        )}
 
-          {/* Title & Format & Summary */}
-          <div className="space-y-1.5 flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+        {/* Dual Gradient Overlays for 100% Crisp Text Contrast */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
+
+        {/* Banner Content Container (HTML Text Layer) */}
+        <div className="relative z-10 space-y-3.5">
+          {/* Top Bar: Date Box + Format & Status Badges */}
+          <div className="flex items-start justify-between gap-3">
+            {/* Poster Date Box */}
+            <div className={`flex flex-col items-center justify-center px-3 py-2 rounded-2xl text-center shrink-0 min-w-[76px] ${formatMeta.dateBoxClass}`}>
+              <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">{startDayStr}</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider mt-0.5">THÁNG {startMonthStr}</span>
+              <span className="text-[9px] font-semibold opacity-90">{startYearStr}</span>
+            </div>
+
+            {/* Badges Stack */}
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${formatMeta.badgeClass}`}>
                 <FormatIcon className="h-3.5 w-3.5 shrink-0" />
                 <span>{formatMeta.label}</span>
               </span>
 
               {isExpired ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/90 text-white border border-rose-400/40 shadow-xs">
                   Đã hết hạn
                 </span>
               ) : isFull ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/90 text-white border border-red-400/40 shadow-xs">
                   Đã đủ chỗ
                 </span>
               ) : isUrgentClose ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500 text-white border border-amber-400/40 shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
                   Sắp hết hạn (&lt;48h)
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/90 text-white border border-emerald-400/40 shadow-xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   Đang mở đăng ký
                 </span>
               )}
             </div>
+          </div>
 
-            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-snug tracking-tight">
+          {/* Main Course Title & Summary (HTML Text on Overlay) */}
+          <div className="space-y-1.5 pt-1">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight tracking-tight drop-shadow-md">
               {courseTitle}
             </h3>
 
             {courseSummary && (
-              <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-200/90 line-clamp-2 leading-relaxed max-w-2xl drop-shadow-xs">
                 {courseSummary}
               </p>
             )}
           </div>
         </div>
 
-        {/* Thumbnail Image (Compact Right Thumbnail if cover_url exists) */}
-        {coverUrl && (
-          <div className="w-full sm:w-36 h-24 rounded-2xl overflow-hidden shadow-sm shrink-0 border border-slate-200/80 bg-slate-950">
-            <img
-              src={coverUrl}
-              alt={courseTitle}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
+        {/* Banner Footer: Compact Value Props */}
+        <div className="relative z-10 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-indigo-200/90 font-medium pt-3 border-t border-white/10">
+          <div className="flex items-center gap-1.5">
+            <Award className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <span>Chuẩn Y Khoa Hàn Quốc</span>
           </div>
-        )}
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>Hỗ trợ sản phẩm DESEMBRE</span>
+          </div>
+        </div>
       </div>
 
       {/* 2. Main Content Split: Left (Batch Details + Instructor + Sessions) & Right (CTA Column) */}
-      <div className="flex flex-col lg:flex-row lg:items-stretch gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-5 pt-1">
         {/* Left Column */}
         <div className="flex-1 space-y-4">
           {/* Batch Info Header */}
-          <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+          <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-3.5 space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2">
               {/* Clean Batch Display Title */}
               <div className="flex items-center gap-2">
                 <Tag className="w-4 h-4 text-indigo-600 shrink-0" />
@@ -162,16 +185,11 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
               </div>
             </div>
 
-            {/* Key Value Props Badges */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-slate-600 font-medium">
-              <div className="flex items-center gap-1.5">
-                <Award className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                <span>Chuẩn Y Khoa Hàn Quốc</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span>Hỗ trợ sản phẩm DESEMBRE</span>
-              </div>
+            <div className="flex items-center gap-2 text-xs text-slate-700">
+              <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
+              <span>
+                Khai giảng chính thức: <strong className="text-slate-900 font-bold">{startDayStr}/{startMonthStr}/{startYearStr}</strong>
+              </span>
             </div>
           </div>
 
