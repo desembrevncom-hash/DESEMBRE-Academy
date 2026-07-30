@@ -91,9 +91,9 @@ function AdminBatchesIndexPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+          className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background font-medium text-sm"
         >
-          <option value="all">Đang hoạt động</option>
+          <option value="all">Tất cả (Mở, nháp, đóng)</option>
           <option value="open">Đang mở đăng ký</option>
           <option value="draft">Bản nháp</option>
           <option value="closed">Đã đóng</option>

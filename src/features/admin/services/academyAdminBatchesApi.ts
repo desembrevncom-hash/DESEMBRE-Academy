@@ -9,20 +9,30 @@ export async function adminGetCourseBatches() {
   console.log("[Admin Batches project]", env.url);
 
   const { data, error } = await supabase.rpc("admin_get_course_batches");
-  if (error) {
-    console.warn("[adminGetCourseBatches RPC error, falling back to table query]:", error);
+  let rawData = data;
+
+  if (error || !rawData) {
+    console.warn("[adminGetCourseBatches RPC error/empty, falling back to table query]:", error);
     // Fallback to table select if RPC not updated yet
     const { data: fallbackData, error: fallbackErr } = await supabase
       .from("course_batches")
-      .select("*, course:courses(id, title, slug), instructor:academy_instructors(id, full_name, title)")
+      .select("*, course:courses(id, title, slug), instructor:academy_instructors(id, full_name, title), sessions:course_sessions(id)")
       .order("created_at", { ascending: false });
 
     if (fallbackErr) throw fallbackErr;
-    console.log("[Admin Batches raw]", fallbackData);
-    return fallbackData;
+    rawData = fallbackData;
   }
-  console.log("[Admin Batches raw]", data);
-  return data;
+
+  if (Array.isArray(rawData)) {
+    return rawData.map((b: any) => ({
+      ...b,
+      sessions_count: typeof b.sessions_count === "number"
+        ? b.sessions_count
+        : (Array.isArray(b.sessions) ? b.sessions.length : 0),
+    }));
+  }
+
+  return rawData || [];
 }
 
 export async function adminCreateCourseBatch(payload: any) {

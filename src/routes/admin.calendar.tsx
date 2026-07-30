@@ -43,7 +43,7 @@ function AdminCalendarPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterFormat, setFilterFormat] = useState("ALL");
-  const [filterStatus, setFilterStatus] = useState("ALL");
+  const [filterStatus, setFilterStatus] = useState("ACTIVE");
 
   const loadData = useCallback(async () => {
     try {
@@ -152,10 +152,21 @@ function AdminCalendarPage() {
       if (isTestRecord) return false;
 
       const fmt = (batch.training_format || s.location_type || "").toLowerCase();
-      const status = (batch.registration_status || batch.status || "").toUpperCase();
+      const status = (batch.registration_status || batch.status || "open").toLowerCase().trim();
 
       const matchFmt = filterFormat === "ALL" || fmt === filterFormat.toLowerCase();
-      const matchStatus = filterStatus === "ALL" || status === filterStatus.toUpperCase();
+      
+      let matchStatus = true;
+      if (filterStatus === "ACTIVE" || filterStatus === "OPEN") {
+        matchStatus = (status === "open" || status === "published" || status === "upcoming" || status === "ongoing");
+      } else if (filterStatus === "DRAFT") {
+        matchStatus = (status === "draft");
+      } else if (filterStatus === "CLOSED") {
+        matchStatus = (status === "closed" || status === "cancelled" || status === "archived");
+      } else if (filterStatus === "ALL") {
+        matchStatus = true;
+      }
+
       const matchSearch = !searchTerm ||
         (course?.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (batch?.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
