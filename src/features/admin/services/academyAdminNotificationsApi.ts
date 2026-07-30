@@ -34,12 +34,92 @@ export async function getAdminNotificationOutbox(): Promise<NotificationJob[]> {
   const supabase = getSupabaseBrowserClient();
   if (!supabase) throw new Error("UNAUTHENTICATED");
 
-  const { data, error } = await supabase.rpc("admin_get_notification_outbox");
-  if (error) {
-    throw new Error(error.message || "Lỗi tải danh sách outbox.");
+  let jobs: any[] = [];
+  try {
+    const { data, error } = await supabase.rpc("admin_get_notification_outbox");
+    if (!error && Array.isArray(data) && data.length > 0) {
+      jobs = data;
+    }
+  } catch (err) {
+    console.warn("[Notifications] admin_get_notification_outbox RPC warning:", err);
   }
 
-  return (data || []) as NotificationJob[];
+  if (!jobs || jobs.length === 0) {
+    console.warn("[Notifications] getAdminNotificationOutbox using table fallback query...");
+    const { data: fallbackData, error: fallbackErr } = await supabase
+      .from("notification_outbox")
+      .select(`
+        id,
+        registration_id,
+        channel,
+        template_code,
+        payload,
+        status,
+        sender_key,
+        attempt_count,
+        max_attempts,
+        error_message,
+        provider_status,
+        provider_message_id,
+        provider_response,
+        next_attempt_at,
+        created_at,
+        updated_at,
+        sent_at,
+        delivered_at,
+        seen_at,
+        course_registrations:registration_id (
+          full_name,
+          phone,
+          course_batches:batch_id (
+            title,
+            courses:course_id (
+              title
+            )
+          )
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    if (fallbackErr) {
+      console.error("[Notifications] Fallback query error:", fallbackErr);
+      throw fallbackErr;
+    }
+
+    jobs = (fallbackData || []).map((row: any) => {
+      const reg = row.course_registrations || {};
+      const batch = reg.course_batches || {};
+      const course = batch.courses || {};
+
+      return {
+        id: row.id,
+        registration_id: row.registration_id,
+        channel: row.channel,
+        template_code: row.template_code,
+        payload: row.payload,
+        status: row.status,
+        sender_key: row.sender_key || null,
+        attempt_count: Number(row.attempt_count ?? 0),
+        max_attempts: Number(row.max_attempts ?? 5),
+        error_message: row.error_message || null,
+        provider_status: row.provider_status || null,
+        provider_message_id: row.provider_message_id || null,
+        provider_response: row.provider_response || null,
+        next_attempt_at: row.next_attempt_at || null,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        sent_at: row.sent_at || null,
+        delivered_at: row.delivered_at || null,
+        seen_at: row.seen_at || null,
+        lead_name: reg.full_name || null,
+        lead_phone: reg.phone || null,
+        batch_title: batch.title || null,
+        course_title: course.title || null,
+      };
+    });
+  }
+
+  return jobs as NotificationJob[];
 }
 
 export async function adminRetryNotificationJob(jobId: string): Promise<void> {

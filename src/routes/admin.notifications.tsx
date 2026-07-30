@@ -310,15 +310,17 @@ function AdminNotificationsPage() {
                     </td>
                     <td className="p-4 align-top">
                       {job.sender_key ? (
-                         <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded">{job.sender_key}</span>
+                        <span className="text-xs font-mono font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded">
+                          {job.sender_key}
+                        </span>
                       ) : (
-                         <span className="text-xs text-muted-foreground italic">—</span>
+                        <span className="text-xs text-muted-foreground italic">—</span>
                       )}
                     </td>
                     <td className="p-4 align-top">
                       <div className="mb-1"><StatusBadge status={job.status} /></div>
                       <div className="text-[10px] text-muted-foreground font-semibold">
-                        Attempts: {job.attempt_count} / {job.max_attempts}
+                        Attempts: {job.attempt_count ?? 0} / {job.max_attempts ?? 5}
                       </div>
                     </td>
                     <td className="p-4 align-top max-w-[200px]">
