@@ -34,10 +34,12 @@ export function buildCourseHeadMeta(meta: CourseMetaForSeo): Array<Record<string
     "";
   const fullTitle = `${title} — DESEMBRE Training Center`;
 
-  // Validate thumbnail: chỉ chấp nhận https://
+  // Validate thumbnail: chỉ chấp nhận http:// hoặc https://, fallback về default og image
   const thumbUrl = meta.marketing?.thumbnail_url;
   const safeThumbUrl =
-    thumbUrl && thumbUrl.startsWith("https://") ? thumbUrl : null;
+    thumbUrl && (thumbUrl.startsWith("https://") || thumbUrl.startsWith("http://"))
+      ? thumbUrl
+      : "https://academy.desembre-vn.com/og/academy-home.jpg";
   const thumbAlt = meta.marketing?.thumbnail_alt || title;
 
   const tags: Array<Record<string, string>> = [
@@ -46,6 +48,11 @@ export function buildCourseHeadMeta(meta: CourseMetaForSeo): Array<Record<string
     { property: "og:title", content: title },
     { property: "og:type", content: "website" },
     { name: "twitter:title", content: title },
+    { property: "og:image", content: safeThumbUrl },
+    { property: "og:image:alt", content: thumbAlt },
+    { name: "twitter:image", content: safeThumbUrl },
+    { name: "twitter:image:alt", content: thumbAlt },
+    { name: "twitter:card", content: "summary_large_image" },
   ];
 
   if (description) {
@@ -54,19 +61,6 @@ export function buildCourseHeadMeta(meta: CourseMetaForSeo): Array<Record<string
       { property: "og:description", content: description },
       { name: "twitter:description", content: description }
     );
-  }
-
-  if (safeThumbUrl) {
-    tags.push(
-      { property: "og:image", content: safeThumbUrl },
-      { property: "og:image:alt", content: thumbAlt },
-      { name: "twitter:image", content: safeThumbUrl },
-      { name: "twitter:image:alt", content: thumbAlt },
-      { name: "twitter:card", content: "summary_large_image" }
-    );
-  } else {
-    // Fallback twitter card khi không có ảnh
-    tags.push({ name: "twitter:card", content: "summary" });
   }
 
   return tags;
@@ -84,10 +78,11 @@ export function applyCourseSeoMeta(course: CourseOutline["course"]) {
     course.description ||
     "";
 
-  // Validate thumbnail: chỉ inject nếu https://
   const rawThumb = course.marketing?.thumbnail_url;
   const seoImage =
-    rawThumb && rawThumb.startsWith("https://") ? rawThumb : "";
+    rawThumb && (rawThumb.startsWith("https://") || rawThumb.startsWith("http://"))
+      ? rawThumb
+      : "https://academy.desembre-vn.com/og/academy-home.jpg";
   const seoImageAlt = course.marketing?.thumbnail_alt || seoTitle;
 
   // Cập nhật title
@@ -116,15 +111,10 @@ export function applyCourseSeoMeta(course: CourseOutline["course"]) {
   setMeta("og:description", seoDescription, true);
   setMeta("twitter:description", seoDescription);
 
-  // Ảnh (Thumbnail) - chỉ https://
-  if (seoImage) {
-    setMeta("og:image", seoImage, true);
-    setMeta("og:image:alt", seoImageAlt, true);
-    setMeta("twitter:image", seoImage);
-    setMeta("twitter:image:alt", seoImageAlt);
-    setMeta("twitter:card", "summary_large_image");
-  } else {
-    // Fallback khi không có ảnh
-    setMeta("twitter:card", "summary");
-  }
+  // Ảnh (Thumbnail)
+  setMeta("og:image", seoImage, true);
+  setMeta("og:image:alt", seoImageAlt, true);
+  setMeta("twitter:image", seoImage);
+  setMeta("twitter:image:alt", seoImageAlt);
+  setMeta("twitter:card", "summary_large_image");
 }

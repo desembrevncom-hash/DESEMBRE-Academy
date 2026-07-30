@@ -16,15 +16,32 @@ import { Button } from "@/components/ui/button";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 export const Route = createFileRoute("/khoa-hoc/$slug")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `Khóa học ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center` },
-      { name: "description", content: "Khoá đào tạo chuyên sâu chuẩn Y Khoa & Thẩm mỹ cao cấp tại DESEMBRE Training Center." },
-      { property: "og:title", content: `Khóa học ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center` },
-      { property: "og:description", content: "Chương trình đào tạo kỹ thuật viên và chủ Spa chuyên nghiệp cùng chuyên gia DESEMBRE Training Center." },
-      { property: "og:type", content: "article" },
-    ],
-  }),
+  head: ({ params }) => {
+    const slug = params.slug;
+    const title = `Khóa học ${slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center`;
+    const description = "Khoá đào tạo chuyên sâu chuẩn Y Khoa & Thẩm mỹ cao cấp tại DESEMBRE Training Center.";
+    const canonicalUrl = `https://academy.desembre-vn.com/khoa-hoc/${slug}`;
+    const defaultOgImage = "https://academy.desembre-vn.com/og/academy-home.jpg";
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:image", content: defaultOgImage },
+        { property: "og:url", content: canonicalUrl },
+        { property: "og:type", content: "article" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: defaultOgImage },
+      ],
+      links: [
+        { rel: "canonical", href: canonicalUrl },
+      ],
+    };
+  },
   component: PublicCourseDetailPage,
 });
 
@@ -51,6 +68,45 @@ function PublicCourseDetailPage() {
           data.batches = data.batches.filter((b) => !isDemoRecord(b));
         }
         setCourse(data);
+
+        if (typeof document !== "undefined") {
+          const pageTitle = `${data.title} | DESEMBRE Training Center`;
+          const description = data.summary || "Khoá đào tạo chuyên sâu chuẩn Y Khoa & Thẩm mỹ cao cấp tại DESEMBRE Training Center.";
+          const rawCover = data.cover_url;
+          const ogImage = rawCover && (rawCover.startsWith("http://") || rawCover.startsWith("https://"))
+            ? rawCover
+            : "https://academy.desembre-vn.com/og/academy-home.jpg";
+          const canonicalUrl = `https://academy.desembre-vn.com/khoa-hoc/${slug}`;
+
+          document.title = pageTitle;
+
+          const setMetaTag = (attr: string, key: string, content: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+              el = document.createElement("meta");
+              el.setAttribute(attr, key);
+              document.head.appendChild(el);
+            }
+            el.setAttribute("content", content);
+          };
+
+          setMetaTag("name", "description", description);
+          setMetaTag("property", "og:title", pageTitle);
+          setMetaTag("property", "og:description", description);
+          setMetaTag("property", "og:image", ogImage);
+          setMetaTag("property", "og:url", canonicalUrl);
+          setMetaTag("name", "twitter:title", pageTitle);
+          setMetaTag("name", "twitter:description", description);
+          setMetaTag("name", "twitter:image", ogImage);
+
+          let linkEl = document.querySelector('link[rel="canonical"]');
+          if (!linkEl) {
+            linkEl = document.createElement("link");
+            linkEl.setAttribute("rel", "canonical");
+            document.head.appendChild(linkEl);
+          }
+          linkEl.setAttribute("href", canonicalUrl);
+        }
       }
     } catch (err: any) {
       console.error("fetchCourseDetail error:", err);

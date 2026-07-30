@@ -13,15 +13,32 @@ import { Loader2, User, Award, CheckCircle2, Calendar, Sparkles, BookOpen } from
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/giang-vien/$slug")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `Giảng viên ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center` },
-      { name: "description", content: "Chuyên gia đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Training Center." },
-      { property: "og:title", content: `Giảng viên ${params.slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center` },
-      { property: "og:description", content: "Hồ sơ chuyên môn, thành tựu và danh sách lớp đào tạo do giảng viên phụ trách." },
-      { property: "og:type", content: "profile" },
-    ],
-  }),
+  head: ({ params }) => {
+    const slug = params.slug;
+    const title = `Giảng viên ${slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center`;
+    const description = "Chuyên gia đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Training Center.";
+    const canonicalUrl = `https://academy.desembre-vn.com/giang-vien/${slug}`;
+    const defaultOgImage = "https://academy.desembre-vn.com/og/academy-home.jpg";
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:image", content: defaultOgImage },
+        { property: "og:url", content: canonicalUrl },
+        { property: "og:type", content: "profile" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: defaultOgImage },
+      ],
+      links: [
+        { rel: "canonical", href: canonicalUrl },
+      ],
+    };
+  },
   component: PublicInstructorProfilePage,
 });
 
@@ -43,6 +60,45 @@ function PublicInstructorProfilePage() {
         setError("INSTRUCTOR_NOT_FOUND");
       } else {
         setInstructor(data);
+
+        if (typeof document !== "undefined") {
+          const pageTitle = `Giảng viên ${data.full_name} | DESEMBRE Training Center`;
+          const description = data.bio || `Chuyên gia đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Training Center.`;
+          const rawAvatar = data.avatar_url;
+          const ogImage = rawAvatar && (rawAvatar.startsWith("http://") || rawAvatar.startsWith("https://"))
+            ? rawAvatar
+            : "https://academy.desembre-vn.com/og/academy-home.jpg";
+          const canonicalUrl = `https://academy.desembre-vn.com/giang-vien/${slug}`;
+
+          document.title = pageTitle;
+
+          const setMetaTag = (attr: string, key: string, content: string) => {
+            let el = document.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) {
+              el = document.createElement("meta");
+              el.setAttribute(attr, key);
+              document.head.appendChild(el);
+            }
+            el.setAttribute("content", content);
+          };
+
+          setMetaTag("name", "description", description);
+          setMetaTag("property", "og:title", pageTitle);
+          setMetaTag("property", "og:description", description);
+          setMetaTag("property", "og:image", ogImage);
+          setMetaTag("property", "og:url", canonicalUrl);
+          setMetaTag("name", "twitter:title", pageTitle);
+          setMetaTag("name", "twitter:description", description);
+          setMetaTag("name", "twitter:image", ogImage);
+
+          let linkEl = document.querySelector('link[rel="canonical"]');
+          if (!linkEl) {
+            linkEl = document.createElement("link");
+            linkEl.setAttribute("rel", "canonical");
+            document.head.appendChild(linkEl);
+          }
+          linkEl.setAttribute("href", canonicalUrl);
+        }
       }
     } catch (err: any) {
       console.error("fetchInstructorProfile error:", err);

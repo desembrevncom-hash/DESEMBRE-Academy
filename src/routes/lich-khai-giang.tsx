@@ -22,8 +22,17 @@ export const Route = createFileRoute("/lich-khai-giang")({
       { name: "description", content: "Lịch khai giảng các khóa đào tạo spa, thẩm mỹ, quản trị kinh doanh spa chuẩn Hàn Quốc mới nhất tại DESEMBRE Training Center." },
       { property: "og:title", content: "Lịch Khai Giảng | DESEMBRE Training Center" },
       { property: "og:description", content: "Xem lịch khai giảng mới nhất các lớp đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Training Center." },
+      { property: "og:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+      { property: "og:url", content: "https://academy.desembre-vn.com/lich-khai-giang" },
       { property: "og:type", content: "website" },
-    ]
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Lịch Khai Giảng | DESEMBRE Training Center" },
+      { name: "twitter:description", content: "Xem lịch khai giảng mới nhất các lớp đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Training Center." },
+      { name: "twitter:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://academy.desembre-vn.com/lich-khai-giang" },
+    ],
   })
 });
 

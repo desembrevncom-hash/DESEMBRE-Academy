@@ -10,6 +10,24 @@ import { useAuth } from "@/features/auth/useAuth";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 export const Route = createFileRoute("/courses/")({
+  head: () => ({
+    meta: [
+      { title: "Danh sách Khóa học | DESEMBRE Training Center" },
+      { name: "description", content: "Khám phá tất cả các khóa đào tạo chuyên sâu về Da liễu, Thẩm mỹ và Quản trị Spa tại DESEMBRE Training Center." },
+      { property: "og:title", content: "Danh sách Khóa học | DESEMBRE Training Center" },
+      { property: "og:description", content: "Khám phá tất cả các khóa đào tạo chuyên sâu về Da liễu, Thẩm mỹ và Quản trị Spa tại DESEMBRE Training Center." },
+      { property: "og:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+      { property: "og:url", content: "https://academy.desembre-vn.com/courses" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Danh sách Khóa học | DESEMBRE Training Center" },
+      { name: "twitter:description", content: "Khám phá tất cả các khóa đào tạo chuyên sâu tại DESEMBRE Training Center." },
+      { name: "twitter:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://academy.desembre-vn.com/courses" },
+    ],
+  }),
   component: CoursesIndexPage,
 });
 

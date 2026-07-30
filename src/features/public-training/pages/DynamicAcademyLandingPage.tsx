@@ -58,7 +58,44 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
 
       // 2. Set Page Title & Meta Tags dynamically
       if (typeof document !== "undefined") {
-        document.title = landingData.seo_title || landingData.title || "DESEMBRE Training Center";
+        const rawTitle = landingData.seo_title || landingData.title || "DESEMBRE Training Center";
+        const pageTitle = rawTitle.includes("DESEMBRE") ? rawTitle : `${rawTitle} | DESEMBRE Training Center`;
+        const description = landingData.seo_description || landingData.hero_subtitle || "Trung tâm đào tạo chuyên sâu dành cho khách hàng, đối tác và đội ngũ DESEMBRE.";
+        const rawCover = landingData.hero_cover_url;
+        const ogImage = rawCover && (rawCover.startsWith("http://") || rawCover.startsWith("https://"))
+          ? rawCover
+          : "https://academy.desembre-vn.com/og/academy-home.jpg";
+        const targetCanonicalPath = canonicalPath || (slug === "synergistic-protocol" ? "/synergistic-protocol" : `/l/${slug}`);
+        const canonicalUrl = `https://academy.desembre-vn.com${targetCanonicalPath}`;
+
+        document.title = pageTitle;
+
+        const setMetaTag = (attr: string, key: string, content: string) => {
+          let el = document.querySelector(`meta[${attr}="${key}"]`);
+          if (!el) {
+            el = document.createElement("meta");
+            el.setAttribute(attr, key);
+            document.head.appendChild(el);
+          }
+          el.setAttribute("content", content);
+        };
+
+        setMetaTag("name", "description", description);
+        setMetaTag("property", "og:title", pageTitle);
+        setMetaTag("property", "og:description", description);
+        setMetaTag("property", "og:image", ogImage);
+        setMetaTag("property", "og:url", canonicalUrl);
+        setMetaTag("name", "twitter:title", pageTitle);
+        setMetaTag("name", "twitter:description", description);
+        setMetaTag("name", "twitter:image", ogImage);
+
+        let linkEl = document.querySelector('link[rel="canonical"]');
+        if (!linkEl) {
+          linkEl = document.createElement("link");
+          linkEl.setAttribute("rel", "canonical");
+          document.head.appendChild(linkEl);
+        }
+        linkEl.setAttribute("href", canonicalUrl);
       }
 
       // 3. Fetch Public Batches & Filter by Course ID or fallback title/slug

@@ -22,8 +22,11 @@ export const Route = createFileRoute("/courses/$slug")({
       return null;
     }
   },
-  head: ({ loaderData }) => ({
+  head: ({ loaderData, params }) => ({
     meta: buildCourseHeadMeta(loaderData ?? null),
+    links: [
+      { rel: "canonical", href: `https://academy.desembre-vn.com/courses/${params.slug}` },
+    ],
   }),
   component: CourseDetailPage,
 });
