@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { adminCreateCourseBatch } from "@/features/admin/services/academyAdminBatchesApi";
 import { academyAdminCoursesApi } from "@/features/admin/services/academyAdminCoursesApi";
 import { getAdminInstructors, type Instructor } from "@/features/admin/services/academyAdminInstructorsApi";
+import { isDemoRecord } from "@/features/admin/utils/demoData";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
@@ -56,15 +57,17 @@ function AdminBatchesNewPage() {
           getAdminInstructors().catch(() => []),
         ]);
         
-        const filteredCourses = coursesData.filter((c: any) => {
-          const searchStr = ((c.title || "") + " " + (c.slug || "")).toLowerCase();
-          return !searchStr.includes("smoke") && 
-                 !searchStr.includes("test") && 
-                 !searchStr.includes("demo") && 
-                 !searchStr.includes("cancel");
-        });
+        const visibleCourseOptions = (coursesData || []).filter((c: any) => !isDemoRecord(c));
+        const filteredOutSlugs = (coursesData || []).filter((c: any) => isDemoRecord(c)).map((c: any) => c.slug);
         
-        setCourses(filteredCourses);
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[admin.batches.new] Course options count — Total:", coursesData?.length, "Visible:", visibleCourseOptions.length);
+          if (filteredOutSlugs.length > 0) {
+            console.log("[admin.batches.new] Filtered out test courses:", filteredOutSlugs);
+          }
+        }
+
+        setCourses(visibleCourseOptions);
         setInstructors(instructorsData || []);
       } catch (err) {
         console.error("Failed to load options", err);
