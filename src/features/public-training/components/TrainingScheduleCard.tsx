@@ -129,9 +129,29 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
           {/* Instructor Compact */}
           <CompactInstructorCard instructor={instructor} />
 
-          {/* Sessions Accordion */}
-          <div>
-            {sessions.length > 0 ? (
+          {/* Sessions Display Rule */}
+          <div className="pt-1">
+            {sessions.length === 0 ? (
+              <p className="text-xs text-slate-500 italic flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>Thời gian chi tiết từng buổi học sẽ được xác nhận sau khi đăng ký.</span>
+              </p>
+            ) : sessions.length === 1 ? (
+              <div className="bg-slate-50/90 border border-slate-100 rounded-xl p-3 text-xs text-slate-700 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span>
+                    Giờ học: <strong className="text-slate-900 font-semibold">{formatTimeRange(sessions[0].starts_at, sessions[0].ends_at)}</strong>
+                  </span>
+                </div>
+                {sessions[0].location_detail && (
+                  <div className="flex items-center gap-1.5 text-slate-600">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>{sessions[0].location_detail}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
               <div className="space-y-2">
                 <button
                   type="button"
@@ -179,11 +199,6 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                     ))}
                   </div>
                 )}
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50/90 border border-amber-200/80 px-3 py-1.5 rounded-xl">
-                <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                <span>Lịch học đang cập nhật</span>
               </div>
             )}
           </div>

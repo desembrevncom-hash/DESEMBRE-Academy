@@ -211,7 +211,7 @@ function PublicCalendarPage() {
                 Lớp khai giảng đang mở ({filteredBatches.length})
               </h2>
               <p className="text-xs sm:text-sm text-slate-500">
-                Chọn lớp phù hợp và gửi thông tin để DESEMBRE Academy xác nhận qua Zalo/điện thoại.
+                Chọn lớp phù hợp và gửi thông tin để DESEMBRE Training Center xác nhận qua Zalo/điện thoại.
               </p>
             </div>
 
