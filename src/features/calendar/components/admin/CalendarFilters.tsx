@@ -55,10 +55,11 @@ export function CalendarFilters({
         </select>
         
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className={selCls}>
-          <option value="ALL">Tất cả status</option>
+          <option value="ALL">Đang hoạt động</option>
           <option value="OPEN">Open</option>
           <option value="CLOSED">Closed</option>
           <option value="DRAFT">Draft</option>
+          <option value="DEMO">Dữ liệu test/smoke</option>
         </select>
       </div>
     </div>

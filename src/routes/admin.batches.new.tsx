@@ -93,8 +93,16 @@ function AdminBatchesNewPage() {
         end_date: values.end_date || null
       };
 
-      await adminCreateCourseBatch(payload);
-      navigate({ to: "/admin/batches" });
+      const createdBatch = await adminCreateCourseBatch(payload);
+      if (createdBatch?.id) {
+        navigate({
+          to: "/admin/batches/$batchId",
+          params: { batchId: createdBatch.id },
+          search: { created: "true" } as any,
+        });
+      } else {
+        navigate({ to: "/admin/batches" });
+      }
     } catch (err: any) {
       setError(err.message || "Không thể tạo lớp học. Vui lòng kiểm tra lại thông tin.");
       setSubmitting(false);

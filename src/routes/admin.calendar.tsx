@@ -24,6 +24,8 @@ import {
 } from "@/features/admin/services/academyAdminSessionsApi";
 import { toast } from "sonner";
 
+import { isDemoRecord } from "@/features/admin/utils/demoData";
+
 export const Route = createFileRoute("/admin/calendar")({
   component: AdminCalendarPage,
 });
@@ -144,6 +146,10 @@ function AdminCalendarPage() {
       const batch = s.course_batches;
       const course = batch?.courses;
       if (!batch) return false;
+
+      const isTestRecord = isDemoRecord(s) || isDemoRecord(batch) || isDemoRecord(course || {});
+      if (filterStatus === "DEMO") return isTestRecord;
+      if (isTestRecord) return false;
 
       const fmt = (batch.training_format || s.location_type || "").toLowerCase();
       const status = (batch.registration_status || batch.status || "").toUpperCase();

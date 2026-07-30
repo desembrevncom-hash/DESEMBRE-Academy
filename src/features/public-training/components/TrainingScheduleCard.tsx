@@ -181,9 +181,10 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 )}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 italic px-1">
-                Lịch học đang cập nhật
-              </p>
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50/90 border border-amber-200/80 px-3 py-1.5 rounded-xl">
+                <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>Lịch học đang cập nhật</span>
+              </div>
             )}
           </div>
         </div>

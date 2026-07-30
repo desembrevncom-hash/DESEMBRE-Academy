@@ -129,6 +129,7 @@ function AdminBatchesIndexPage() {
                 <th className="px-5 py-3.5 font-semibold">Khóa học</th>
                 <th className="px-5 py-3.5 font-semibold">Giảng viên</th>
                 <th className="px-5 py-3.5 font-semibold">Trạng thái</th>
+                <th className="px-5 py-3.5 font-semibold">Buổi học</th>
                 <th className="px-5 py-3.5 font-semibold">Số chỗ</th>
                 <th className="px-5 py-3.5 font-semibold">Thời gian</th>
                 <th className="px-5 py-3.5 font-semibold text-right">Thao tác</th>
@@ -139,6 +140,7 @@ function AdminBatchesIndexPage() {
                 const regStatus = (batch.registration_status || batch.status || "open").toLowerCase();
                 const instructorName = batch.instructor?.full_name || "Chưa gán";
                 const courseSlug = batch.course?.slug;
+                const sessionsCount = batch.sessions_count ?? (Array.isArray(batch.sessions) ? batch.sessions.length : 0);
 
                 return (
                   <tr key={batch.id} className="hover:bg-muted/30">
@@ -176,6 +178,19 @@ function AdminBatchesIndexPage() {
                         </span>
                       )}
                     </td>
+                    <td className="px-5 py-3.5">
+                      {sessionsCount > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-800 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
+                          {sessionsCount} buổi học
+                        </span>
+                      ) : (
+                        <div className="flex flex-col gap-0.5">
+                          <span className="inline-flex items-center text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md w-max">
+                            Chưa có lịch học
+                          </span>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-5 py-3.5 text-xs text-slate-600">
                       {batch.max_participants ? `${batch.max_participants} chỗ` : "Không giới hạn"}
                     </td>
@@ -185,30 +200,13 @@ function AdminBatchesIndexPage() {
                     </td>
                     <td className="px-5 py-3.5 text-right space-x-2">
                       <Link
-                        to="/lich-khai-giang"
-                        target="_blank"
-                        className="text-xs font-semibold text-indigo-600 hover:underline"
+                        to="/admin/batches/$batchId"
+                        params={{ batchId: batch.id }}
+                        search={{ addSession: true } as any}
+                        className="inline-flex items-center justify-center gap-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 h-8 px-2.5 rounded-md"
                       >
-                        Lịch public ↗
+                        + Thêm buổi học
                       </Link>
-                      {courseSlug && (
-                        <Link
-                          to="/khoa-hoc/$slug"
-                          params={{ slug: courseSlug }}
-                          target="_blank"
-                          className="text-xs font-semibold text-indigo-600 hover:underline"
-                        >
-                          Khóa học ↗
-                        </Link>
-                      )}
-                      {isDemoRecord(batch) && regStatus !== "closed" && (
-                        <button 
-                          onClick={() => handleCloseDemo(batch)}
-                          className="inline-flex items-center justify-center gap-1 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 h-8 px-2.5 rounded-md"
-                        >
-                          Đóng đăng ký
-                        </button>
-                      )}
                       <Link 
                         to="/admin/batches/$batchId/registrations" 
                         params={{ batchId: batch.id }}
@@ -219,6 +217,7 @@ function AdminBatchesIndexPage() {
                       <Link 
                         to="/admin/batches/$batchId" 
                         params={{ batchId: batch.id }}
+                        search={{ addSession: false } as any}
                         className="inline-flex items-center justify-center gap-1 text-xs font-medium bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-8 px-2.5 rounded-md"
                       >
                         <Edit className="h-3.5 w-3.5" /> Sửa

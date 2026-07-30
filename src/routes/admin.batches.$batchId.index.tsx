@@ -20,6 +20,10 @@ import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 
 export const Route = createFileRoute("/admin/batches/$batchId/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    created: search.created === "true" || search.created === true,
+    addSession: search.addSession === "true" || search.addSession === true,
+  }),
   component: AdminBatchesEditPage,
 });
 
@@ -73,21 +77,35 @@ interface SessionFormValues {
 interface SessionFormProps {
   batchId: string;
   editing: AdminSession | null;
+  batchStartDate?: string | null;
+  batchFormat?: string | null;
   onDone: () => void;
   onCancel: () => void;
 }
 
-function SessionForm({ batchId, editing, onDone, onCancel }: SessionFormProps) {
+function SessionForm({ batchId, editing, batchStartDate, batchFormat, onDone, onCancel }: SessionFormProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const defaultStartsAt = editing?.starts_at
+    ? toDateTimeLocal(editing.starts_at)
+    : batchStartDate
+      ? `${batchStartDate.slice(0, 10)}T09:00`
+      : "";
+  const defaultEndsAt = editing?.ends_at
+    ? toDateTimeLocal(editing.ends_at)
+    : batchStartDate
+      ? `${batchStartDate.slice(0, 10)}T12:00`
+      : "";
+  const defaultLocationType = editing?.location_type ?? (batchFormat || "office");
 
   const { register, handleSubmit, formState: { errors } } = useForm<SessionFormValues>({
     defaultValues: {
       title: editing?.title ?? "",
       description: editing?.description ?? "",
-      starts_at: toDateTimeLocal(editing?.starts_at),
-      ends_at: toDateTimeLocal(editing?.ends_at),
-      location_type: editing?.location_type ?? "office",
+      starts_at: defaultStartsAt,
+      ends_at: defaultEndsAt,
+      location_type: defaultLocationType,
       location_detail: editing?.location_detail ?? "",
     },
   });
@@ -181,11 +199,23 @@ function SessionForm({ batchId, editing, onDone, onCancel }: SessionFormProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Sessions Section
 // ─────────────────────────────────────────────────────────────────────────────
-function SessionsSection({ batchId, onCountChange }: { batchId: string, onCountChange?: (count: number) => void }) {
+function SessionsSection({
+  batchId,
+  batchStartDate,
+  batchFormat,
+  initialShowForm = false,
+  onCountChange,
+}: {
+  batchId: string;
+  batchStartDate?: string | null;
+  batchFormat?: string | null;
+  initialShowForm?: boolean;
+  onCountChange?: (count: number) => void;
+}) {
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(initialShowForm);
   const [editingSession, setEditingSession] = useState<AdminSession | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -339,6 +369,9 @@ function SessionsSection({ batchId, onCountChange }: { batchId: string, onCountC
 function AdminBatchesEditPage() {
   const navigate = useNavigate();
   const { batchId } = Route.useParams();
+  const search = Route.useSearch();
+  const isJustCreated = !!(search as any)?.created;
+  const isAddSessionParam = !!(search as any)?.addSession;
 
   const [courses, setCourses] = useState<any[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -348,7 +381,7 @@ function AdminBatchesEditPage() {
   const [sessionCount, setSessionCount] = useState<number>(0);
   const [batchRegistrations, setBatchRegistrations] = useState<number>(0);
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
       course_id: "",
       title: "",
@@ -444,6 +477,22 @@ function AdminBatchesEditPage() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-3xl">
+      {isJustCreated && (
+        <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 text-emerald-800 font-bold text-sm">
+              ✓
+            </div>
+            <div>
+              <h3 className="font-bold text-emerald-950 text-sm">Lớp đã được tạo thành công!</h3>
+              <p className="text-xs text-emerald-800 mt-0.5">
+                Hãy thêm buổi học để lớp xuất hiện đầy đủ trên Lịch đào tạo và ứng dụng của học viên.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8 flex justify-between items-start">
         <div>
@@ -588,7 +637,13 @@ function AdminBatchesEditPage() {
       </div>
 
       {/* Sessions Section */}
-      <SessionsSection batchId={batchId} onCountChange={setSessionCount} />
+      <SessionsSection
+        batchId={batchId}
+        batchStartDate={watch("start_date")}
+        batchFormat={watch("training_format")}
+        initialShowForm={isAddSessionParam || isJustCreated}
+        onCountChange={setSessionCount}
+      />
     </div>
   );
 }
