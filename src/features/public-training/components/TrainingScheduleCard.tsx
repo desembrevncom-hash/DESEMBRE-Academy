@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PublicCourseBatch } from "../services/publicTrainingApi";
-import { getFormatConfig, formatDateSafe, formatTimeRange } from "../utils/formatters";
+import { formatDateSafe, formatTimeRange } from "../utils/formatters";
+import { getTrainingFormatMeta, getCleanBatchDisplayTitle } from "../utils/trainingFormat";
 import { CourseCardBanner } from "./CourseCardBanner";
 import { CompactInstructorCard } from "./CompactInstructorCard";
 import { Calendar, MapPin, Users, Clock, ArrowRight, ChevronDown, ChevronUp, MessageSquare, Tag } from "lucide-react";
@@ -14,8 +15,8 @@ interface TrainingScheduleCardProps {
 export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const formatConfig = getFormatConfig(batch.training_format);
-  const FormatIcon = formatConfig.icon;
+  const formatMeta = getTrainingFormatMeta(batch.training_format);
+  const FormatIcon = formatMeta.icon;
 
   const totalRegistered = (batch.confirmed_count || 0) + (batch.pending_count || 0);
 
@@ -29,21 +30,23 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
       ? Math.max(0, batch.max_participants - totalRegistered)
       : null;
 
-  const isClosingSoon =
-    !isFull &&
-    remainingSeats != null &&
-    remainingSeats <= 3 &&
-    remainingSeats > 0;
-
   const sessions = batch.sessions || [];
   const instructor = batch.instructor;
   const courseTitle = batch.course?.title || batch.title;
   const courseSummary = batch.course?.summary || batch.description;
   const coverUrl = batch.course?.cover_url || null;
 
-  const isExpired = batch.registration_closes_at
-    ? new Date(batch.registration_closes_at).getTime() < Date.now()
-    : false;
+  const closeTime = batch.registration_closes_at ? new Date(batch.registration_closes_at).getTime() : null;
+  const now = Date.now();
+  const isExpired = closeTime ? closeTime < now : false;
+  const hoursUntilClose = closeTime ? (closeTime - now) / 3600000 : null;
+  const isUrgentClose = !isExpired && hoursUntilClose !== null && hoursUntilClose > 0 && hoursUntilClose <= 48;
+
+  const cleanBatchTitle = getCleanBatchDisplayTitle(
+    batch.title,
+    courseTitle,
+    formatDateSafe(batch.start_date, "dd/MM/yyyy")
+  );
 
   const handleConsult = () => {
     window.open("https://zalo.me", "_blank");
@@ -51,7 +54,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
 
   return (
     <div className="group bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative space-y-5 antialiased">
-      {/* 1. Course Banner */}
+      {/* 1. Course Banner (Main Course Title & Summary appear ONLY ONCE here) */}
       <CourseCardBanner
         title={courseTitle}
         summary={courseSummary}
@@ -65,33 +68,33 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
           {/* Batch Info Header */}
           <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5">
-              {/* Batch Tag / Title */}
+              {/* Clean Batch Tag / Display Title */}
               <div className="flex items-center gap-2">
                 <Tag className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span className="text-xs font-extrabold uppercase tracking-wider text-indigo-700">
-                  Lớp: {batch.title}
+                <span className="text-xs font-extrabold tracking-wide text-slate-800">
+                  Lớp: {cleanBatchTitle}
                 </span>
               </div>
 
-              {/* Status & Format Badges */}
+              {/* Status & Visual Format Badges */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${formatConfig.cls}`}>
-                  <FormatIcon className="h-3 w-3" />
-                  <span>{formatConfig.label}</span>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border ${formatMeta.badgeClass}`}>
+                  <FormatIcon className="h-3.5 w-3.5 shrink-0" />
+                  <span>{formatMeta.label}</span>
                 </span>
 
                 {isExpired ? (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 border border-rose-200">
-                    Đã hết hạn đăng ký
+                    Đã hết hạn
                   </span>
                 ) : isFull ? (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
                     Đã đủ chỗ
                   </span>
-                ) : isClosingSoon ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                    Sắp đóng đăng ký
+                ) : isUrgentClose ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-ping" />
+                    Sắp hết hạn (&lt;48h)
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -119,7 +122,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 <span>
                   Sĩ số:{" "}
                   <strong className="text-slate-900 font-bold">
-                    {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Liên hệ để tư vấn sĩ số"}
+                    {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Liên hệ tư vấn"}
                   </strong>
                 </span>
               </div>
@@ -208,12 +211,16 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
         <div className="lg:w-60 flex flex-col justify-between gap-3 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
           {batch.registration_closes_at && (
             <div className={`text-xs text-center p-3 rounded-2xl border ${
-              isExpired ? "bg-rose-50 border-rose-100" : "bg-slate-50 border-slate-100"
+              isExpired
+                ? "bg-rose-50 border-rose-200 text-rose-800"
+                : isUrgentClose
+                ? "bg-amber-50 border-amber-200 text-amber-900"
+                : "bg-slate-50 border-slate-100 text-slate-700"
             }`}>
               <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5">
                 Hạn chót đăng ký
               </span>
-              <span className={`font-bold text-xs ${isExpired ? "text-rose-700" : "text-slate-900"}`}>
+              <span className="font-bold text-xs">
                 {formatDateSafe(batch.registration_closes_at, "dd/MM/yyyy HH:mm")}
               </span>
             </div>

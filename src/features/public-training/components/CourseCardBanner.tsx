@@ -66,8 +66,8 @@ export function CourseCardBanner({ title, summary, coverUrl }: CourseCardBannerP
               <div className="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
                 <BookOpen className="w-4 h-4" />
               </div>
-              <div className="text-[11px] font-semibold text-indigo-200 line-clamp-1">
-                {title}
+              <div className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider">
+                DESEMBRE Training
               </div>
             </div>
           )}
