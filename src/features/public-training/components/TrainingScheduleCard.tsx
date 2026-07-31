@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { PublicCourseBatch } from "../services/publicTrainingApi";
 import { formatDateSafe, formatTimeRange } from "../utils/formatters";
 import { getTrainingFormatMeta } from "../utils/trainingFormat";
 import { CompactInstructorCard } from "./CompactInstructorCard";
-import { Calendar, MapPin, Users, Clock, ArrowRight, ChevronDown, ChevronUp, MessageSquare, Sparkles, Award } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ArrowRight, ChevronDown, ChevronUp, ExternalLink, Sparkles, Award, AlarmClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, format } from "date-fns";
 
@@ -37,6 +38,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
   const courseTitle = rawCourseTitle.replace(/^\s*Chuyên\s+đề\s*:\s*/i, "");
   const courseSummary = batch.course?.summary || batch.description;
   const coverUrl = batch.course?.cover_url || null;
+  const courseSlug = batch.course?.slug || null;
 
   const closeTime = batch.registration_closes_at ? new Date(batch.registration_closes_at).getTime() : null;
   const now = Date.now();
@@ -73,9 +75,10 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
     ? formatTimeRange(sessions[0].starts_at, sessions[0].ends_at)
     : "14:00–16:00";
 
-  const handleConsult = () => {
-    window.open("https://zalo.me", "_blank");
-  };
+  // Format registration close deadline for Meta Bar
+  const deadlineStr = batch.registration_closes_at
+    ? formatDateSafe(batch.registration_closes_at, "dd/MM HH:mm")
+    : "Đang mở";
 
   return (
     <div className={`group bg-white border border-slate-200/90 ${formatMeta.cardBorderClass} rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative space-y-4 antialiased`}>
@@ -113,6 +116,14 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 <FormatIcon className="h-3.5 w-3.5 shrink-0" />
                 <span>{formatMeta.label}</span>
               </span>
+
+              {/* Sĩ số / Chỗ trống Badge */}
+              {remainingSeats !== null && !isExpired && !isFull && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/80 text-white border border-indigo-400/30 shadow-xs">
+                  <Users className="w-3 h-3 shrink-0" />
+                  <span>Còn {remainingSeats} chỗ</span>
+                </span>
+              )}
 
               {isExpired ? (
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/90 text-white border border-rose-400/40 shadow-xs">
@@ -164,7 +175,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
         </div>
       </div>
 
-      {/* 2. Unified Scannable Meta Row (No Triplicated Date Lines) */}
+      {/* 2. Unified Scannable Meta Row (Exact: Ngày học, Giờ học, Hình thức, Hạn ĐK) */}
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           {/* Ngày học */}
@@ -200,15 +211,15 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
             </div>
           </div>
 
-          {/* Hạn đăng ký & Chỗ còn */}
+          {/* Hạn ĐK (Urgency Driver) */}
           <div className="flex items-center gap-2">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isUrgentClose ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
-              <Users className="w-4 h-4" />
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isUrgentClose ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+              <AlarmClock className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Chỗ trống</span>
-              <span className="font-bold text-slate-900 truncate block">
-                {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Liên hệ tư vấn"}
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Hạn ĐK</span>
+              <span className={`font-bold truncate block ${isUrgentClose ? "text-rose-700 font-extrabold" : "text-slate-900"}`}>
+                {deadlineStr}
               </span>
             </div>
           </div>
@@ -275,7 +286,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
           )}
         </div>
 
-        {/* Right Column: Deadline & Action Buttons (Clean & Streamlined CTAs) */}
+        {/* Right Column: Action Buttons (Primary & Secondary CTAs) */}
         <div className="lg:w-64 flex flex-col justify-between gap-3 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
           {batch.registration_closes_at && (
             <div className={`text-xs text-center p-3 rounded-2xl border ${
@@ -319,14 +330,25 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
               </Button>
             )}
 
-            {!isExpired && (
+            {courseSlug ? (
               <Button
-                onClick={handleConsult}
+                asChild
+                variant="outline"
+                className="w-full h-10 rounded-xl text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <Link to="/khoa-hoc/$slug" params={{ slug: courseSlug }} className="flex items-center justify-center gap-1.5">
+                  <span>Xem chi tiết</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                onClick={() => onRegister(batch)}
                 variant="outline"
                 className="w-full h-10 rounded-xl text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Tư vấn qua Zalo</span>
+                <span>Xem chi tiết</span>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
               </Button>
             )}
           </div>
