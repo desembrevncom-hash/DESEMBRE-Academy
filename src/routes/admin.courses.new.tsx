@@ -105,14 +105,30 @@ function CreateCoursePage() {
         p_pricing_model: data.pricing_model,
       });
 
+      const isOneSessionCategory =
+        courseTypeMeta?.slug === "lead-magnet-one-session" ||
+        courseTypeMeta?.slug === "hands-on-workshop" ||
+        courseTypeMeta?.slug === "seminar-webinar" ||
+        selectedCategoryObj?.name?.toLowerCase().includes("1 buổi") ||
+        selectedCategoryObj?.name?.toLowerCase().includes("thu phễu");
+
+      const ctaLabel = isOneSessionCategory
+        ? "Tạo lớp khai giảng 1 buổi"
+        : "+ Tạo lớp khai giảng";
+
       toast.success("Tạo khóa học thành công!", {
-        description: "Bấm bên dưới để tạo ngay Lớp khai giảng cho khóa học này.",
+        description: isOneSessionCategory
+          ? "Khóa học 1 buổi đã được tạo. Bấm bên dưới để mở lớp khai giảng 1 buổi."
+          : "Bấm bên dưới để tạo ngay Lớp khai giảng cho khóa học này.",
         action: {
-          label: "+ Tạo lớp khai giảng",
+          label: ctaLabel,
           onClick: () => {
             navigate({
               to: "/admin/batches/new",
-              search: { course_id: response.id } as any,
+              search: {
+                course_id: response.id,
+                ...(isOneSessionCategory ? { mode: "one-session" } : {}),
+              } as any,
             });
           },
         },

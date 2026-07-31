@@ -171,9 +171,14 @@ function AdminBatchesIndexPage() {
                           {sessionsCount} buổi
                         </span>
                       ) : (
-                        <div className="flex flex-col">
-                          <span className="font-medium text-slate-400 text-xs">0 buổi</span>
-                          <span className="text-[10px] font-semibold text-amber-600">Chưa có lịch</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 w-max"
+                            title="Public vẫn hiển thị ngày khai giảng, nhưng chưa có giờ học chi tiết và ZNS reminder sẽ không đủ thông tin."
+                          >
+                            Thiếu buổi học
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-medium">Chưa có giờ học</span>
                         </div>
                       )}
                     </td>
@@ -196,7 +201,11 @@ function AdminBatchesIndexPage() {
                           to="/admin/batches/$batchId"
                           params={{ batchId: batch.id }}
                           search={{ addSession: true } as any}
-                          className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 h-7 px-2 rounded-lg transition-colors"
+                          className={`inline-flex items-center justify-center gap-1 text-[11px] font-bold h-7 px-2 rounded-lg transition-all ${
+                            sessionsCount === 0
+                              ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20"
+                              : "text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80"
+                          }`}
                         >
                           + Buổi
                         </Link>

@@ -204,12 +204,14 @@ function SessionsSection({
   batchStartDate,
   batchFormat,
   initialShowForm = false,
+  isOneSessionCourse = false,
   onCountChange,
 }: {
   batchId: string;
   batchStartDate?: string | null;
   batchFormat?: string | null;
   initialShowForm?: boolean;
+  isOneSessionCourse?: boolean;
   onCountChange?: (count: number) => void;
 }) {
   const [sessions, setSessions] = useState<AdminSession[]>([]);
@@ -255,18 +257,31 @@ function SessionsSection({
   };
 
   return (
-    <div className="bg-card border rounded-lg p-6 mt-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-card border rounded-2xl p-6 mt-8 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold">Lịch học của lớp này</h2>
-          <p className="text-sm text-muted-foreground mt-1">Các buổi học sẽ hiển thị trên lịch khai giảng và trang chi tiết khóa học.</p>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold text-slate-900">Lịch học của lớp này</h2>
+            {isOneSessionCourse && sessions.length === 1 && (
+              <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs px-2.5 py-0.5 rounded-full font-bold">
+                ✓ Lịch 1 buổi đã hoàn tất
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Các buổi học sẽ hiển thị trên lịch khai giảng và trang chi tiết khóa học.</p>
         </div>
         {!showForm && !editingSession && (
-          <Button size="sm" onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Thêm buổi học
+          <Button size="sm" onClick={() => setShowForm(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">
+            <Plus className="mr-1.5 h-4 w-4" /> Thêm buổi học
           </Button>
         )}
       </div>
+
+      {isOneSessionCourse && sessions.length > 1 && (
+        <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+          ⚠️ Khóa này đang được phân loại là 1 buổi nhưng có {sessions.length} buổi học. Hãy kiểm tra lại loại khóa học hoặc lịch học.
+        </div>
+      )}
 
       {(showForm && !editingSession) && (
         <div className="mb-6">
@@ -290,8 +305,13 @@ function SessionsSection({
       )}
 
       {!loading && !error && sessions.length === 0 && !showForm && (
-        <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/20">
-          <p className="font-semibold text-slate-700">Chưa có buổi học nào. Hãy thêm lịch học để học viên biết thời gian tham gia.</p>
+        <div className="text-center py-8 border border-dashed rounded-2xl bg-slate-50/70 p-6 space-y-3">
+          <p className="font-bold text-slate-800 text-sm">
+            {isOneSessionCourse ? "Thêm 1 buổi học để hoàn tất lịch khai giảng." : "Chưa có buổi học nào. Hãy thêm lịch học để học viên biết thời gian tham gia."}
+          </p>
+          <Button size="sm" onClick={() => setShowForm(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm">
+            <Plus className="mr-1.5 h-4 w-4" /> Thêm buổi học ngay
+          </Button>
         </div>
       )}
 
@@ -397,6 +417,16 @@ function AdminBatchesEditPage() {
       description: ""
     }
   });
+
+  const selectedCourseId = watch("course_id");
+  const selectedCourseObj = courses.find((c) => c.id === selectedCourseId);
+  const isOneSessionCourse =
+    !!selectedCourseObj &&
+    ((selectedCourseObj.category_slug || selectedCourseObj.category?.slug) === "lead-magnet-one-session" ||
+      (selectedCourseObj.category_slug || selectedCourseObj.category?.slug) === "hands-on-workshop" ||
+      (selectedCourseObj.category_slug || selectedCourseObj.category?.slug) === "seminar-webinar" ||
+      (selectedCourseObj.category_name || selectedCourseObj.category?.name || "").toLowerCase().includes("thu phễu") ||
+      (selectedCourseObj.category_name || selectedCourseObj.category?.name || "").toLowerCase().includes("1 buổi"));
 
   useEffect(() => {
     async function loadData() {
@@ -681,6 +711,7 @@ function AdminBatchesEditPage() {
         batchStartDate={watch("start_date")}
         batchFormat={watch("training_format")}
         initialShowForm={isAddSessionParam || isJustCreated}
+        isOneSessionCourse={isOneSessionCourse}
         onCountChange={setSessionCount}
       />
     </div>

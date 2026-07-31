@@ -19,13 +19,18 @@ function fromDateTimeLocal(val: string) {
 }
 
 function AdminBatchesNewPage() {
-  const getInitialCourseId = () => {
+  const getInitialSearchParams = () => {
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
-      return searchParams.get("course_id") || "";
+      return {
+        course_id: searchParams.get("course_id") || "",
+        mode: searchParams.get("mode") || "",
+      };
     }
-    return "";
+    return { course_id: "", mode: "" };
   };
+
+  const initialParams = getInitialSearchParams();
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -35,7 +40,7 @@ function AdminBatchesNewPage() {
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
-      course_id: getInitialCourseId(),
+      course_id: initialParams.course_id,
       title: "",
       slug: "",
       training_format: "office",
@@ -51,6 +56,14 @@ function AdminBatchesNewPage() {
 
   const selectedCourseId = watch("course_id");
   const selectedCourseObj = courses.find((c) => c.id === selectedCourseId);
+  const isOneSessionMode =
+    initialParams.mode === "one-session" ||
+    (selectedCourseObj &&
+      ((selectedCourseObj.category_slug || selectedCourseObj.category?.slug) === "lead-magnet-one-session" ||
+        (selectedCourseObj.category_slug || selectedCourseObj.category?.slug) === "hands-on-workshop" ||
+        (selectedCourseObj.category_slug || selectedCourseObj.category?.slug) === "seminar-webinar" ||
+        (selectedCourseObj.category_name || selectedCourseObj.category?.name || "").toLowerCase().includes("thu phễu") ||
+        (selectedCourseObj.category_name || selectedCourseObj.category?.name || "").toLowerCase().includes("1 buổi")));
 
   useEffect(() => {
     async function loadData() {
