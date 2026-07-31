@@ -151,38 +151,110 @@ export async function getLandingPageById(id: string): Promise<AcademyLandingPage
 
 export async function getLandingPageBySlug(slug: string): Promise<AcademyLandingPage | null> {
   const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("UNAUTHENTICATED");
-
   const normalizedSlug = slug.toLowerCase().trim();
 
-  const { data, error } = await supabase
-    .from("academy_landing_pages")
-    .select(`
-      *,
-      course:courses (
-        id,
-        title,
-        slug,
-        cover_url
-      )
-    `)
-    .eq("slug", normalizedSlug)
-    .maybeSingle();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("academy_landing_pages")
+        .select(`
+          *,
+          course:courses (
+            id,
+            title,
+            slug,
+            cover_url
+          )
+        `)
+        .eq("slug", normalizedSlug)
+        .maybeSingle();
 
-  if (error) {
-    console.error(`Error fetching landing page by slug '${slug}':`, error);
-    const { data: fallbackData, error: fallbackError } = await supabase
-      .from("academy_landing_pages")
-      .select("*")
-      .eq("slug", normalizedSlug)
-      .maybeSingle();
-
-    if (fallbackError || !fallbackData) return null;
-    return normalizeLandingRecord(fallbackData);
+      if (!error && data) {
+        return normalizeLandingRecord(data);
+      }
+    } catch (err) {
+      console.warn(`[getLandingPageBySlug Exception for '${slug}']:`, err);
+    }
   }
 
-  if (!data) return null;
-  return normalizeLandingRecord(data);
+  // Fallback default landing configuration for BIOLOGICAL TRIGGER campaign
+  if (normalizedSlug === "biological-trigger") {
+    return {
+      id: "default-biological-trigger-landing",
+      title: "Chuyên đề: BIOLOGICAL TRIGGER",
+      slug: "biological-trigger",
+      course_id: null,
+      hero_badge: "Buổi học thu phễu • Online Zoom",
+      hero_title: "Chuyên đề: BIOLOGICAL TRIGGER",
+      hero_subtitle: "Kích hoạt tín hiệu tái tạo sinh học với Holistic Crystaling Peel chuẩn Y Khoa Hàn Quốc.",
+      hero_cover_url: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&auto=format&fit=crop",
+      primary_cta_label: "Đăng ký giữ chỗ ngay",
+      secondary_cta_label: "Xem lịch học chi tiết",
+      audience: [
+        {
+          title: "Chủ Spa / Clinic",
+          description: "Muốn hiểu đúng cơ chế vi kim sinh học Holistic Crystaling Peel để xây dựng liệu trình mũi nhọn tăng trưởng doanh thu."
+        },
+        {
+          title: "Kỹ thuật viên Thẩm mỹ",
+          description: "Cần nắm vững protocol thao tác chuẩn Y Khoa, kiểm soát lực massage vi tinh thể và kỹ thuật dập tắt kích ứng."
+        },
+        {
+          title: "Đội ngũ Tư vấn viên",
+          description: "Cần hiểu rõ bản chất liệu trình tái tạo để giải thích thuyết phục, tăng tỷ lệ chốt sales liệu trình."
+        },
+        {
+          title: "Spa đang làm Vi Kim / Peel",
+          description: "Dành cho các cơ sở đã làm peel nhưng kết quả chưa ổn định hoặc hay gặp sự cố tăng sắc tố/kích ứng."
+        }
+      ],
+      outcomes: [
+        {
+          title: "Cơ chế Kích hoạt Sinh học",
+          description: "Nắm vững cơ chế thâm nhập của vi tinh thể Crystaling Spicule giúp kích hoạt chu trình tái tạo tế bào mới."
+        },
+        {
+          title: "Chỉ định & Chống chỉ định",
+          description: "Phân loại chính xác tình trạng da phù hợp và rà soát kỹ các trường hợp tuyệt đối không được peel."
+        },
+        {
+          title: "Phối hợp Protocol Chuẩn",
+          description: "Biết cách kết hợp vi kim với ampoule tế bào gốc và huyết thanh phục hồi cao cấp DESEMBRE."
+        },
+        {
+          title: "An toàn & Phục hồi Sau Peel",
+          description: "Quy trình làm dịu da tức thì, bảo vệ hàng rào da và dặn dò khách hàng chăm sóc chuẩn tại nhà."
+        },
+        {
+          title: "Tư vấn & Chốt Liệu Trình",
+          description: "Sở hữu bộ kịch bản tư vấn thực chiến giúp giải thích cơ chế khoa học cho khách hàng tự tin."
+        }
+      ],
+      curriculum_fallback: [],
+      trust_items: [
+        { title: "Chứng nhận Hoàn thành", description: "Cấp chứng nhận đào tạo từ DESEMBRE Training Center", badge: "Uy tín" },
+        { title: "Tài liệu Thực chiến", description: "Trọn bộ Slide bài giảng & Video kỹ thuật thao tác", badge: "Đầy đủ" }
+      ],
+      faqs: [
+        {
+          q: "Khóa học được tổ chức dưới hình thức nào?",
+          a: "Khóa học tổ chức trực tuyến qua Zoom Online, có giảng viên hướng dẫn tương tác trực tiếp và giải đáp thắc mắc lâm sàng."
+        },
+        {
+          q: "Tôi có được nhận tài liệu hướng dẫn sau buổi học không?",
+          a: "Có, học viên tham gia sẽ nhận trọn bộ tài liệu protocol và hướng dẫn chăm sóc sau liệu trình từ DESEMBRE Training Center."
+        }
+      ],
+      seo_title: "Chuyên đề BIOLOGICAL TRIGGER | DESEMBRE Training Center",
+      seo_description: "Đăng ký chuyên đề BIOLOGICAL TRIGGER - Kích hoạt tín hiệu tái tạo da với Holistic Crystaling Peel chuẩn Y Khoa.",
+      og_image_url: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&auto=format&fit=crop",
+      is_published: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  return null;
 }
 
 export async function createLandingPage(payload: CreateLandingPagePayload): Promise<AcademyLandingPage> {

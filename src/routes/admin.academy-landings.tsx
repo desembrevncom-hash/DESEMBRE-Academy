@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
   getLandingPages,
+  getLandingPageBySlug,
   createLandingPage,
   updateLandingPage,
   deleteLandingPage,
@@ -58,6 +59,15 @@ function AdminAcademyLandingsPage() {
       } catch (err: any) {
         console.error("Failed to load landing pages:", err);
         setError(err.message || "Không thể tải danh sách landing pages từ Supabase.");
+      }
+
+      // Ensure BIOLOGICAL TRIGGER landing page is listed in Admin table
+      const hasBioTrigger = landingsData.some((item) => item.slug === "biological-trigger");
+      if (!hasBioTrigger) {
+        const bioTriggerDefault = await getLandingPageBySlug("biological-trigger");
+        if (bioTriggerDefault) {
+          landingsData.unshift(bioTriggerDefault);
+        }
       }
 
       try {

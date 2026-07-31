@@ -2,18 +2,48 @@ import { Sparkles, GraduationCap, ArrowDown, MessageSquareCheck, ShieldCheck, Ch
 import { Button } from "@/components/ui/button";
 
 interface SynergisticProtocolHeroProps {
+  title?: string | null;
+  subtitle?: string | null;
+  badge?: string | null;
+  primaryCtaLabel?: string | null;
+  secondaryCtaLabel?: string | null;
   coverUrl?: string | null;
+  onScrollToSchedule?: () => void;
+  onConsult?: () => void;
 }
 
-export function SynergisticProtocolHero({ coverUrl }: SynergisticProtocolHeroProps) {
+export function SynergisticProtocolHero({
+  title,
+  subtitle,
+  badge,
+  primaryCtaLabel,
+  secondaryCtaLabel,
+  coverUrl,
+  onScrollToSchedule,
+  onConsult,
+}: SynergisticProtocolHeroProps) {
+  const heroTitle = title || "SYNERGISTIC PROTOCOL";
+  const heroSubtitle =
+    subtitle ||
+    "Chuẩn hóa tư duy phối hợp hoạt chất, xây dựng protocol điều trị có hệ thống và ứng dụng thực tế trong chăm sóc da chuyên sâu.";
+  const heroBadge = badge || "DESEMBRE TRAINING CENTER • KHÓA ĐÀO TẠO CHUYÊN SÂU";
+
   const scrollToSchedule = () => {
-    const el = document.getElementById("synergistic-schedule-section");
+    if (onScrollToSchedule) {
+      onScrollToSchedule();
+      return;
+    }
+    const el = document.getElementById("campaign-schedule-section") || document.getElementById("synergistic-schedule-section");
     if (el) {
       el.scrollIntoView({ behavior: "smooth" });
     }
   };
 
   const handleConsult = () => {
+    if (onConsult) {
+      onConsult();
+      return;
+    }
     window.open("https://zalo.me", "_blank");
   };
 
@@ -31,17 +61,17 @@ export function SynergisticProtocolHero({ coverUrl }: SynergisticProtocolHeroPro
           {/* Left Content */}
           <div className="lg:col-span-7 space-y-5 text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-semibold backdrop-blur-md shadow-lg shadow-indigo-950/40">
-              <GraduationCap className="h-4 w-4 text-indigo-400" />
-              <span>DESEMBRE TRAINING CENTER • KHÓA ĐÀO TẠO CHUYÊN SÂU</span>
-              <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+              <GraduationCap className="h-4 w-4 text-indigo-400 shrink-0" />
+              <span className="uppercase tracking-wide">{heroBadge}</span>
+              <Sparkles className="h-3.5 w-3.5 text-amber-300 shrink-0" />
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-200 bg-clip-text text-transparent">
-              SYNERGISTIC PROTOCOL
+              {heroTitle}
             </h1>
 
             <p className="text-indigo-200/90 text-sm sm:text-base leading-relaxed max-w-xl">
-              Chuẩn hóa tư duy phối hợp hoạt chất, xây dựng protocol điều trị có hệ thống và ứng dụng thực tế trong chăm sóc da chuyên sâu.
+              {heroSubtitle}
             </p>
 
             {/* 3 Value Pills */}
@@ -66,7 +96,7 @@ export function SynergisticProtocolHero({ coverUrl }: SynergisticProtocolHeroPro
                 onClick={scrollToSchedule}
                 className="h-12 px-7 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 text-sm"
               >
-                <span>Đăng ký lớp gần nhất</span>
+                <span>{primaryCtaLabel || "Đăng ký giữ chỗ"}</span>
                 <ArrowDown className="w-4 h-4" />
               </Button>
 
@@ -76,7 +106,7 @@ export function SynergisticProtocolHero({ coverUrl }: SynergisticProtocolHeroPro
                 className="h-12 px-7 rounded-xl font-semibold bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm transition-all text-sm"
               >
                 <MessageSquareCheck className="mr-2 w-4 h-4 text-indigo-300" />
-                <span>Nhận tư vấn lộ trình</span>
+                <span>{secondaryCtaLabel || "Xem lịch học"}</span>
               </Button>
             </div>
           </div>
@@ -87,7 +117,7 @@ export function SynergisticProtocolHero({ coverUrl }: SynergisticProtocolHeroPro
               <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-2xl aspect-video sm:aspect-4/3 bg-slate-900 group">
                 <img
                   src={coverUrl}
-                  alt="SYNERGISTIC PROTOCOL"
+                  alt={heroTitle}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
@@ -102,7 +132,7 @@ export function SynergisticProtocolHero({ coverUrl }: SynergisticProtocolHeroPro
                     DESEMBRE ACADEMY
                   </div>
                   <div className="text-xl sm:text-2xl font-bold text-white leading-snug">
-                    SYNERGISTIC PROTOCOL
+                    {heroTitle}
                   </div>
                   <p className="text-xs text-indigo-200/80 leading-relaxed pt-1">
                     Chuẩn hóa phác đồ điều trị da liễu Hàn Quốc cao cấp.

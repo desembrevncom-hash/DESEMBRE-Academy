@@ -227,7 +227,16 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
       <SiteHeader />
 
       {/* Hero Landing */}
-      <SynergisticProtocolHero coverUrl={coverUrl} />
+      <SynergisticProtocolHero
+        title={landing.hero_title || landing.title}
+        subtitle={landing.hero_subtitle}
+        badge={landing.hero_badge}
+        primaryCtaLabel={landing.primary_cta_label}
+        secondaryCtaLabel={landing.secondary_cta_label}
+        coverUrl={coverUrl}
+        onScrollToSchedule={handleScrollToSchedule}
+        onConsult={handleOpenConsult}
+      />
 
       <main className="container mx-auto px-4 max-w-5xl py-10 sm:py-14 space-y-10 sm:space-y-12">
         {/* 1. Audience Section */}
