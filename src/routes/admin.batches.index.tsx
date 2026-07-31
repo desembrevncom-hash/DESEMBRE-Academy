@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 import { isOneSessionCourseType } from "@/features/admin/constants";
+import { AddSessionModal } from "@/features/admin/components/AddSessionModal";
 
 export const Route = createFileRoute("/admin/batches/")({
   component: AdminBatchesIndexPage,
@@ -16,28 +17,22 @@ function AdminBatchesIndexPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "open" | "draft" | "closed" | "demo">("all");
+  const [selectedBatchForSession, setSelectedBatchForSession] = useState<any | null>(null);
+
+  const loadBatches = async () => {
+    try {
+      setLoading(true);
+      const data = await adminGetCourseBatches();
+      setBatches(data || []);
+    } catch (err: any) {
+      setError(err.message || "Không thể tải danh sách lớp học");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let mounted = true;
-    async function loadBatches() {
-      try {
-        setLoading(true);
-        const data = await adminGetCourseBatches();
-        if (mounted) {
-          setBatches(data || []);
-        }
-      } catch (err: any) {
-        if (mounted) {
-          setError(err.message || "Không thể tải danh sách lớp học");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
     loadBatches();
-    return () => { mounted = false; };
   }, []);
 
   const filteredBatches = batches.filter((batch) => {
@@ -240,18 +235,17 @@ function AdminBatchesIndexPage() {
                     {/* Cột 8: Thao tác (w-[150px]) */}
                     <td className="px-4 py-3.5 align-top">
                       <div className="flex flex-col gap-1.5 min-w-[130px]">
-                        <Link
-                          to="/admin/batches/$batchId"
-                          params={{ batchId: batch.id }}
-                          search={{ addSession: true } as any}
-                          className={`inline-flex items-center justify-center gap-1 text-[11px] font-bold h-7 px-2 rounded-lg transition-all ${
+                        <button
+                          type="button"
+                          onClick={() => setSelectedBatchForSession(batch)}
+                          className={`inline-flex items-center justify-center gap-1 text-[11px] font-bold h-7.5 px-2.5 rounded-lg transition-all cursor-pointer ${
                             sessionsCount === 0
-                              ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20"
+                              ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/30 ring-2 ring-indigo-400/50"
                               : "text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80"
                           }`}
                         >
-                          + Buổi
-                        </Link>
+                          <Plus className="w-3.5 h-3.5" /> Buổi
+                        </button>
                         <div className="grid grid-cols-2 gap-1.5">
                           <Link 
                             to="/admin/batches/$batchId/registrations" 
@@ -278,6 +272,14 @@ function AdminBatchesIndexPage() {
           </table>
         </div>
       )}
+
+      {/* Add Session Modal */}
+      <AddSessionModal
+        isOpen={!!selectedBatchForSession}
+        batch={selectedBatchForSession}
+        onClose={() => setSelectedBatchForSession(null)}
+        onSuccess={loadBatches}
+      />
     </div>
   );
 }
