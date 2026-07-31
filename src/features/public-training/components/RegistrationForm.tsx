@@ -78,7 +78,7 @@ export function RegistrationForm({
         email: values.email || undefined,
         notes: values.notes || undefined,
         source: source || (campaignSlug ? "landing_page" : "public_schedule"),
-        campaign_slug: campaignSlug,
+        campaign_slug: campaignSlug || (source === "landing_page" ? "biological-trigger" : undefined),
         utm_source,
         utm_medium,
         utm_campaign,

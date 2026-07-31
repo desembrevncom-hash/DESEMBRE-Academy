@@ -124,13 +124,46 @@ function fromDateTimeLocal(val: string) {
   return new Date(val).toISOString();
 }
 
+function parseAttributionFromNotes(notesText?: string | null) {
+  if (!notesText) {
+    return { cleanNotes: "", campaign: null, utmSource: null, utmMedium: null, utmCampaign: null };
+  }
+
+  let campaign: string | null = null;
+  let utmSource: string | null = null;
+  let utmMedium: string | null = null;
+  let utmCampaign: string | null = null;
+
+  const cleanNotes = notesText
+    .replace(/\[campaign:\s*([^\]]+)\]/gi, (_, val) => {
+      campaign = val.trim();
+      return "";
+    })
+    .replace(/\[utm_source:\s*([^\]]+)\]/gi, (_, val) => {
+      utmSource = val.trim();
+      return "";
+    })
+    .replace(/\[utm_medium:\s*([^\]]+)\]/gi, (_, val) => {
+      utmMedium = val.trim();
+      return "";
+    })
+    .replace(/\[utm_campaign:\s*([^\]]+)\]/gi, (_, val) => {
+      utmCampaign = val.trim();
+      return "";
+    })
+    .trim();
+
+  return { cleanNotes, campaign, utmSource, utmMedium, utmCampaign };
+}
+
 function AcademyRegistrationsCrmAdmin() {
   const [registrations, setRegistrations] = useState<BatchRegistrationLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
-  const [quickFilter, setQuickFilter] = useState<string>("all"); // 'all' | 'today' | 'overdue' | 'unassigned' | 'hot' | 'confirmed'
+  const [campaignFilter, setCampaignFilter] = useState<string>("all");
+  const [quickFilter, setQuickFilter] = useState<string>("all"); // 'all' | 'today' | 'overdue' | 'unassigned' | 'hot' | 'confirmed' | 'landing_campaign'
 
   const [selectedLead, setSelectedLead] = useState<BatchRegistrationLead | null>(null);
   const [leadInsights, setLeadInsights] = useState<LeadInsightData | null>(null);
@@ -187,10 +220,30 @@ function AcademyRegistrationsCrmAdmin() {
     return counts;
   }, [registrations]);
 
-  // Quick filtering
+  // List of unique campaign slugs found in dataset for filter dropdown
+  const availableCampaignSlugs = useMemo(() => {
+    const slugs = new Set<string>();
+    registrations.forEach((r) => {
+      const parsed = parseAttributionFromNotes(r.notes || r.note);
+      if (parsed.campaign) slugs.add(parsed.campaign);
+    });
+    return Array.from(slugs);
+  }, [registrations]);
+
+  // Quick & Campaign filtering
   const filteredRegistrations = useMemo(() => {
     const now = new Date();
     return registrations.filter((r) => {
+      const parsed = parseAttributionFromNotes(r.notes || r.note);
+
+      if (campaignFilter !== "all") {
+        if (parsed.campaign !== campaignFilter) return false;
+      }
+
+      if (quickFilter === "landing_campaign") {
+        return r.source === "landing_page" || Boolean(parsed.campaign);
+      }
+
       if (quickFilter === "today") {
         if (!r.next_follow_up_at) return false;
         try {
@@ -216,7 +269,7 @@ function AcademyRegistrationsCrmAdmin() {
       }
       return true;
     });
-  }, [registrations, quickFilter]);
+  }, [registrations, quickFilter, campaignFilter]);
 
   const loadLeadDetails = async (lead: BatchRegistrationLead) => {
     setSelectedLead(lead);
@@ -345,6 +398,7 @@ function AcademyRegistrationsCrmAdmin() {
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-3">
         {[
           { key: "all", label: `Tất cả (${registrations.length})` },
+          { key: "landing_campaign", label: "🎯 Landing Campaign" },
           { key: "today", label: "Cần gọi hôm nay" },
           { key: "overdue", label: "Quá hạn follow-up" },
           { key: "unassigned", label: "Chưa phân công" },
@@ -379,6 +433,21 @@ function AcademyRegistrationsCrmAdmin() {
         </div>
 
         <div className="flex flex-wrap gap-2.5">
+          {availableCampaignSlugs.length > 0 && (
+            <select
+              value={campaignFilter}
+              onChange={(e) => setCampaignFilter(e.target.value)}
+              className="px-3.5 py-2.5 bg-purple-50 border border-purple-200 text-purple-900 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            >
+              <option value="all">Tất cả Campaign Ads</option>
+              {availableCampaignSlugs.map((slug) => (
+                <option key={slug} value={slug}>
+                  Campaign: {slug}
+                </option>
+              ))}
+            </select>
+          )}
+
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -735,14 +804,60 @@ function AcademyRegistrationsCrmAdmin() {
                   </div>
                 </div>
 
-                {(selectedLead.note || selectedLead.notes) && (
-                  <div className="pt-2 border-t border-slate-100 text-xs space-y-1">
-                    <span className="text-slate-400 block text-[10px] mb-0.5">Nhu cầu tư vấn / Ghi chú & Tracking</span>
-                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-700 font-mono text-xs whitespace-pre-wrap leading-relaxed">
-                      {selectedLead.note || selectedLead.notes}
+                {(() => {
+                  const raw = selectedLead.note || selectedLead.notes;
+                  const parsed = parseAttributionFromNotes(raw);
+                  const hasAttribution = parsed.campaign || parsed.utmSource || parsed.utmMedium || parsed.utmCampaign;
+
+                  return (
+                    <div className="pt-2 border-t border-slate-100 text-xs space-y-2">
+                      {hasAttribution && (
+                        <div className="bg-purple-50/80 border border-purple-200/80 rounded-xl p-3 space-y-1.5">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-purple-900 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-purple-600" />
+                            <span>Campaign Ads Attribution</span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 text-[11px]">
+                            {parsed.campaign && (
+                              <div>
+                                <span className="text-purple-600/80 block text-[10px]">Campaign Slug</span>
+                                <span className="font-bold text-purple-900 font-mono">{parsed.campaign}</span>
+                              </div>
+                            )}
+                            {parsed.utmSource && (
+                              <div>
+                                <span className="text-purple-600/80 block text-[10px]">UTM Source</span>
+                                <span className="font-bold text-purple-900 font-mono">{parsed.utmSource}</span>
+                              </div>
+                            )}
+                            {parsed.utmMedium && (
+                              <div>
+                                <span className="text-purple-600/80 block text-[10px]">UTM Medium</span>
+                                <span className="font-bold text-purple-900 font-mono">{parsed.utmMedium}</span>
+                              </div>
+                            )}
+                            {parsed.utmCampaign && (
+                              <div>
+                                <span className="text-purple-600/80 block text-[10px]">UTM Campaign</span>
+                                <span className="font-bold text-purple-900 font-mono">{parsed.utmCampaign}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {parsed.cleanNotes && (
+                        <div>
+                          <span className="text-slate-400 block text-[10px] mb-0.5">Nhu cầu tư vấn / Ghi chú của khách</span>
+                          <p className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-700 italic">
+                            "{parsed.cleanNotes}"
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Duplicate Registrations by Phone Box */}

@@ -156,10 +156,28 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
   }, []);
 
   const handleOpenRegister = useCallback((batch: PublicCourseBatch, notes?: string) => {
-    trackLandingEvent("campaign_primary_cta_click", { batch_id: batch.id, batch_title: batch.title, slug });
+    let utm_source: string | undefined;
+    let utm_medium: string | undefined;
+    let utm_campaign: string | undefined;
+
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      utm_source = sp.get("utm_source") || undefined;
+      utm_medium = sp.get("utm_medium") || undefined;
+      utm_campaign = sp.get("utm_campaign") || undefined;
+    }
+
+    trackLandingEvent("landing_cta_click", {
+      batch_id: batch.id,
+      batch_title: batch.title,
+      campaign_slug: slug,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+    });
     setInitialNotes(notes);
     setRegisteringBatch(batch);
-    trackLandingEvent("campaign_registration_open", { batch_id: batch.id, slug });
+    trackLandingEvent("campaign_registration_open", { batch_id: batch.id, campaign_slug: slug });
   }, [slug]);
 
   const handleOpenConsult = useCallback(() => {
@@ -392,6 +410,7 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
         <RegistrationSuccess
           batchTitle={successBatchTitle}
           isDuplicate={isDuplicateRegistration}
+          courseSlug={slug}
           onClose={() => setSuccessBatchTitle(null)}
         />
       )}
