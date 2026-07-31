@@ -10,6 +10,9 @@ export interface AcademyAdminCourseListItem {
   slug: string;
   status: AcademyCourseStatus;
   catalog_visibility: AcademyCatalogVisibility;
+  category_id?: string | null;
+  category_name?: string | null;
+  category_slug?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -33,7 +33,7 @@ function AdminBatchesNewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
       course_id: getInitialCourseId(),
       title: "",
@@ -48,6 +48,9 @@ function AdminBatchesNewPage() {
       description: ""
     }
   });
+
+  const selectedCourseId = watch("course_id");
+  const selectedCourseObj = courses.find((c) => c.id === selectedCourseId);
 
   useEffect(() => {
     async function loadData() {
@@ -133,7 +136,7 @@ function AdminBatchesNewPage() {
             <label className="text-sm font-medium">Khóa học</label>
             <select 
               {...register("course_id", { required: "Vui lòng chọn khóa học" })}
-              className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-semibold text-slate-800"
               disabled={loadingCourses}
             >
               <option value="">-- Chọn khóa học --</option>
@@ -143,6 +146,33 @@ function AdminBatchesNewPage() {
             </select>
             {errors.course_id && <p className="text-destructive text-sm">{errors.course_id.message}</p>}
             
+            {/* Notice for Lead Magnet / One-Session Course */}
+            {selectedCourseObj && (
+              (() => {
+                const catSlug = selectedCourseObj.category_slug || selectedCourseObj.category?.slug || "";
+                const catName = selectedCourseObj.category_name || selectedCourseObj.category?.name || "";
+                const isFunnelOneSession =
+                  catSlug === "lead-magnet-one-session" ||
+                  catName.toLowerCase().includes("thu phễu") ||
+                  catName.toLowerCase().includes("1 buổi");
+
+                if (isFunnelOneSession) {
+                  return (
+                    <div className="mt-2.5 p-3.5 bg-purple-50 border border-purple-200 text-purple-900 rounded-xl text-xs flex items-start gap-2.5">
+                      <div className="w-2 h-2 rounded-full bg-purple-600 shrink-0 mt-1.5" />
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-purple-950">Khóa học 1 buổi / Thu phễu</p>
+                        <p className="leading-relaxed text-purple-800">
+                          Khóa học này phù hợp lớp 1 buổi. Sau khi tạo lớp, hãy thêm 1 buổi học để public hiển thị giờ học và ZNS nhắc lịch hoạt động đúng.
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()
+            )}
+
             {courses.length === 0 && !loadingCourses && (
               <div className="mt-2 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-sm flex flex-col gap-2">
                 <p>Chưa có khóa học phù hợp để tạo lớp. Vui lòng tạo khóa học trước.</p>

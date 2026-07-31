@@ -2,15 +2,18 @@ import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useForm, type SubmitHandler, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateAcademyCourse } from "@/features/admin/hooks/useAcademyAdminCourses";
+import { useCreateAcademyCourse, useAcademyAdminCategories } from "@/features/admin/hooks/useAcademyAdminCourses";
 import { createCourseSchema, type CreateCourseFormData } from "@/features/admin/validators";
 import {
   CATALOG_VISIBILITY_OPTIONS,
   ENROLLMENT_POLICY_OPTIONS,
   ACCESS_POLICY_OPTIONS,
   PRICING_MODEL_OPTIONS,
+  PREDEFINED_COURSE_TYPES,
+  getCourseTypeMeta,
 } from "@/features/admin/constants";
 import { toast } from "sonner";
+import { Info, Plus, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/admin/courses/new")({
   component: CreateCoursePage,
@@ -19,6 +22,7 @@ export const Route = createFileRoute("/admin/courses/new")({
 function CreateCoursePage() {
   const navigate = useNavigate();
   const createMutation = useCreateAcademyCourse();
+  const { data: dbCategories = [], isLoading: isLoadingCategories } = useAcademyAdminCategories();
   const [hasManuallyEditedSlug, setHasManuallyEditedSlug] = useState(false);
 
   const {
@@ -37,10 +41,37 @@ function CreateCoursePage() {
       title: "",
       slug: "",
       description: "",
+      category_id: "",
     },
   });
 
   const title = watch("title");
+  const selectedCategoryId = watch("category_id");
+
+  // Merge DB categories with Predefined Course Types to ensure options are always available
+  const mergedCategories = [...dbCategories];
+  
+  PREDEFINED_COURSE_TYPES.forEach((pre) => {
+    const exists = mergedCategories.some(
+      (c) => c.slug === pre.slug || c.name.toLowerCase() === pre.name.toLowerCase()
+    );
+    if (!exists) {
+      mergedCategories.push({
+        id: `predefined-${pre.slug}`,
+        name: pre.name,
+        slug: pre.slug,
+        description: pre.helperText,
+        status: "published",
+        course_count: 0,
+      } as any);
+    }
+  });
+
+  // Find active category meta for helper text
+  const selectedCategoryObj = mergedCategories.find((c) => c.id === selectedCategoryId);
+  const courseTypeMeta = selectedCategoryObj
+    ? getCourseTypeMeta(selectedCategoryObj.slug) || getCourseTypeMeta(selectedCategoryObj.name)
+    : null;
 
   // Auto-generate slug from title
   if (title && !hasManuallyEditedSlug) {
@@ -50,7 +81,6 @@ function CreateCoursePage() {
       .replace(/[\s\W-]+/g, "-")
       .replace(/^-+|-+$/g, "");
 
-    // Only update if it's different to avoid infinite loops, though react-hook-form handles it gracefully
     const currentSlug = watch("slug");
     if (currentSlug !== generatedSlug) {
       setValue("slug", generatedSlug, { shouldValidate: true });
@@ -59,20 +89,36 @@ function CreateCoursePage() {
 
   const onSubmit: SubmitHandler<CreateCourseFormData> = async (data) => {
     try {
+      // If user selected a synthetic predefined category ID that hasn't been saved to DB, pass null or original slug
+      const realCategoryId = data.category_id && !data.category_id.startsWith("predefined-")
+        ? data.category_id
+        : undefined;
+
       const response = await createMutation.mutateAsync({
         p_title: data.title,
         p_slug: data.slug,
         p_description: data.description,
-        p_category_id: data.category_id,
+        p_category_id: realCategoryId,
         p_catalog_visibility: data.catalog_visibility,
         p_enrollment_policy: data.enrollment_policy,
         p_access_policy: data.access_policy,
         p_pricing_model: data.pricing_model,
       });
 
-      toast.success("Tạo khóa học thành công!");
+      toast.success("Tạo khóa học thành công!", {
+        description: "Bấm bên dưới để tạo ngay Lớp khai giảng cho khóa học này.",
+        action: {
+          label: "+ Tạo lớp khai giảng",
+          onClick: () => {
+            navigate({
+              to: "/admin/batches/new",
+              search: { course_id: response.id } as any,
+            });
+          },
+        },
+      });
 
-      // Navigate to settings page with the returned ID
+      // Navigate to settings page with the returned ID and course_id parameter for quick batch creation
       navigate({
         to: "/admin/courses/$courseId/settings",
         params: { courseId: response.id },
@@ -102,18 +148,51 @@ function CreateCoursePage() {
       <div className="mb-8">
         <Link
           to="/admin/courses"
-          className="text-primary hover:underline text-sm mb-4 inline-block font-medium"
+          className="text-indigo-600 hover:underline text-sm mb-4 inline-block font-medium"
         >
           &larr; Quay lại danh sách khóa học
         </Link>
         <h1 className="text-3xl font-bold tracking-tight">Tạo khóa học mới</h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Nhập thông tin cơ bản. Khóa học sẽ được lưu dưới dạng bản nháp.
+          Nhập thông tin cơ bản và chọn loại khóa học phù hợp (buổi phễu, chuyên đề, workshop,...).
         </p>
       </div>
 
-      <div className="bg-card text-card-foreground border rounded-lg shadow-sm p-6">
+      <div className="bg-card text-card-foreground border rounded-2xl shadow-sm p-6 space-y-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* 1. Category / Course Type Selection */}
+          <div className="space-y-2.5 bg-slate-50/80 p-4 rounded-xl border border-slate-200/80">
+            <label htmlFor="category_id" className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+              <span>Loại khóa học / Danh mục</span>
+              <span className="text-xs font-normal text-slate-500">(Khuyến nghị chọn đúng để hỗ trợ quy trình phễu)</span>
+            </label>
+            <select
+              id="category_id"
+              {...register("category_id")}
+              className="w-full border rounded-lg px-3.5 py-2.5 text-sm font-semibold text-slate-800 bg-white border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+              disabled={isLoadingCategories}
+            >
+              <option value="">-- Chọn loại khóa học --</option>
+              {mergedCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            {errors.category_id && <p className="text-xs text-destructive">{errors.category_id.message}</p>}
+
+            {/* Helper Text Card based on Selected Category */}
+            {courseTypeMeta && (
+              <div className="mt-2.5 p-3 rounded-xl bg-indigo-50/90 border border-indigo-100 text-indigo-900 text-xs flex items-start gap-2 animate-in fade-in duration-200">
+                <Info className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-indigo-950">{courseTypeMeta.name}</p>
+                  <p className="leading-relaxed text-indigo-800">{courseTypeMeta.helperText}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="title" className="text-sm font-medium">
               Tên khóa học <span className="text-destructive">*</span>
@@ -254,12 +333,12 @@ function CreateCoursePage() {
             <button
               type="submit"
               disabled={isSubmitting || createMutation.isPending}
-              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-md shadow-indigo-600/20"
             >
               {(isSubmitting || createMutation.isPending) && (
-                <div className="w-4 h-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin"></div>
+                <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
               )}
-              Tạo khóa học nháp
+              <span>Tạo khóa học nháp</span>
             </button>
           </div>
         </form>
@@ -267,3 +346,5 @@ function CreateCoursePage() {
     </div>
   );
 }
+
+
