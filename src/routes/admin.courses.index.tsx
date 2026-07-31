@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useAcademyAdminCourses, useArchiveAcademyCourse, useAcademyAdminCategories } from "@/features/admin/hooks/useAcademyAdminCourses";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAcademyAdminCourses, useArchiveAcademyCourse, useAcademyAdminCategories, academyAdminKeys } from "@/features/admin/hooks/useAcademyAdminCourses";
+import { academyAdminCoursesApi } from "@/features/admin/services/academyAdminCoursesApi";
 import type { AcademyCourseStatus } from "@/features/admin/types";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 import { PREDEFINED_COURSE_TYPES, getCourseTypeMeta } from "@/features/admin/constants";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { Search, Plus, Filter, Tag } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/courses/")({
@@ -13,6 +15,7 @@ export const Route = createFileRoute("/admin/courses/")({
 });
 
 function AdminCourseList() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AcademyCourseStatus | "all" | "demo">("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -65,11 +68,15 @@ function AdminCourseList() {
     }
 
     if (categoryFilter !== "all") {
-      const typeMeta = getCourseTypeMeta(course.category_slug || course.category_name);
+      const dbCat = dbCategories.find(c => c.id === course.category_id);
+      const catSlug = course.category_slug || dbCat?.slug;
+      const catName = course.category_name || dbCat?.name;
+      const typeMeta = getCourseTypeMeta(catSlug || catName);
+
       if (categoryFilter === "uncategorized") {
         if (course.category_id || typeMeta) return false;
       } else {
-        const matchesSlug = course.category_slug === categoryFilter;
+        const matchesSlug = catSlug === categoryFilter;
         const matchesMeta = typeMeta?.slug === categoryFilter;
         if (!matchesSlug && !matchesMeta) return false;
       }
@@ -83,19 +90,62 @@ function AdminCourseList() {
     }
   };
 
-  const handleQuickCategoryChange = async (courseId: string, newCategoryId: string) => {
+  const handleQuickCategoryChange = async (courseId: string, selectedVal: string) => {
     try {
       setUpdatingCourseId(courseId);
       const supabase = getSupabaseBrowserClient();
       if (!supabase) throw new Error("Supabase client error");
 
-      const targetCat = mergedCategories.find((c) => c.id === newCategoryId);
-      const realCatId = newCategoryId && !newCategoryId.startsWith("predefined-") ? newCategoryId : null;
+      let targetCatId: string | null = null;
 
+      if (!selectedVal || selectedVal === "uncategorized") {
+        targetCatId = null;
+      } else if (!selectedVal.startsWith("predefined-")) {
+        targetCatId = selectedVal;
+      } else {
+        const preSlug = selectedVal.replace("predefined-", "");
+        const preMeta = PREDEFINED_COURSE_TYPES.find((p) => p.slug === preSlug);
+        
+        // 1. Check if category exists in dbCategories
+        const existingCat = dbCategories.find(
+          (c) => c.slug === preSlug || (preMeta && c.name.toLowerCase() === preMeta.name.toLowerCase())
+        );
+
+        if (existingCat) {
+          targetCatId = existingCat.id;
+        } else {
+          // 2. Create category in DB if not found
+          const catName = preMeta?.name || preSlug;
+          try {
+            const created = await academyAdminCoursesApi.createCategory({
+              p_name: catName,
+              p_slug: preSlug,
+              p_status: "published",
+            });
+            if (created?.id) {
+              targetCatId = created.id;
+            }
+          } catch (createErr) {
+            console.warn("Could not create category via RPC, searching DB table directly", createErr);
+            // Search categories table directly
+            const { data: catRow } = await supabase
+              .from("categories")
+              .select("id")
+              .or(`slug.eq.${preSlug},name.ilike.%${catName}%`)
+              .maybeSingle();
+
+            if (catRow?.id) {
+              targetCatId = catRow.id;
+            }
+          }
+        }
+      }
+
+      // Update public.courses category_id
       const { error: updateErr } = await supabase
         .from("courses")
         .update({
-          category_id: realCatId,
+          category_id: targetCatId,
           updated_at: new Date().toISOString(),
         })
         .eq("id", courseId);
@@ -103,8 +153,10 @@ function AdminCourseList() {
       if (updateErr) throw updateErr;
 
       toast.success("Cập nhật loại khóa học thành công!");
-      refetch();
+      queryClient.invalidateQueries({ queryKey: [...academyAdminKeys.all] });
+      await refetch();
     } catch (err: any) {
+      console.error("[Quick Category Error]", err);
       toast.error(err.message || "Không thể cập nhật loại khóa học");
     } finally {
       setUpdatingCourseId(null);
@@ -219,8 +271,17 @@ function AdminCourseList() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {courses?.map((course) => {
-                  const typeMeta = getCourseTypeMeta(course.category_slug || course.category_name);
-                  const badgeLabel = course.category_name || typeMeta?.name;
+                  const dbCat = dbCategories.find((c) => c.id === course.category_id);
+                  const catSlug = course.category_slug || dbCat?.slug;
+                  const catName = course.category_name || dbCat?.name;
+                  const typeMeta = getCourseTypeMeta(catSlug || catName);
+                  const badgeLabel = catName || typeMeta?.name;
+
+                  const currentSelectVal =
+                    course.category_id ||
+                    dbCat?.id ||
+                    (typeMeta ? mergedCategories.find((c) => c.slug === typeMeta.slug || c.name === typeMeta.name)?.id : "") ||
+                    "";
 
                   return (
                     <tr key={course.id} className="hover:bg-slate-50/70 transition-colors">
@@ -242,7 +303,7 @@ function AdminCourseList() {
                           {badgeLabel ? (
                             <span
                               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                                typeMeta?.badgeClass || "bg-slate-100 text-slate-700 border-slate-200"
+                                typeMeta?.badgeClass || "bg-indigo-50 text-indigo-700 border-indigo-200"
                               }`}
                             >
                               {badgeLabel}
@@ -255,7 +316,7 @@ function AdminCourseList() {
                           
                           {/* Quick Change Select Dropdown */}
                           <select
-                            value={course.category_id || (typeMeta ? `predefined-${typeMeta.slug}` : "")}
+                            value={currentSelectVal}
                             onChange={(e) => handleQuickCategoryChange(course.id, e.target.value)}
                             disabled={updatingCourseId === course.id}
                             className="text-[10px] bg-transparent text-indigo-600 hover:text-indigo-800 font-bold border border-indigo-200/80 rounded px-1 py-0.5 focus:outline-none cursor-pointer"
