@@ -380,6 +380,8 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
         <RegistrationForm
           batch={registeringBatch}
           initialNotes={initialNotes}
+          source="landing_page"
+          campaignSlug={slug}
           onClose={handleCloseRegister}
           onSuccess={handleSuccess}
         />

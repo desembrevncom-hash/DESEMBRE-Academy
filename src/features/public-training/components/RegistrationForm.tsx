@@ -22,9 +22,18 @@ interface RegistrationFormProps {
   onClose: () => void;
   onSuccess: (isDuplicate?: boolean) => void;
   initialNotes?: string;
+  source?: string;
+  campaignSlug?: string;
 }
 
-export function RegistrationForm({ batch, onClose, onSuccess, initialNotes }: RegistrationFormProps) {
+export function RegistrationForm({
+  batch,
+  onClose,
+  onSuccess,
+  initialNotes,
+  source,
+  campaignSlug,
+}: RegistrationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -48,6 +57,19 @@ export function RegistrationForm({ batch, onClose, onSuccess, initialNotes }: Re
     if (isSubmitting) return;
     setIsSubmitting(true);
     setErrorMsg(null);
+
+    // Extract UTM parameters silently from URL
+    let utm_source: string | undefined;
+    let utm_medium: string | undefined;
+    let utm_campaign: string | undefined;
+
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      utm_source = searchParams.get("utm_source") || undefined;
+      utm_medium = searchParams.get("utm_medium") || undefined;
+      utm_campaign = searchParams.get("utm_campaign") || undefined;
+    }
+
     try {
       const res = await submitPublicCourseRegistration({
         batchId: batch.id,
@@ -55,6 +77,11 @@ export function RegistrationForm({ batch, onClose, onSuccess, initialNotes }: Re
         phone: values.phone,
         email: values.email || undefined,
         notes: values.notes || undefined,
+        source: source || (campaignSlug ? "landing_page" : "public_schedule"),
+        campaign_slug: campaignSlug,
+        utm_source,
+        utm_medium,
+        utm_campaign,
       });
 
       if (res && res.ok !== false) {

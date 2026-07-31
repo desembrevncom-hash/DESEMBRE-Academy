@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export interface PublicInstructorInfo {
@@ -48,6 +49,11 @@ export interface SubmitPublicRegistrationPayload {
   phone: string;
   email?: string;
   notes?: string;
+  source?: string;
+  campaign_slug?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
 }
 
 export interface SubmitPublicRegistrationResponse {
@@ -93,16 +99,47 @@ export async function getPublicTrainingSchedule(): Promise<PublicCourseBatch[]> 
 export async function submitPublicCourseRegistration(
   payload: SubmitPublicRegistrationPayload
 ): Promise<SubmitPublicRegistrationResponse> {
-  const supabase = getSupabaseBrowserClient();
-  if (!supabase) throw new Error("Supabase client unavailable");
+  let supabase = getSupabaseBrowserClient();
+  if (!supabase) {
+    const url = process.env.VITE_SUPABASE_URL || "https://ynmcoeapfycijblydyuw.supabase.co";
+    const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_QIWQKhXRvEOQ57t-gEep-g_qsiKFs09";
+    supabase = createClient(url, key);
+  }
 
-  const { data, error } = await supabase.rpc("public_submit_course_registration", {
+  // Attempt RPC with extended parameters (p_source, p_campaign_slug, utm_*)
+  let rpcRes = await supabase.rpc("public_submit_course_registration", {
     p_batch_id: payload.batchId,
     p_full_name: payload.fullName,
     p_phone: payload.phone,
     p_email: payload.email || null,
     p_notes: payload.notes || null,
+    p_source: payload.source || 'public_schedule',
+    p_campaign_slug: payload.campaign_slug || null,
+    p_utm_source: payload.utm_source || null,
+    p_utm_medium: payload.utm_medium || null,
+    p_utm_campaign: payload.utm_campaign || null,
   });
+
+  // Fallback: If DB RPC signature is old (5 params), try calling with 5 params and append tracking info to p_notes
+  if (rpcRes.error && (rpcRes.error.code === "PGRST202" || rpcRes.error.message?.includes("function") || rpcRes.error.code === "42883")) {
+    console.warn("[submitPublicCourseRegistration] Extended RPC signature not found, falling back to 5-param RPC with notes attribution");
+
+    let attributionNotes = payload.notes || "";
+    if (payload.campaign_slug) attributionNotes += ` [campaign: ${payload.campaign_slug}]`;
+    if (payload.utm_source) attributionNotes += ` [utm_source: ${payload.utm_source}]`;
+    if (payload.utm_medium) attributionNotes += ` [utm_medium: ${payload.utm_medium}]`;
+    if (payload.utm_campaign) attributionNotes += ` [utm_campaign: ${payload.utm_campaign}]`;
+
+    rpcRes = await supabase.rpc("public_submit_course_registration", {
+      p_batch_id: payload.batchId,
+      p_full_name: payload.fullName,
+      p_phone: payload.phone,
+      p_email: payload.email || null,
+      p_notes: attributionNotes.trim() || null,
+    });
+  }
+
+  const { data, error } = rpcRes;
 
   if (error) {
     console.error("[submitPublicCourseRegistration RPC Error]", {

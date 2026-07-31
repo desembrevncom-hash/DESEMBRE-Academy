@@ -397,6 +397,8 @@ function AcademyRegistrationsCrmAdmin() {
             className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
           >
             <option value="all">Tất cả nguồn</option>
+            <option value="landing_page">Landing Page Campaign</option>
+            <option value="public_schedule">Lịch khai giảng (Public)</option>
             <option value="public_website">Public Website</option>
             <option value="batch_landing">Batch Landing</option>
             <option value="manual">Nhập tay</option>
@@ -717,16 +719,28 @@ function AcademyRegistrationsCrmAdmin() {
 
                   <div>
                     <span className="text-slate-400 block text-[10px]">Nguồn đăng ký</span>
-                    <span className="font-medium text-slate-800">{selectedLead.source || "public_website"}</span>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
+                      selectedLead.source === "landing_page"
+                        ? "bg-purple-100 text-purple-800 border border-purple-200"
+                        : selectedLead.source === "public_schedule"
+                        ? "bg-indigo-100 text-indigo-800 border border-indigo-200"
+                        : "bg-slate-100 text-slate-700"
+                    }`}>
+                      {selectedLead.source === "landing_page"
+                        ? "Landing Page Campaign"
+                        : selectedLead.source === "public_schedule"
+                        ? "Lịch khai giảng (Public)"
+                        : (selectedLead.source || "Public Website")}
+                    </span>
                   </div>
                 </div>
 
                 {(selectedLead.note || selectedLead.notes) && (
-                  <div className="pt-2 border-t border-slate-100 text-xs">
-                    <span className="text-slate-400 block text-[10px] mb-0.5">Nhu cầu tư vấn / Ghi chú của khách</span>
-                    <p className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-700 italic">
-                      "{selectedLead.note || selectedLead.notes}"
-                    </p>
+                  <div className="pt-2 border-t border-slate-100 text-xs space-y-1">
+                    <span className="text-slate-400 block text-[10px] mb-0.5">Nhu cầu tư vấn / Ghi chú & Tracking</span>
+                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-slate-700 font-mono text-xs whitespace-pre-wrap leading-relaxed">
+                      {selectedLead.note || selectedLead.notes}
+                    </div>
                   </div>
                 )}
               </div>
