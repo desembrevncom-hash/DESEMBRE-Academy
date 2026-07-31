@@ -18,6 +18,7 @@ import {
   PRICING_MODEL_OPTIONS,
 } from "@/features/admin/constants";
 import { toast } from "sonner";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useCourseEditorRegistry } from "@/features/admin/contexts/CourseEditorRegistry";
 import { ArrowLeft, Save, Undo2, Info, Upload, ImageIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -103,6 +104,66 @@ function CourseSettingsPage() {
     }
   };
 
+  const [restoring, setRestoring] = useState(false);
+  const [savingCategoryOnly, setSavingCategoryOnly] = useState(false);
+  const [archivedCategoryId, setArchivedCategoryId] = useState<string>("");
+
+  useEffect(() => {
+    if (editorData?.course?.category?.id) {
+      setArchivedCategoryId(editorData.course.category.id);
+    }
+  }, [editorData]);
+
+  const handleRestoreCourse = async () => {
+    const confirmRestore = window.confirm(
+      "Khóa học đã lưu trữ sẽ được mở lại để chỉnh sửa. Không nên dùng cho khóa đã có dữ liệu lịch sử quan trọng. Bạn chắc chắn?"
+    );
+    if (!confirmRestore) return;
+
+    try {
+      setRestoring(true);
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) throw new Error("Supabase client error");
+
+      const { error: restoreErr } = await supabase
+        .from("courses")
+        .update({ status: "draft", updated_at: new Date().toISOString() })
+        .eq("id", courseId);
+
+      if (restoreErr) throw restoreErr;
+
+      toast.success("Đã khôi phục khóa học về dạng Bản nháp (Draft)!");
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.message || "Không thể khôi phục khóa học");
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const handleSaveCategoryOnly = async () => {
+    try {
+      setSavingCategoryOnly(true);
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) throw new Error("Supabase client error");
+
+      const realCatId = archivedCategoryId && !archivedCategoryId.startsWith("predefined-") ? archivedCategoryId : null;
+
+      const { error: catErr } = await supabase
+        .from("courses")
+        .update({ category_id: realCatId, updated_at: new Date().toISOString() })
+        .eq("id", courseId);
+
+      if (catErr) throw catErr;
+
+      toast.success("Đã lưu phân loại khóa học thành công!");
+    } catch (err: any) {
+      toast.error(err.message || "Không thể cập nhật danh mục khóa học");
+    } finally {
+      setSavingCategoryOnly(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "published":
@@ -126,6 +187,16 @@ function CourseSettingsPage() {
           <p className="text-muted-foreground">{course.title} ({course.slug})</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {isReadOnly && (
+            <Button
+              type="button"
+              onClick={handleRestoreCourse}
+              disabled={restoring}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs"
+            >
+              {restoring ? "Đang khôi phục..." : "Khôi phục để chỉnh sửa"}
+            </Button>
+          )}
           <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium">
             <Link to="/admin/batches/new" search={{ course_id: course.id }}>
               + Tạo lớp cho khóa này
@@ -148,11 +219,64 @@ function CourseSettingsPage() {
       </div>
 
       {isReadOnly && (
-        <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md border border-yellow-200 flex items-start gap-3">
-          <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
-          <p>Khóa học này đã bị lưu trữ (Archived). Các tính năng chỉnh sửa đã bị khóa.</p>
+        <div className="bg-amber-50 text-amber-900 p-4 rounded-xl border border-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-bold text-sm">Khóa học này đã bị lưu trữ (Archived)</p>
+              <p className="text-xs text-amber-800 mt-0.5">
+                Các thông tin cốt lõi (tên, slug, mô tả) bị khóa chỉnh sửa. Bạn vẫn có thể phân loại khóa học bên dưới hoặc khôi phục lại bản nháp để chỉnh sửa toàn bộ.
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleRestoreCourse}
+            disabled={restoring}
+            className="bg-amber-700 hover:bg-amber-800 text-white font-bold shrink-0"
+          >
+            Khôi phục để chỉnh sửa
+          </Button>
         </div>
       )}
+
+      {/* Standalone Section for Category / Course Type (Always editable even when archived) */}
+      <div className="bg-card text-card-foreground border rounded-2xl shadow-sm p-6 space-y-4 bg-indigo-50/30 border-indigo-100">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Phân loại khóa học (Course Type)</span>
+              {isReadOnly && <span className="text-xs font-normal text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">(Có thể chỉnh sửa khi Archived)</span>}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">Phân loại giúp định hình phễu đào tạo và hiển thị thông báo ZNS chính xác.</p>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSaveCategoryOnly}
+            disabled={savingCategoryOnly}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+          >
+            {savingCategoryOnly ? "Đang lưu..." : "Lưu phân loại"}
+          </Button>
+        </div>
+
+        <div className="max-w-md">
+          <select
+            value={archivedCategoryId}
+            onChange={(e) => setArchivedCategoryId(e.target.value)}
+            className="w-full border rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 bg-white border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+          >
+            <option value="">-- Chọn loại khóa học --</option>
+            {(categories || []).map((cat: any) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6 pb-20">
         

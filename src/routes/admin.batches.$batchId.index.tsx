@@ -13,7 +13,7 @@ import {
 } from "@/features/admin/services/academyAdminSessionsApi";
 import {
   Loader2, ArrowLeft, Users, Plus, Pencil, Trash2,
-  CalendarDays, MapPin, Video, MonitorPlay,
+  CalendarDays, MapPin, Video, MonitorPlay, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
@@ -380,6 +380,7 @@ function AdminBatchesEditPage() {
   const [error, setError] = useState<string | null>(null);
   const [sessionCount, setSessionCount] = useState<number>(0);
   const [batchRegistrations, setBatchRegistrations] = useState<number>(0);
+  const [hasZnsOutbox, setHasZnsOutbox] = useState<boolean>(false);
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
@@ -412,6 +413,19 @@ function AdminBatchesEditPage() {
         if (batch) {
           const totalRegs = (batch.confirmed_count || 0) + (batch.pending_count || 0) + (batch.registration_count || 0);
           setBatchRegistrations(totalRegs);
+
+          // Check if outbox has notifications for this batch
+          const supabase = (await import("@/lib/supabase/client")).getSupabaseBrowserClient();
+          if (supabase) {
+            const { count } = await supabase
+              .from("notification_outbox")
+              .select("id", { count: "exact", head: true })
+              .eq("channel", "zns");
+            if (count && count > 0) {
+              setHasZnsOutbox(true);
+            }
+          }
+
           reset({
             course_id: batch.course_id || batch.course?.id || "",
             title: batch.title ?? "",
@@ -517,6 +531,31 @@ function AdminBatchesEditPage() {
       <div className="bg-card border rounded-lg p-6">
         {error && (
           <div className="mb-6 p-4 bg-destructive/10 text-destructive rounded-lg">{error}</div>
+        )}
+
+        {/* Safety Warnings for Batch with Leads / ZNS */}
+        {batchRegistrations > 0 && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-950">Lớp này đã có học viên đăng ký ({batchRegistrations} lượt)</p>
+              <p className="leading-relaxed text-amber-800 mt-0.5">
+                Thay đổi ngày/giờ/hình thức học có thể làm lệch thông tin đã gửi qua ZNS cho học viên.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {hasZnsOutbox && (
+          <div className="mb-6 p-4 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-purple-950">Lớp này đã có thông báo ZNS</p>
+              <p className="leading-relaxed text-purple-800 mt-0.5">
+                Hãy kiểm tra danh sách thông báo Outbox trước khi thay đổi lịch học.
+              </p>
+            </div>
+          </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

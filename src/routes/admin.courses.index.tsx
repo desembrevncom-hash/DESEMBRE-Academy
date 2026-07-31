@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useAcademyAdminCourses, useArchiveAcademyCourse } from "@/features/admin/hooks/useAcademyAdminCourses";
+import { useAcademyAdminCourses, useArchiveAcademyCourse, useAcademyAdminCategories } from "@/features/admin/hooks/useAcademyAdminCourses";
 import type { AcademyCourseStatus } from "@/features/admin/types";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
-import { getCourseTypeMeta } from "@/features/admin/constants";
-import { Search, Plus } from "lucide-react";
+import { PREDEFINED_COURSE_TYPES, getCourseTypeMeta } from "@/features/admin/constants";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Search, Plus, Filter, Tag } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/courses/")({
   component: AdminCourseList,
@@ -13,8 +15,12 @@ export const Route = createFileRoute("/admin/courses/")({
 function AdminCourseList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AcademyCourseStatus | "all" | "demo">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
+
   const archiveMutation = useArchiveAcademyCourse();
+  const { data: dbCategories = [] } = useAcademyAdminCategories();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -33,16 +39,75 @@ function AdminCourseList() {
     search: debouncedSearch || undefined,
   });
 
+  // Combine categories for selection
+  const mergedCategories = [...dbCategories];
+  PREDEFINED_COURSE_TYPES.forEach((pre) => {
+    const exists = mergedCategories.some(
+      (c) => c.slug === pre.slug || c.name.toLowerCase() === pre.name.toLowerCase()
+    );
+    if (!exists) {
+      mergedCategories.push({
+        id: `predefined-${pre.slug}`,
+        name: pre.name,
+        slug: pre.slug,
+      } as any);
+    }
+  });
+
   const courses = allCourses?.filter(course => {
     const isDemo = isDemoRecord(course);
-    if (statusFilter === "demo") return isDemo;
-    if (statusFilter === "all") return !isDemo;
-    return !isDemo;
+    if (statusFilter === "demo") {
+      if (!isDemo) return false;
+    } else if (statusFilter === "all") {
+      if (isDemo) return false;
+    } else {
+      if (isDemo) return false;
+    }
+
+    if (categoryFilter !== "all") {
+      const typeMeta = getCourseTypeMeta(course.category_slug || course.category_name);
+      if (categoryFilter === "uncategorized") {
+        if (course.category_id || typeMeta) return false;
+      } else {
+        const matchesSlug = course.category_slug === categoryFilter;
+        const matchesMeta = typeMeta?.slug === categoryFilter;
+        if (!matchesSlug && !matchesMeta) return false;
+      }
+    }
+    return true;
   });
 
   const handleArchiveDemo = async (courseId: string) => {
     if (window.confirm("Lưu trữ khóa học test/demo này?")) {
       await archiveMutation.mutateAsync(courseId);
+    }
+  };
+
+  const handleQuickCategoryChange = async (courseId: string, newCategoryId: string) => {
+    try {
+      setUpdatingCourseId(courseId);
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) throw new Error("Supabase client error");
+
+      const targetCat = mergedCategories.find((c) => c.id === newCategoryId);
+      const realCatId = newCategoryId && !newCategoryId.startsWith("predefined-") ? newCategoryId : null;
+
+      const { error: updateErr } = await supabase
+        .from("courses")
+        .update({
+          category_id: realCatId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", courseId);
+
+      if (updateErr) throw updateErr;
+
+      toast.success("Cập nhật loại khóa học thành công!");
+      refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Không thể cập nhật loại khóa học");
+    } finally {
+      setUpdatingCourseId(null);
     }
   };
 
@@ -62,7 +127,7 @@ function AdminCourseList() {
         </Link>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -73,13 +138,28 @@ function AdminCourseList() {
             placeholder="Tìm khóa học..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+            className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm"
           />
         </div>
+
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="border rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-semibold text-xs text-slate-700"
+        >
+          <option value="all">Tất cả loại khóa học</option>
+          {PREDEFINED_COURSE_TYPES.map((type) => (
+            <option key={type.slug} value={type.slug}>
+              {type.name}
+            </option>
+          ))}
+          <option value="uncategorized">Chưa phân loại</option>
+        </select>
+
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as AcademyCourseStatus | "all" | "demo")}
-          className="border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-semibold text-xs text-slate-700"
+          className="border rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-semibold text-xs text-slate-700"
         >
           <option value="all">Đang hoạt động</option>
           <option value="published">Công khai</option>
@@ -109,11 +189,11 @@ function AdminCourseList() {
         <div className="text-center py-16 border rounded-2xl bg-white text-slate-500 shadow-2xs">
           <h3 className="text-lg font-semibold mb-2 text-slate-900">Chưa có khóa học</h3>
           <p className="text-sm mb-4">
-            {searchQuery || statusFilter !== "all"
+            {searchQuery || statusFilter !== "all" || categoryFilter !== "all"
               ? "Thử thay đổi từ khóa hoặc bộ lọc."
               : "Bắt đầu bằng cách tạo khóa học đầu tiên."}
           </p>
-          {!searchQuery && statusFilter === "all" && (
+          {!searchQuery && statusFilter === "all" && categoryFilter === "all" && (
             <Link
               to="/admin/courses/new"
               className="inline-flex items-center gap-2 bg-indigo-600 text-white font-bold px-4 py-2 rounded-xl hover:bg-indigo-700"
@@ -156,19 +236,39 @@ function AdminCourseList() {
                         <div className="text-[11px] text-slate-400 font-mono mt-0.5">{course.slug}</div>
                       </td>
 
-                      {/* Cột Loại khóa học / Badge */}
+                      {/* Cột Loại khóa học / Badge + Quick Change */}
                       <td className="px-6 py-4">
-                        {badgeLabel ? (
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                              typeMeta?.badgeClass || "bg-slate-100 text-slate-700 border-slate-200"
-                            }`}
+                        <div className="flex items-center gap-1.5">
+                          {badgeLabel ? (
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                                typeMeta?.badgeClass || "bg-slate-100 text-slate-700 border-slate-200"
+                              }`}
+                            >
+                              {badgeLabel}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                              Chưa phân loại
+                            </span>
+                          )}
+                          
+                          {/* Quick Change Select Dropdown */}
+                          <select
+                            value={course.category_id || (typeMeta ? `predefined-${typeMeta.slug}` : "")}
+                            onChange={(e) => handleQuickCategoryChange(course.id, e.target.value)}
+                            disabled={updatingCourseId === course.id}
+                            className="text-[10px] bg-transparent text-indigo-600 hover:text-indigo-800 font-bold border border-indigo-200/80 rounded px-1 py-0.5 focus:outline-none cursor-pointer"
+                            title="Đổi nhanh loại khóa học"
                           >
-                            {badgeLabel}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs font-medium">—</span>
-                        )}
+                            <option value="">-- Đổi loại --</option>
+                            {mergedCategories.map((cat) => (
+                              <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </td>
 
                       <td className="px-6 py-4">
@@ -223,7 +323,7 @@ function AdminCourseList() {
                           params={{ courseId: course.id }}
                           className="text-indigo-600 hover:underline font-semibold text-xs"
                         >
-                          {course.status === "archived" ? "Xem" : "Sửa"}
+                          {course.status === "archived" ? "Xem / Khôi phục" : "Sửa"}
                         </Link>
                       </td>
                     </tr>
@@ -237,4 +337,5 @@ function AdminCourseList() {
     </div>
   );
 }
+
 
