@@ -77,15 +77,17 @@ export async function getPublicTrainingSchedule(): Promise<PublicCourseBatch[]> 
     throw new Error(`[RPC Error ${error.code || '404'}]: ${error.message} (Hint: ${error.hint || 'Check Grants & Schema Reload'})`);
   }
 
-  const batches = (data || []) as PublicCourseBatch[];
+  const rawBatches = (data || []) as PublicCourseBatch[];
+  console.log('[PublicTraining] raw schedule from RPC', rawBatches);
 
-  // Strict eligibility filter: Must have at least 1 valid session with starts_at & ends_at
-  return batches.filter((b) => {
-    if (!b.sessions || !Array.isArray(b.sessions) || b.sessions.length === 0) {
-      return false;
-    }
-    return b.sessions.some((s) => s.starts_at && s.ends_at);
+  // Hard filter client-side: MUST have sessions array with at least 1 valid session containing starts_at and ends_at
+  const cleanBatches = rawBatches.filter((batch) => {
+    return Array.isArray(batch.sessions)
+      && batch.sessions.some((session) => Boolean(session.starts_at) && Boolean(session.ends_at));
   });
+
+  console.log('[PublicTraining] clean schedule after hard filtering 0-session batches', cleanBatches);
+  return cleanBatches;
 }
 
 export async function submitPublicCourseRegistration(

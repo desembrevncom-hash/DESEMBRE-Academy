@@ -18,12 +18,13 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
   const [isExpanded, setIsExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  const sessions = batch.sessions || [];
-
-  // Guard: Do not render public card if batch has 0 valid sessions
-  if (!sessions || sessions.length === 0) {
+  // Hard Guard: Must have at least 1 valid session with starts_at and ends_at
+  const validSessions = (batch.sessions || []).filter((s) => Boolean(s.starts_at) && Boolean(s.ends_at));
+  if (validSessions.length === 0) {
     return null;
   }
+
+  const sessions = validSessions;
 
   const formatMeta = getTrainingFormatMeta(batch.training_format);
   const FormatIcon = formatMeta.icon;
