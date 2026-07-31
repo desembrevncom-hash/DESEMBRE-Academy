@@ -105,10 +105,24 @@ export async function submitPublicCourseRegistration(
       details: error.details,
       hint: error.hint,
     });
+
+    // Graceful fallback for unique constraint violation (duplicate registration)
+    if (
+      error.code === "23505" ||
+      error.message?.includes("course_registrations_unique_batch_phone") ||
+      error.message?.includes("unique constraint") ||
+      error.details?.includes("already exists")
+    ) {
+      return { ok: true, duplicate: true, message: "ALREADY_REGISTERED" };
+    }
+
     throw new Error(`[RPC Error ${error.code || '404'}]: ${error.message} (Hint: ${error.hint || 'Check Grants & Signature'})`);
   }
 
   if (data && data.ok === false) {
+    if (data.duplicate || data.message === "ALREADY_REGISTERED" || data.error?.includes("unique constraint")) {
+      return { ok: true, duplicate: true, message: "ALREADY_REGISTERED" };
+    }
     throw new Error(data.error || "Đăng ký không thành công");
   }
 
