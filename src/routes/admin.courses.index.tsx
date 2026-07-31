@@ -268,15 +268,15 @@ function AdminCourseList() {
       ) : (
         <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left antialiased">
-              <thead className="bg-slate-50/90 border-b border-slate-200/80 text-slate-600 font-bold uppercase text-[11px]">
+            <table className="w-full min-w-[980px] text-xs text-left antialiased">
+              <thead className="bg-slate-50/90 border-b border-slate-200/80 text-slate-600 font-bold uppercase text-[11px] tracking-wider">
                 <tr>
-                  <th className="px-6 py-3.5">Tên khóa học</th>
-                  <th className="px-6 py-3.5">Loại khóa học</th>
-                  <th className="px-6 py-3.5">Trạng thái</th>
-                  <th className="px-6 py-3.5">Hiển thị</th>
-                  <th className="px-6 py-3.5">Cập nhật</th>
-                  <th className="px-6 py-3.5 text-right">Thao tác</th>
+                  <th className="px-5 py-3.5 w-[280px]">Tên khóa học</th>
+                  <th className="px-5 py-3.5 w-[220px]">Loại khóa học</th>
+                  <th className="px-5 py-3.5 w-[110px]">Trạng thái</th>
+                  <th className="px-5 py-3.5 w-[90px]">Hiển thị</th>
+                  <th className="px-5 py-3.5 w-[100px]">Cập nhật</th>
+                  <th className="px-5 py-3.5 w-[180px] text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -285,8 +285,9 @@ function AdminCourseList() {
 
                   return (
                     <tr key={course.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900 leading-snug flex items-center gap-2">
+                      {/* Cột Tên khóa học (w-[280px]) */}
+                      <td className="px-5 py-4 align-top w-[280px]">
+                        <div className="font-semibold text-slate-900 leading-snug flex items-center gap-2 line-clamp-2">
                           {course.title}
                           {isDemoRecord(course) && (
                             <span className="bg-rose-100 text-rose-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase shrink-0">
@@ -294,27 +295,27 @@ function AdminCourseList() {
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                          {course.slug} • cat_id: {course.category_id ? course.category_id.slice(0, 8) + "..." : "null"}
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5 truncate max-w-[240px]" title={course.slug}>
+                          {course.slug}
                         </div>
                       </td>
 
-                      {/* Cột Loại khóa học / Badge + Quick Change */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5">
+                      {/* Cột Loại khóa học (w-[220px]) */}
+                      <td className="px-5 py-4 align-top w-[220px]">
+                        <div className="flex flex-col gap-1.5 items-start">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${resolved.badgeClass}`}
                           >
                             {resolved.label}
                           </span>
                           
-                          {/* Quick Change Select Dropdown */}
+                          {/* Compact Quick Change Select */}
                           <select
                             value={course.category_id || ""}
                             onChange={(e) => handleQuickCategoryChange(course.id, e.target.value)}
                             disabled={updatingCourseId === course.id}
-                            className="text-[10px] bg-transparent text-indigo-600 hover:text-indigo-800 font-bold border border-indigo-200/80 rounded px-1 py-0.5 focus:outline-none cursor-pointer"
-                            title="Đổi nhanh loại khóa học"
+                            className="text-[10px] bg-white text-slate-700 font-semibold border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer w-[140px]"
+                            title="Đổi loại khóa học"
                           >
                             <option value="">-- Đổi loại --</option>
                             {mergedCategories.map((cat) => (
@@ -326,7 +327,8 @@ function AdminCourseList() {
                         </div>
                       </td>
 
-                      <td className="px-6 py-4">
+                      {/* Cột Trạng thái (w-[110px]) */}
+                      <td className="px-5 py-4 align-top w-[110px]">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                             course.status === "published"
@@ -340,46 +342,54 @@ function AdminCourseList() {
                         </span>
                       </td>
 
-                      <td className="px-6 py-4 capitalize text-slate-600 font-medium">{course.catalog_visibility}</td>
+                      {/* Cột Hiển thị (w-[90px]) */}
+                      <td className="px-5 py-4 align-top capitalize text-slate-600 font-medium w-[90px]">
+                        {course.catalog_visibility}
+                      </td>
 
-                      <td className="px-6 py-4 text-slate-500 whitespace-nowrap font-medium">
+                      {/* Cột Cập nhật (w-[100px]) */}
+                      <td className="px-5 py-4 align-top text-slate-500 whitespace-nowrap font-medium w-[100px]">
                         {new Date(course.updated_at).toLocaleDateString()}
                       </td>
 
-                      <td className="px-6 py-4 text-right space-x-3 whitespace-nowrap">
-                        {course.slug && (
+                      {/* Cột Thao tác (w-[180px]) */}
+                      <td className="px-5 py-4 align-top text-right whitespace-nowrap w-[180px]">
+                        <div className="flex items-center justify-end gap-2 text-xs font-semibold">
+                          {course.slug && (
+                            <Link
+                              to="/khoa-hoc/$slug"
+                              params={{ slug: course.slug }}
+                              target="_blank"
+                              className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                              title="Xem trang public"
+                            >
+                              Xem ↗
+                            </Link>
+                          )}
                           <Link
-                            to="/khoa-hoc/$slug"
-                            params={{ slug: course.slug }}
-                            target="_blank"
-                            className="text-xs font-semibold text-indigo-600 hover:underline mr-2"
+                            to="/admin/batches/new"
+                            search={{ course_id: course.id }}
+                            className="text-emerald-700 hover:text-emerald-800 font-bold transition-colors"
                           >
-                            Xem public ↗
+                            + Tạo lớp
                           </Link>
-                        )}
-                        <Link
-                          to="/admin/batches/new"
-                          search={{ course_id: course.id }}
-                          className="text-emerald-700 hover:underline font-bold text-xs mr-2"
-                        >
-                          + Tạo lớp
-                        </Link>
-                        {isDemoRecord(course) && course.status !== "archived" && (
-                          <button
-                            onClick={() => handleArchiveDemo(course.id)}
-                            className="text-rose-600 hover:underline font-semibold text-xs mr-2"
-                            title="Lưu trữ dữ liệu test"
+                          {isDemoRecord(course) && course.status !== "archived" && (
+                            <button
+                              onClick={() => handleArchiveDemo(course.id)}
+                              className="text-rose-600 hover:text-rose-800 font-semibold transition-colors"
+                              title="Lưu trữ dữ liệu test"
+                            >
+                              Lưu trữ
+                            </button>
+                          )}
+                          <Link
+                            to="/admin/courses/$courseId/settings"
+                            params={{ courseId: course.id }}
+                            className="text-slate-700 hover:text-indigo-600 font-bold transition-colors"
                           >
-                            Lưu trữ
-                          </button>
-                        )}
-                        <Link
-                          to="/admin/courses/$courseId/settings"
-                          params={{ courseId: course.id }}
-                          className="text-indigo-600 hover:underline font-semibold text-xs"
-                        >
-                          {course.status === "archived" ? "Xem / Khôi phục" : "Sửa"}
-                        </Link>
+                            {course.status === "archived" ? "Xem" : "Sửa"}
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
