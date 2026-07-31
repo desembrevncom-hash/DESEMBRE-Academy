@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { PublicCourseBatch } from "../services/publicTrainingApi";
 import { formatDateSafe, formatTimeRange } from "../utils/formatters";
-import { getTrainingFormatMeta, getCleanBatchDisplayTitle } from "../utils/trainingFormat";
+import { getTrainingFormatMeta } from "../utils/trainingFormat";
 import { CompactInstructorCard } from "./CompactInstructorCard";
-import { Calendar, MapPin, Users, Clock, ArrowRight, ChevronDown, ChevronUp, MessageSquare, Tag, Sparkles, Award } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ArrowRight, ChevronDown, ChevronUp, MessageSquare, Sparkles, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, format } from "date-fns";
 
@@ -33,7 +33,8 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
 
   const sessions = batch.sessions || [];
   const instructor = batch.instructor;
-  const courseTitle = batch.course?.title || batch.title;
+  const rawCourseTitle = batch.course?.title || batch.title;
+  const courseTitle = rawCourseTitle.replace(/^\s*Chuyên\s+đề\s*:\s*/i, "");
   const courseSummary = batch.course?.summary || batch.description;
   const coverUrl = batch.course?.cover_url || null;
 
@@ -43,10 +44,11 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
   const hoursUntilClose = closeTime ? (closeTime - now) / 3600000 : null;
   const isUrgentClose = !isExpired && hoursUntilClose !== null && hoursUntilClose > 0 && hoursUntilClose <= 48;
 
-  // Extract date parts for poster date box
+  // Extract date parts for poster date box & meta row
   let startDayStr = "01";
   let startMonthStr = "08";
   let startYearStr = "2026";
+  let fullStartDateStr = "01/08/2026";
 
   if (batch.start_date) {
     try {
@@ -54,6 +56,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
       startDayStr = format(d, "dd");
       startMonthStr = format(d, "MM");
       startYearStr = format(d, "yyyy");
+      fullStartDateStr = format(d, "dd/MM/yyyy");
     } catch (e) {}
   } else if (sessions.length > 0 && sessions[0].starts_at) {
     try {
@@ -61,14 +64,14 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
       startDayStr = format(d, "dd");
       startMonthStr = format(d, "MM");
       startYearStr = format(d, "yyyy");
+      fullStartDateStr = format(d, "dd/MM/yyyy");
     } catch (e) {}
   }
 
-  const cleanBatchTitle = getCleanBatchDisplayTitle(
-    batch.title,
-    courseTitle,
-    `${startDayStr}/${startMonthStr}/${startYearStr}`
-  );
+  // Format time range for main session
+  const mainSessionTime = sessions.length > 0 && sessions[0].starts_at
+    ? formatTimeRange(sessions[0].starts_at, sessions[0].ends_at)
+    : "14:00–16:00";
 
   const handleConsult = () => {
     window.open("https://zalo.me", "_blank");
@@ -76,8 +79,8 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
 
   return (
     <div className={`group bg-white border border-slate-200/90 ${formatMeta.cardBorderClass} rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 relative space-y-4 antialiased`}>
-      {/* 1. Rich Cover Banner with Dark Gradient/Blur Overlay */}
-      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-md border border-white/10 min-h-[220px] sm:min-h-[250px] flex flex-col justify-between bg-slate-950">
+      {/* 1. Rich Cover Banner with Dark Gradient & Poster Date Box */}
+      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6 shadow-md border border-white/10 min-h-[200px] sm:min-h-[230px] flex flex-col justify-between bg-slate-950">
         {/* Background Image (Cover URL) or Format Gradient Fallback */}
         {coverUrl && !imgError ? (
           <img
@@ -90,19 +93,18 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
           <div className={`absolute inset-0 bg-gradient-to-br ${formatMeta.bannerGradientClass} pointer-events-none`} />
         )}
 
-        {/* Dual Gradient Overlays for 100% Crisp Text Contrast */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/70 to-slate-900/20 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent pointer-events-none" />
+        {/* Dual Gradient Overlays for High Contrast Readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/75 to-slate-900/25 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 to-transparent pointer-events-none" />
 
-        {/* Banner Content Container (HTML Text Layer) */}
-        <div className="relative z-10 space-y-3.5">
-          {/* Top Bar: Date Box + Format & Status Badges */}
+        {/* Banner Content Layer */}
+        <div className="relative z-10 space-y-3">
+          {/* Top Bar: Clean Date Box + Format & Status Badges */}
           <div className="flex items-start justify-between gap-3">
             {/* Poster Date Box */}
-            <div className={`flex flex-col items-center justify-center px-3 py-2 rounded-2xl text-center shrink-0 min-w-[76px] ${formatMeta.dateBoxClass}`}>
+            <div className={`flex flex-col items-center justify-center px-3.5 py-2 rounded-2xl text-center shrink-0 min-w-[72px] ${formatMeta.dateBoxClass} shadow-xs`}>
               <span className="text-2xl sm:text-3xl font-black leading-none tracking-tight">{startDayStr}</span>
               <span className="text-[10px] font-extrabold uppercase tracking-wider mt-0.5">THÁNG {startMonthStr}</span>
-              <span className="text-[9px] font-semibold opacity-90">{startYearStr}</span>
             </div>
 
             {/* Badges Stack */}
@@ -134,9 +136,10 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
             </div>
           </div>
 
-          {/* Main Course Title & Summary (HTML Text on Overlay) */}
+          {/* Course Title & Short Summary */}
           <div className="space-y-1.5 pt-1">
             <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight tracking-tight drop-shadow-md">
+              <span className="text-indigo-300 font-semibold mr-1.5">Chuyên đề:</span>
               {courseTitle}
             </h3>
 
@@ -148,7 +151,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
           </div>
         </div>
 
-        {/* Banner Footer: Compact Value Props */}
+        {/* Banner Footer: Value Props */}
         <div className="relative z-10 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-indigo-200/90 font-medium pt-3 border-t border-white/10">
           <div className="flex items-center gap-1.5">
             <Award className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
@@ -161,118 +164,119 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
         </div>
       </div>
 
-      {/* 2. Main Content Split: Left (Batch Details + Instructor + Sessions) & Right (CTA Column) */}
-      <div className="flex flex-col lg:flex-row lg:items-stretch gap-5 pt-1">
-        {/* Left Column */}
-        <div className="flex-1 space-y-4">
-          {/* Batch Info Header */}
-          <div className="bg-slate-50/80 border border-slate-100 rounded-2xl p-3.5 space-y-2.5">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2">
-              {/* Clean Batch Display Title */}
-              <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-indigo-600 shrink-0" />
-                <span className="text-xs font-bold text-slate-800">
-                  {cleanBatchTitle}
-                </span>
-              </div>
-
-              {/* Sĩ số chỗ còn */}
-              <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
-                <Users className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                <span>
-                  {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Liên hệ tư vấn"}
-                </span>
-              </div>
+      {/* 2. Unified Scannable Meta Row (No Triplicated Date Lines) */}
+      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          {/* Ngày học */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+              <Calendar className="w-4 h-4" />
             </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Ngày học</span>
+              <span className="font-bold text-slate-900 truncate block">{fullStartDateStr}</span>
+            </div>
+          </div>
 
-            <div className="flex items-center gap-2 text-xs text-slate-700">
-              <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
-              <span>
-                Khai giảng chính thức: <strong className="text-slate-900 font-bold">{startDayStr}/{startMonthStr}/{startYearStr}</strong>
+          {/* Giờ học */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Giờ học</span>
+              <span className="font-bold text-slate-900 truncate block">{mainSessionTime}</span>
+            </div>
+          </div>
+
+          {/* Hình thức */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0">
+              <FormatIcon className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Hình thức</span>
+              <span className="font-bold text-slate-900 truncate block">{formatMeta.label}</span>
+            </div>
+          </div>
+
+          {/* Hạn đăng ký & Chỗ còn */}
+          <div className="flex items-center gap-2">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isUrgentClose ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
+              <Users className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Chỗ trống</span>
+              <span className="font-bold text-slate-900 truncate block">
+                {remainingSeats !== null ? `Còn ${remainingSeats} chỗ` : "Liên hệ tư vấn"}
               </span>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Instructor Compact */}
+      {/* 3. Main Content Split: Left (Instructor + Sessions) & Right (CTAs) */}
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 pt-1">
+        {/* Left Column */}
+        <div className="flex-1 space-y-3">
+          {/* Instructor Compact Card */}
           <CompactInstructorCard instructor={instructor} />
 
-          {/* Sessions Display Rule */}
-          <div className="pt-1">
-            {sessions.length === 0 ? (
-              <p className="text-xs text-slate-500 italic flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>Thời gian chi tiết từng buổi học sẽ được xác nhận sau khi đăng ký.</span>
-              </p>
-            ) : sessions.length === 1 ? (
-              <div className="bg-slate-50/90 border border-slate-100 rounded-xl p-3 text-xs text-slate-700 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>
-                    Giờ học: <strong className="text-slate-900 font-semibold">{formatTimeRange(sessions[0].starts_at, sessions[0].ends_at)}</strong>
-                  </span>
-                </div>
-                {sessions[0].location_detail && (
-                  <div className="flex items-center gap-1.5 text-slate-600">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{sessions[0].location_detail}</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100/80 px-3.5 py-2 rounded-xl transition-all"
-                >
-                  <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>{isExpanded ? "Thu gọn lịch học" : `Xem lịch học chi tiết (${sessions.length} buổi)`}</span>
-                  {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </button>
+          {/* Sessions Accordion if Multiple Sessions */}
+          {sessions.length > 1 && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100/80 px-3.5 py-2 rounded-xl transition-all"
+              >
+                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{isExpanded ? "Thu gọn lịch học" : `Xem lịch học chi tiết (${sessions.length} buổi)`}</span>
+                {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
 
-                {isExpanded && (
-                  <div className="space-y-2 pt-2 animate-in fade-in duration-200">
-                    {sessions.map((s, idx) => (
-                      <div
-                        key={s.id || idx}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 gap-2 shadow-2xs"
-                      >
-                        <div className="flex items-center gap-2 font-semibold text-slate-800">
-                          <span className="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 text-[10px] flex items-center justify-center font-bold shrink-0">
-                            {idx + 1}
-                          </span>
-                          <span>{s.title || `Buổi ${idx + 1}`}</span>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3 text-slate-600 text-[11px]">
-                          {s.starts_at && (
-                            <div className="flex items-center gap-1 font-medium text-slate-700">
-                              <Clock className="w-3 h-3 text-indigo-500 shrink-0" />
-                              <span>
-                                {formatDateSafe(s.starts_at, "dd/MM")}{" "}
-                                ({formatTimeRange(s.starts_at, s.ends_at)})
-                              </span>
-                            </div>
-                          )}
-
-                          {s.location_detail && (
-                            <div className="flex items-center gap-1 text-slate-500">
-                              <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                              <span className="truncate max-w-[150px]">{s.location_detail}</span>
-                            </div>
-                          )}
-                        </div>
+              {isExpanded && (
+                <div className="space-y-2 pt-1 animate-in fade-in duration-200">
+                  {sessions.map((s, idx) => (
+                    <div
+                      key={s.id || idx}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 gap-2"
+                    >
+                      <div className="flex items-center gap-2 font-semibold text-slate-800">
+                        <span className="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 text-[10px] flex items-center justify-center font-bold shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span>{s.title || `Buổi ${idx + 1}`}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+
+                      <div className="flex flex-wrap items-center gap-3 text-slate-600 text-[11px]">
+                        {s.starts_at && (
+                          <div className="flex items-center gap-1 font-medium text-slate-700">
+                            <Clock className="w-3 h-3 text-indigo-500 shrink-0" />
+                            <span>
+                              {formatDateSafe(s.starts_at, "dd/MM")}{" "}
+                              ({formatTimeRange(s.starts_at, s.ends_at)})
+                            </span>
+                          </div>
+                        )}
+
+                        {s.location_detail && (
+                          <div className="flex items-center gap-1 text-slate-500">
+                            <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate max-w-[150px]">{s.location_detail}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Right Column: Deadline & Action Buttons */}
-        <div className="lg:w-60 flex flex-col justify-between gap-3 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+        {/* Right Column: Deadline & Action Buttons (Clean & Streamlined CTAs) */}
+        <div className="lg:w-64 flex flex-col justify-between gap-3 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
           {batch.registration_closes_at && (
             <div className={`text-xs text-center p-3 rounded-2xl border ${
               isExpired
@@ -294,21 +298,21 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
             {isExpired ? (
               <Button
                 disabled
-                className="w-full h-12 rounded-xl text-xs font-semibold bg-slate-200 text-slate-500 cursor-not-allowed"
+                className="w-full h-13 rounded-2xl text-xs font-semibold bg-slate-200 text-slate-500 cursor-not-allowed"
               >
                 Đã hết hạn đăng ký
               </Button>
             ) : isFull ? (
               <Button
                 disabled
-                className="w-full h-12 rounded-xl text-xs font-semibold bg-slate-200 text-slate-500 cursor-not-allowed"
+                className="w-full h-13 rounded-2xl text-xs font-semibold bg-slate-200 text-slate-500 cursor-not-allowed"
               >
                 Đã đủ chỗ — Chờ lớp mới
               </Button>
             ) : (
               <Button
                 onClick={() => onRegister(batch)}
-                className="w-full h-12 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/25 transition-all duration-200 gap-1.5"
+                className="w-full h-13 rounded-2xl text-sm font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/25 transition-all duration-200 gap-2"
               >
                 <span>Đăng ký học ngay</span>
                 <ArrowRight className="w-4 h-4" />
@@ -322,7 +326,7 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
                 className="w-full h-10 rounded-xl text-xs font-semibold border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Tư vấn lộ trình</span>
+                <span>Tư vấn qua Zalo</span>
               </Button>
             )}
           </div>
