@@ -40,17 +40,65 @@ export async function getPublicCourseBySlug(slug: string): Promise<PublicCourseD
       p_slug: slug,
     });
 
-    if (error) {
-      console.error("[getPublicCourseBySlug RPC Error]", {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-      });
+    if (!error && data) {
+      return data as PublicCourseDetail;
+    }
+
+    console.warn("[getPublicCourseBySlug RPC error/empty, attempting fallback query]:", slug, error);
+
+    // Fallback: Direct table query if RPC returned empty or error
+    const { data: courseRow, error: courseErr } = await supabase
+      .from("courses")
+      .select(`
+        id,
+        title,
+        slug,
+        summary,
+        description,
+        cover_url,
+        status,
+        created_at,
+        updated_at,
+        course_batches (
+          id,
+          title,
+          slug,
+          training_format,
+          max_participants,
+          registration_status,
+          registration_closes_at,
+          start_date,
+          end_date,
+          description,
+          status,
+          instructor:academy_instructors(id, full_name, title, avatar_url, expertise),
+          sessions:course_sessions(id, title, session_number, starts_at, ends_at, location_type, location_detail)
+        )
+      `)
+      .eq("slug", slug)
+      .maybeSingle();
+
+    if (courseErr || !courseRow) {
+      console.error("[getPublicCourseBySlug Fallback Error]", courseErr);
       return null;
     }
 
-    return data as PublicCourseDetail | null;
+    const rawBatches = (courseRow.course_batches || []).map((b: any) => ({
+      ...b,
+      sessions: (b.sessions || []).filter((s: any) => s.starts_at && s.ends_at),
+    }));
+
+    return {
+      id: courseRow.id,
+      title: courseRow.title,
+      slug: courseRow.slug,
+      summary: courseRow.summary,
+      description: courseRow.description,
+      cover_url: courseRow.cover_url,
+      created_at: courseRow.created_at,
+      updated_at: courseRow.updated_at,
+      batches: rawBatches,
+    };
   } catch (err) {
     console.error("[getPublicCourseBySlug Exception]", err);
     return null;
