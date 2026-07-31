@@ -286,24 +286,34 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
           )}
         </div>
 
-        {/* Right Column: Action Buttons (Primary & Secondary CTAs) */}
+        {/* Right Column: Action Buttons & Urgency Summary */}
         <div className="lg:w-64 flex flex-col justify-between gap-3 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100">
-          {batch.registration_closes_at && (
-            <div className={`text-xs text-center p-3 rounded-2xl border ${
-              isExpired
-                ? "bg-rose-50 border-rose-200 text-rose-800"
-                : isUrgentClose
-                ? "bg-amber-50 border-amber-200 text-amber-900 font-bold"
-                : "bg-slate-50 border-slate-100 text-slate-700"
-            }`}>
-              <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5">
-                Hạn chót đăng ký
-              </span>
-              <span className="font-bold text-xs">
-                {formatDateSafe(batch.registration_closes_at, "dd/MM/yyyy HH:mm")}
-              </span>
-            </div>
-          )}
+          {/* Urgency Summary Box (No Duplicated Deadline Date) */}
+          <div className={`text-xs text-center p-3 rounded-2xl border ${
+            isExpired
+              ? "bg-rose-50 border-rose-200 text-rose-800"
+              : isUrgentClose
+              ? "bg-amber-50 border-amber-200 text-amber-900 font-bold"
+              : "bg-indigo-50/80 border-indigo-100 text-indigo-900 font-semibold"
+          }`}>
+            <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider mb-0.5">
+              Trạng thái đăng ký
+            </span>
+            <span className="font-bold text-xs flex items-center justify-center gap-1.5">
+              {isExpired ? (
+                "Đã hết hạn đăng ký"
+              ) : isUrgentClose ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping inline-block" />
+                  <span>Sắp hết hạn đăng ký</span>
+                </>
+              ) : hoursUntilClose !== null && hoursUntilClose > 48 ? (
+                `Còn ${Math.ceil(hoursUntilClose / 24)} ngày để đăng ký`
+              ) : (
+                "Đang nhận đăng ký"
+              )}
+            </span>
+          </div>
 
           <div className="space-y-2 mt-auto">
             {isExpired ? (
