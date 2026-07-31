@@ -39,7 +39,7 @@ export function RegistrationSuccess({ batchTitle, isDuplicate, onClose }: Regist
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-1">
             {isDuplicate ? (
               <>
-                Bạn đã đăng ký lớp <span className="font-bold text-slate-900">{batchTitle}</span> trước đó. DESEMBRE Training Center sẽ liên hệ xác nhận trong thời gian sớm nhất. Vui lòng theo dõi Zalo/SĐT đã đăng ký.
+                Bạn đã đăng ký lớp <span className="font-bold text-slate-900">{batchTitle}</span> rồi. DESEMBRE Training Center sẽ liên hệ xác nhận qua Zalo/điện thoại.
               </>
             ) : (
               <>

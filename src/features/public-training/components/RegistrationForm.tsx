@@ -57,7 +57,11 @@ export function RegistrationForm({ batch, onClose, onSuccess, initialNotes }: Re
         notes: values.notes || undefined,
       });
 
-      onSuccess(!!res.duplicate);
+      if (res && res.ok !== false) {
+        onSuccess(!!res.duplicate);
+      } else {
+        setErrorMsg(res?.error || "Không thể gửi đăng ký lúc này. Vui lòng thử lại sau hoặc liên hệ DESEMBRE Training Center.");
+      }
     } catch (err: any) {
       console.error("[PublicRegistration Error]:", err);
       // Show user-friendly error message in Vietnamese
