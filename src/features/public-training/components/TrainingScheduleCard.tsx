@@ -7,6 +7,7 @@ import { CompactInstructorCard } from "./CompactInstructorCard";
 import { Calendar, MapPin, Users, Clock, ArrowRight, ChevronDown, ChevronUp, ExternalLink, Sparkles, Award, AlarmClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { parseISO, format } from "date-fns";
+import { isOneSessionCourseType, isMultiSessionCourseType } from "@/features/admin/constants";
 
 interface TrainingScheduleCardProps {
   batch: PublicCourseBatch;
@@ -16,6 +17,13 @@ interface TrainingScheduleCardProps {
 export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  const sessions = batch.sessions || [];
+
+  // Guard: Do not render public card if batch has 0 valid sessions
+  if (!sessions || sessions.length === 0) {
+    return null;
+  }
 
   const formatMeta = getTrainingFormatMeta(batch.training_format);
   const FormatIcon = formatMeta.icon;
@@ -32,13 +40,22 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
       ? Math.max(0, batch.max_participants - totalRegistered)
       : null;
 
-  const sessions = batch.sessions || [];
   const instructor = batch.instructor;
   const rawCourseTitle = batch.course?.title || batch.title;
   const courseTitle = rawCourseTitle.replace(/^\s*Chuyên\s+đề\s*:\s*/i, "");
   const courseSummary = batch.course?.summary || batch.description;
   const coverUrl = batch.course?.cover_url || null;
   const courseSlug = batch.course?.slug || null;
+
+  const catSlug = (batch.course as any)?.category_slug || (batch.course as any)?.category?.slug || (batch as any).course_type_slug;
+  const isOneSession = isOneSessionCourseType(catSlug);
+  const isMultiSession = isMultiSessionCourseType(catSlug) || sessions.length > 1;
+
+  const sessionTypeBadgeLabel = isOneSession
+    ? "Buổi học thu phễu"
+    : isMultiSession
+    ? `Chương trình ${sessions.length} buổi`
+    : null;
 
   const closeTime = batch.registration_closes_at ? new Date(batch.registration_closes_at).getTime() : null;
   const now = Date.now();
@@ -112,6 +129,13 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
 
             {/* Badges Stack */}
             <div className="flex flex-wrap items-center justify-end gap-2">
+              {/* Course Type Badge */}
+              {sessionTypeBadgeLabel && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-indigo-500 text-white border border-indigo-400/40 shadow-xs">
+                  <span>{sessionTypeBadgeLabel}</span>
+                </span>
+              )}
+
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${formatMeta.badgeClass}`}>
                 <FormatIcon className="h-3.5 w-3.5 shrink-0" />
                 <span>{formatMeta.label}</span>
@@ -175,27 +199,31 @@ export function TrainingScheduleCard({ batch, onRegister }: TrainingScheduleCard
         </div>
       </div>
 
-      {/* 2. Unified Scannable Meta Row (Exact: Ngày học, Giờ học, Hình thức, Hạn ĐK) */}
+      {/* 2. Unified Scannable Meta Row */}
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          {/* Ngày học */}
+          {/* Ngày học / Khai giảng */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
               <Calendar className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Ngày học</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                {isMultiSession ? "Khai giảng" : "Ngày học"}
+              </span>
               <span className="font-bold text-slate-900 truncate block">{fullStartDateStr}</span>
             </div>
           </div>
 
-          {/* Giờ học */}
+          {/* Giờ học / Buổi đầu */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
               <Clock className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Giờ học</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                {isMultiSession ? "Buổi đầu" : "Giờ học"}
+              </span>
               <span className="font-bold text-slate-900 truncate block">{mainSessionTime}</span>
             </div>
           </div>

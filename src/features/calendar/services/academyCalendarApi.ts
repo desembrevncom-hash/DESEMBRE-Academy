@@ -63,23 +63,41 @@ export async function getAdminCalendar() {
     rawSessions = fallbackData || [];
   }
 
-  return rawSessions.map((s: any) => {
-    const batch = s.course_batches || s.batch || s.course_batch || {};
-    const course = batch.courses || batch.course || s.course || s.courses || {};
-    const instructor = batch.instructor || s.instructor || {};
-    const rawSt = batch.registration_status || batch.status || s.registration_status || s.batch_status || "open";
-    const regStatus = (rawSt || "open").toString().toLowerCase().trim();
+  return rawSessions
+    .filter((s: any) => {
+      // 1. Session must have starts_at and ends_at
+      if (!s.starts_at || !s.ends_at) return false;
 
-    return {
-      ...s,
-      course_batches: {
-        ...batch,
-        registration_status: regStatus,
-        courses: course,
-        instructor: instructor,
-      },
-    };
-  });
+      const batch = s.course_batches || s.batch || s.course_batch || {};
+      const course = batch.courses || batch.course || s.course || s.courses || {};
+
+      // 2. Batch status must not be cancelled or archived
+      const batchStatus = (batch.status || "").toLowerCase();
+      if (batchStatus === "cancelled" || batchStatus === "archived") return false;
+
+      // 3. Course status must not be archived
+      const courseStatus = (course.status || "").toLowerCase();
+      if (courseStatus === "archived") return false;
+
+      return true;
+    })
+    .map((s: any) => {
+      const batch = s.course_batches || s.batch || s.course_batch || {};
+      const course = batch.courses || batch.course || s.course || s.courses || {};
+      const instructor = batch.instructor || s.instructor || {};
+      const rawSt = batch.registration_status || batch.status || s.registration_status || s.batch_status || "open";
+      const regStatus = (rawSt || "open").toString().toLowerCase().trim();
+
+      return {
+        ...s,
+        course_batches: {
+          ...batch,
+          registration_status: regStatus,
+          courses: course,
+          instructor: instructor,
+        },
+      };
+    });
 }
 
 export type AttendanceStatus = 'not_marked' | 'present' | 'absent' | 'late' | 'excused';

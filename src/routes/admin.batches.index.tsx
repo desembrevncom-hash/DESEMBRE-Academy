@@ -5,6 +5,7 @@ import { Loader2, Plus, AlertCircle, Edit, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
+import { isOneSessionCourseType } from "@/features/admin/constants";
 
 export const Route = createFileRoute("/admin/batches/")({
   component: AdminBatchesIndexPage,
@@ -166,21 +167,63 @@ function AdminBatchesIndexPage() {
 
                     {/* Cột 5: Buổi học (w-[110px]) */}
                     <td className="px-4 py-3.5 align-top">
-                      {sessionsCount > 0 ? (
-                        <span className="font-bold text-indigo-700 text-xs">
-                          {sessionsCount} buổi
-                        </span>
-                      ) : (
-                        <div className="flex flex-col gap-0.5">
-                          <span
-                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 w-max"
-                            title="Public vẫn hiển thị ngày khai giảng, nhưng chưa có giờ học chi tiết và ZNS reminder sẽ không đủ thông tin."
-                          >
-                            Thiếu buổi học
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium">Chưa có giờ học</span>
-                        </div>
-                      )}
+                      {(() => {
+                        const course = batch.course || batch.courses || {};
+                        const catSlug = course.category_slug || course.category?.slug;
+                        const isOneSession = isOneSessionCourseType(catSlug);
+
+                        if (isOneSession) {
+                          if (sessionsCount === 0) {
+                            return (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 w-max">
+                                  Thiếu buổi học
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-medium">Lớp 1 buổi chưa tạo giờ</span>
+                              </div>
+                            );
+                          } else if (sessionsCount === 1) {
+                            return (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 w-max">
+                                Đủ lịch 1 buổi
+                              </span>
+                            );
+                          } else {
+                            return (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 w-max">
+                                  Nhiều hơn 1 buổi
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-medium">{sessionsCount} buổi</span>
+                              </div>
+                            );
+                          }
+                        } else {
+                          // Multi-session or default
+                          if (sessionsCount === 0) {
+                            return (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 w-max">
+                                  Thiếu lịch
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-medium">Chưa có buổi học</span>
+                              </div>
+                            );
+                          } else if (sessionsCount === 1) {
+                            return (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 w-max">
+                                Mới có 1 buổi
+                              </span>
+                            );
+                          } else {
+                            return (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 w-max">
+                                Đã có {sessionsCount} buổi
+                              </span>
+                            );
+                          }
+                        }
+                      })()}
                     </td>
 
                     {/* Cột 6: Số chỗ (w-[90px]) */}

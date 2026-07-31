@@ -65,10 +65,6 @@ export async function getPublicTrainingSchedule(): Promise<PublicCourseBatch[]> 
     return [];
   }
 
-  const { getSupabaseEnvironment } = await import("@/lib/supabase/env");
-  const env = getSupabaseEnvironment();
-  console.log("[Public Training RPC project]", env.url);
-
   const { data, error } = await supabase.rpc("public_get_training_schedule");
 
   if (error) {
@@ -81,7 +77,15 @@ export async function getPublicTrainingSchedule(): Promise<PublicCourseBatch[]> 
     throw new Error(`[RPC Error ${error.code || '404'}]: ${error.message} (Hint: ${error.hint || 'Check Grants & Schema Reload'})`);
   }
 
-  return data || [];
+  const batches = (data || []) as PublicCourseBatch[];
+
+  // Strict eligibility filter: Must have at least 1 valid session with starts_at & ends_at
+  return batches.filter((b) => {
+    if (!b.sessions || !Array.isArray(b.sessions) || b.sessions.length === 0) {
+      return false;
+    }
+    return b.sessions.some((s) => s.starts_at && s.ends_at);
+  });
 }
 
 export async function submitPublicCourseRegistration(

@@ -109,3 +109,28 @@ export function resolveCourseType(
   };
 }
 
+export const ONE_SESSION_COURSE_TYPE_SLUGS = [
+  "lead-magnet-one-session",
+  "hands-on-workshop",
+  "seminar-webinar",
+] as const;
+
+export const MULTI_SESSION_COURSE_TYPE_SLUGS = [
+  "professional-topic",
+  "multi-session-program",
+] as const;
+
+export function isOneSessionCourseType(slugOrName?: string | null): boolean {
+  if (!slugOrName) return false;
+  const meta = getCourseTypeMeta(slugOrName);
+  const targetSlug = meta?.slug || slugOrName.toLowerCase().trim();
+  return (ONE_SESSION_COURSE_TYPE_SLUGS as readonly string[]).includes(targetSlug);
+}
+
+export function isMultiSessionCourseType(slugOrName?: string | null): boolean {
+  if (!slugOrName) return false;
+  const meta = getCourseTypeMeta(slugOrName);
+  const targetSlug = meta?.slug || slugOrName.toLowerCase().trim();
+  return (MULTI_SESSION_COURSE_TYPE_SLUGS as readonly string[]).includes(targetSlug);
+}
+
