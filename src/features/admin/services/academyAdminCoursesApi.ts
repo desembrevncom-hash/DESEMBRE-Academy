@@ -91,16 +91,53 @@ export const academyAdminCoursesApi = {
     search?: string;
   }): Promise<AcademyAdminCourseListItem[]> {
     const client = getClientOrThrow();
-    const { data, error } = await client.rpc("admin_list_academy_courses", {
+    
+    // 1. Fetch courses via RPC
+    const { data: rpcData, error: rpcError } = await client.rpc("admin_list_academy_courses", {
       p_status: params?.status || null,
       p_search: params?.search || null,
     });
 
-    if (error) {
-      handleRpcError(error);
+    let courses: any[] = [];
+    if (!rpcError && Array.isArray(rpcData)) {
+      courses = rpcData;
+    } else {
+      let query = client.from("courses").select("id, title, slug, status, catalog_visibility, category_id, updated_at, created_at");
+      if (params?.status) query = query.eq("status", params.status);
+      if (params?.search) query = query.ilike("title", `%${params.search}%`);
+      const { data: directData, error: directErr } = await query.order("updated_at", { ascending: false });
+      if (directErr) handleRpcError(directErr);
+      courses = directData || [];
     }
 
-    return (data as AcademyAdminCourseListItem[]) || [];
+    // 2. Explicitly query public.courses to guarantee category_id, category_name & category_slug
+    const courseIds = courses.map((c) => c.id).filter(Boolean);
+    if (courseIds.length > 0) {
+      try {
+        const { data: dbCourses } = await client
+          .from("courses")
+          .select("id, category_id, category:course_categories(id, name, slug)")
+          .in("id", courseIds);
+
+        if (dbCourses && dbCourses.length > 0) {
+          const catMap = new Map(dbCourses.map((dc: any) => [dc.id, dc]));
+          courses = courses.map((c) => {
+            const dbC = catMap.get(c.id);
+            const cat = dbC?.category;
+            return {
+              ...c,
+              category_id: dbC?.category_id ?? c.category_id ?? null,
+              category_name: cat?.name ?? c.category_name ?? null,
+              category_slug: cat?.slug ?? c.category_slug ?? null,
+            };
+          });
+        }
+      } catch (err) {
+        console.warn("[listCourses category enrichment warning]", err);
+      }
+    }
+
+    return courses as AcademyAdminCourseListItem[];
   },
 
   async listCategories(): Promise<AcademyAdminCategory[]> {

@@ -136,16 +136,30 @@ function AdminCourseList() {
         }
       }
 
-      // Update public.courses category_id
-      const { error: updateErr } = await supabase
+      console.log("[CourseType] updating", { courseId, selectedCategoryId: targetCatId });
+
+      // Update public.courses category_id and verify returned row
+      const { data: updatedRows, error: updateErr } = await supabase
         .from("courses")
         .update({
           category_id: targetCatId,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", courseId);
+        .eq("id", courseId)
+        .select("id, category_id");
 
       if (updateErr) throw updateErr;
+
+      console.log("[CourseType] updated row", updatedRows);
+
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error("CATEGORY_UPDATE_NO_ROWS_AFFECTED");
+      }
+
+      const updatedRow = updatedRows[0];
+      if (updatedRow.category_id !== targetCatId) {
+        throw new Error(`CATEGORY_UPDATE_NOT_PERSISTED: Expected ${targetCatId}, got ${updatedRow.category_id}`);
+      }
 
       toast.success("Cập nhật loại khóa học thành công!");
       await refetchCategories();
@@ -280,7 +294,9 @@ function AdminCourseList() {
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">{course.slug}</div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                          {course.slug} • cat_id: {course.category_id ? course.category_id.slice(0, 8) + "..." : "null"}
+                        </div>
                       </td>
 
                       {/* Cột Loại khóa học / Badge + Quick Change */}
