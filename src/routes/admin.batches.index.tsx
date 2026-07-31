@@ -4,7 +4,6 @@ import { adminGetCourseBatches } from "@/features/admin/services/academyAdminBat
 import { Loader2, Plus, AlertCircle, Edit, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
-import { vi } from "date-fns/locale";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 export const Route = createFileRoute("/admin/batches/")({
@@ -49,40 +48,16 @@ function AdminBatchesIndexPage() {
     return regStatus === statusFilter;
   });
 
-  const handleCloseDemo = async (batch: any) => {
-    if (!window.confirm("Đóng đăng ký lớp dữ liệu test này?")) return;
-    try {
-      const { adminUpdateCourseBatch } = await import("@/features/admin/services/academyAdminBatchesApi");
-      await adminUpdateCourseBatch(batch.id, {
-        course_id: batch.course_id,
-        title: batch.title,
-        slug: batch.slug,
-        training_format: batch.training_format,
-        instructor_id: batch.instructor_id,
-        max_participants: batch.max_participants,
-        start_date: batch.start_date,
-        end_date: batch.end_date,
-        registration_closes_at: batch.registration_closes_at,
-        description: batch.description,
-        registration_status: "closed",
-      });
-      const data = await adminGetCourseBatches();
-      setBatches(data || []);
-    } catch (err) {
-      alert("Lỗi khi đóng đăng ký lớp test");
-    }
-  };
-
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto py-6 px-4 max-w-7xl">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Quản lý Lớp đào tạo</h1>
-          <p className="text-muted-foreground mt-2">Quản lý lớp đào tạo và theo dõi đăng ký học viên.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Quản lý Lớp đào tạo</h1>
+          <p className="text-sm text-slate-500 mt-1">Danh sách tất cả lớp học và trạng thái đăng ký học viên.</p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shadow-indigo-600/20">
           <Link to="/admin/batches/new">
-            <Plus className="mr-2 h-4 w-4" /> Tạo lớp mới
+            <Plus className="mr-1.5 h-4 w-4" /> Tạo lớp mới
           </Link>
         </Button>
       </div>
@@ -91,9 +66,9 @@ function AdminBatchesIndexPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary bg-background font-medium text-sm"
+          className="border border-slate-200 rounded-xl px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white font-semibold text-xs text-slate-700 shadow-2xs"
         >
-          <option value="all">Tất cả (Mở, nháp, đóng)</option>
+          <option value="all">Tất cả trạng thái (Mở, nháp, đóng)</option>
           <option value="open">Đang mở đăng ký</option>
           <option value="draft">Bản nháp</option>
           <option value="closed">Đã đóng</option>
@@ -103,125 +78,146 @@ function AdminBatchesIndexPage() {
 
       {loading && (
         <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
         </div>
       )}
 
       {!loading && error && (
-        <div className="bg-destructive/10 text-destructive p-4 rounded-lg flex items-center gap-3">
-          <AlertCircle className="h-5 w-5" />
-          <p>{error}</p>
+        <div className="bg-rose-50 text-rose-800 p-4 rounded-2xl border border-rose-200 flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
         </div>
       )}
 
       {!loading && !error && filteredBatches.length === 0 && (
-        <div className="text-center py-12 border rounded-lg bg-card text-muted-foreground">
-          Chưa có lớp nào trong mục này.
+        <div className="text-center py-12 border border-slate-200 rounded-2xl bg-white text-slate-500 text-sm font-medium shadow-2xs">
+          Chưa có lớp học nào trong mục này.
         </div>
       )}
 
       {!loading && !error && filteredBatches.length > 0 && (
-        <div className="border rounded-lg bg-card overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-muted/50 border-b">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <table className="min-w-[1050px] w-full table-fixed text-xs text-left antialiased">
+            <thead className="bg-slate-50/90 border-b border-slate-200/80 text-slate-600 font-bold">
               <tr>
-                <th className="px-5 py-3.5 font-semibold">Lớp / Batch</th>
-                <th className="px-5 py-3.5 font-semibold">Khóa học</th>
-                <th className="px-5 py-3.5 font-semibold">Giảng viên</th>
-                <th className="px-5 py-3.5 font-semibold">Trạng thái</th>
-                <th className="px-5 py-3.5 font-semibold">Buổi học</th>
-                <th className="px-5 py-3.5 font-semibold">Số chỗ</th>
-                <th className="px-5 py-3.5 font-semibold">Thời gian</th>
-                <th className="px-5 py-3.5 font-semibold text-right">Thao tác</th>
+                <th className="w-[260px] px-4 py-3.5">Lớp / Batch</th>
+                <th className="w-[220px] px-4 py-3.5">Khóa học</th>
+                <th className="w-[120px] px-4 py-3.5">Giảng viên</th>
+                <th className="w-[110px] px-4 py-3.5">Trạng thái</th>
+                <th className="w-[110px] px-4 py-3.5">Buổi học</th>
+                <th className="w-[90px] px-4 py-3.5">Số chỗ</th>
+                <th className="w-[130px] px-4 py-3.5">Thời gian</th>
+                <th className="w-[150px] px-4 py-3.5 text-center">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-slate-100">
               {filteredBatches.map((batch) => {
                 const regStatus = (batch.registration_status || batch.status || "open").toLowerCase();
                 const instructorName = batch.instructor?.full_name || "Chưa gán";
-                const courseSlug = batch.course?.slug;
                 const sessionsCount = batch.sessions_count ?? (Array.isArray(batch.sessions) ? batch.sessions.length : 0);
+                const rawCourseTitle = batch.course?.title || batch.course_title || batch.course_id || "";
+                const courseTitleClean = rawCourseTitle.replace(/^\s*Chuyên\s+đề\s*:\s*/i, "");
 
                 return (
-                  <tr key={batch.id} className="hover:bg-muted/30">
-                    <td className="px-5 py-3.5">
-                      <div className="font-semibold text-foreground flex items-center gap-2">
+                  <tr key={batch.id} className="hover:bg-slate-50/70 transition-colors">
+                    {/* Cột 1: Lớp / Batch (w-[260px]) */}
+                    <td className="px-4 py-3.5 align-top">
+                      <div className="font-semibold text-slate-900 leading-snug line-clamp-2">
                         {batch.title}
                         {isDemoRecord(batch) && (
-                          <span className="bg-rose-100 text-rose-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">
-                            Dữ liệu test
+                          <span className="inline-block bg-rose-100 text-rose-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ml-1.5 shrink-0">
+                            Test
                           </span>
                         )}
                       </div>
-                      <div className="text-muted-foreground text-xs">{batch.slug}</div>
+                      <div className="text-[11px] text-slate-400 font-mono truncate mt-0.5">{batch.slug}</div>
                     </td>
-                    <td className="px-5 py-3.5 text-muted-foreground font-medium">
-                      {batch.course?.title || batch.course_title || batch.course_id}
+
+                    {/* Cột 2: Khóa học (w-[220px]) */}
+                    <td className="px-4 py-3.5 align-top">
+                      <div className="text-slate-700 font-medium leading-snug line-clamp-2">
+                        {courseTitleClean || "Chưa chọn khóa"}
+                      </div>
                     </td>
-                    <td className="px-5 py-3.5 text-xs font-semibold text-slate-700">
-                      {instructorName}
+
+                    {/* Cột 3: Giảng viên (w-[120px]) */}
+                    <td className="px-4 py-3.5 align-top">
+                      <div className="font-semibold text-slate-700 truncate">{instructorName}</div>
                     </td>
-                    <td className="px-5 py-3.5">
+
+                    {/* Cột 4: Trạng thái (w-[110px]) */}
+                    <td className="px-4 py-3.5 align-top">
                       {regStatus === "open" && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          Đang mở đăng ký
+                        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 whitespace-nowrap">
+                          Mở đăng ký
                         </span>
                       )}
                       {regStatus === "closed" && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                        <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-rose-700 whitespace-nowrap">
                           Đã đóng
                         </span>
                       )}
                       {regStatus === "draft" && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 whitespace-nowrap">
                           Bản nháp
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3.5">
+
+                    {/* Cột 5: Buổi học (w-[110px]) */}
+                    <td className="px-4 py-3.5 align-top">
                       {sessionsCount > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-800 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">
-                          {sessionsCount} buổi học
+                        <span className="font-bold text-indigo-700 text-xs">
+                          {sessionsCount} buổi
                         </span>
                       ) : (
-                        <div className="flex flex-col gap-0.5">
-                          <span className="inline-flex items-center text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md w-max">
-                            Chưa có lịch học
-                          </span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-slate-400 text-xs">0 buổi</span>
+                          <span className="text-[10px] font-semibold text-amber-600">Chưa có lịch</span>
                         </div>
                       )}
                     </td>
-                    <td className="px-5 py-3.5 text-xs text-slate-600">
-                      {batch.max_participants ? `${batch.max_participants} chỗ` : "Không giới hạn"}
+
+                    {/* Cột 6: Số chỗ (w-[90px]) */}
+                    <td className="px-4 py-3.5 align-top text-slate-600 font-medium">
+                      {batch.max_participants ? `${batch.max_participants} chỗ` : "Không hạn chế"}
                     </td>
-                    <td className="px-5 py-3.5 text-xs text-muted-foreground">
+
+                    {/* Cột 7: Thời gian (w-[130px]) */}
+                    <td className="px-4 py-3.5 align-top text-slate-600 font-medium leading-relaxed">
                       {batch.start_date ? format(parseISO(batch.start_date), "dd/MM/yyyy") : "-"}
                       {batch.end_date ? ` – ${format(parseISO(batch.end_date), "dd/MM/yyyy")}` : ""}
                     </td>
-                    <td className="px-5 py-3.5 text-right space-x-2">
-                      <Link
-                        to="/admin/batches/$batchId"
-                        params={{ batchId: batch.id }}
-                        search={{ addSession: true } as any}
-                        className="inline-flex items-center justify-center gap-1 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 h-8 px-2.5 rounded-md"
-                      >
-                        + Thêm buổi học
-                      </Link>
-                      <Link 
-                        to="/admin/batches/$batchId/registrations" 
-                        params={{ batchId: batch.id }}
-                        className="inline-flex items-center justify-center gap-1 text-xs font-medium border border-input bg-background shadow-xs hover:bg-accent h-8 px-2.5 rounded-md"
-                      >
-                        <Users className="h-3.5 w-3.5" /> Leads
-                      </Link>
-                      <Link 
-                        to="/admin/batches/$batchId" 
-                        params={{ batchId: batch.id }}
-                        search={{ addSession: false } as any}
-                        className="inline-flex items-center justify-center gap-1 text-xs font-medium bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 h-8 px-2.5 rounded-md"
-                      >
-                        <Edit className="h-3.5 w-3.5" /> Sửa
-                      </Link>
+
+                    {/* Cột 8: Thao tác (w-[150px]) */}
+                    <td className="px-4 py-3.5 align-top">
+                      <div className="flex flex-col gap-1.5 min-w-[130px]">
+                        <Link
+                          to="/admin/batches/$batchId"
+                          params={{ batchId: batch.id }}
+                          search={{ addSession: true } as any}
+                          className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 h-7 px-2 rounded-lg transition-colors"
+                        >
+                          + Buổi
+                        </Link>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <Link 
+                            to="/admin/batches/$batchId/registrations" 
+                            params={{ batchId: batch.id }}
+                            className="inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 h-7 px-1.5 rounded-lg transition-colors"
+                          >
+                            <Users className="h-3 w-3 text-slate-500 shrink-0" /> Leads
+                          </Link>
+                          <Link 
+                            to="/admin/batches/$batchId" 
+                            params={{ batchId: batch.id }}
+                            search={{ addSession: false } as any}
+                            className="inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-indigo-600 bg-white hover:bg-indigo-50 border border-indigo-200 h-7 px-1.5 rounded-lg transition-colors"
+                          >
+                            <Edit className="h-3 w-3 text-indigo-500 shrink-0" /> Sửa
+                          </Link>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -233,3 +229,4 @@ function AdminBatchesIndexPage() {
     </div>
   );
 }
+
