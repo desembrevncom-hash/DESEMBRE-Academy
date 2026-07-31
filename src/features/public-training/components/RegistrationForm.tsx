@@ -61,7 +61,7 @@ export function RegistrationForm({ batch, onClose, onSuccess, initialNotes }: Re
     } catch (err: any) {
       console.error("[PublicRegistration Error]:", err);
       // Show user-friendly error message in Vietnamese
-      setErrorMsg("Không thể gửi đăng ký lúc này. Vui lòng thử lại sau hoặc liên hệ DESEMBRE Academy.");
+      setErrorMsg("Không thể gửi đăng ký lúc này. Vui lòng thử lại sau hoặc liên hệ DESEMBRE Training Center.");
     } finally {
       setIsSubmitting(false);
     }
