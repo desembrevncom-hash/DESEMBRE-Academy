@@ -17,6 +17,8 @@ import { instructors } from "@/data/instructors";
 import { courses } from "@/data/courses";
 import heroImg from "@/assets/hero-instructor.jpg";
 
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/config/site";
+
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
@@ -31,16 +33,16 @@ export const Route = createFileRoute("/about")({
         property: "og:description",
         content: "Tìm hiểu về DESEMBRE Training Center, đội ngũ giảng viên và giá trị cốt lõi.",
       },
-      { property: "og:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
-      { property: "og:url", content: "https://academy.desembre-vn.com/about" },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
+      { property: "og:url", content: `${SITE_URL}/about` },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Về chúng tôi — DESEMBRE Training Center" },
       { name: "twitter:description", content: "Tìm hiểu về DESEMBRE Training Center, đội ngũ giảng viên và giá trị cốt lõi." },
-      { name: "twitter:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
     ],
     links: [
-      { rel: "canonical", href: "https://academy.desembre-vn.com/about" },
+      { rel: "canonical", href: `${SITE_URL}/about` },
     ],
   }),
   component: AboutPage,

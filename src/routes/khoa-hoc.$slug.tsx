@@ -15,13 +15,15 @@ import { Loader2, BookOpen, Calendar, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/config/site";
+
 export const Route = createFileRoute("/khoa-hoc/$slug")({
   head: ({ params }) => {
     const slug = params.slug;
     const title = `Khóa học ${slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center`;
     const description = "Khoá đào tạo chuyên sâu chuẩn Y Khoa & Thẩm mỹ cao cấp tại DESEMBRE Training Center.";
-    const canonicalUrl = `https://academy.desembre-vn.com/khoa-hoc/${slug}`;
-    const defaultOgImage = "https://academy.desembre-vn.com/og/academy-home.jpg";
+    const canonicalUrl = `${SITE_URL}/khoa-hoc/${slug}`;
+    const defaultOgImage = DEFAULT_OG_IMAGE;
 
     return {
       meta: [

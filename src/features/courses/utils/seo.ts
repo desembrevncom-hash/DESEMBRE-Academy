@@ -1,4 +1,5 @@
 import type { CourseOutline } from "../types";
+import { DEFAULT_OG_IMAGE } from "@/config/site";
 
 /**
  * Kiểu nhẹ cho SEO meta — canonical source of truth.
@@ -39,7 +40,7 @@ export function buildCourseHeadMeta(meta: CourseMetaForSeo): Array<Record<string
   const safeThumbUrl =
     thumbUrl && (thumbUrl.startsWith("https://") || thumbUrl.startsWith("http://"))
       ? thumbUrl
-      : "https://academy.desembre-vn.com/og/academy-home.jpg";
+      : DEFAULT_OG_IMAGE;
   const thumbAlt = meta.marketing?.thumbnail_alt || title;
 
   const tags: Array<Record<string, string>> = [

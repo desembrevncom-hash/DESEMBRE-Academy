@@ -21,6 +21,8 @@ import { CatalogCourseCard } from "@/features/courses/components/CatalogCourseCa
 import { Loader2, AlertCircle } from "lucide-react";
 import heroImg from "@/assets/hero-banner.jpg";
 
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/config/site";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -28,16 +30,16 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Viện đào tạo thẩm mỹ da liễu chuẩn Y Khoa Hàn Quốc hàng đầu tại Việt Nam. Đào tạo kỹ thuật viên, chủ Spa chuyên nghiệp." },
       { property: "og:title", content: "DESEMBRE Training Center — Viện Đào Tạo Thẩm Mỹ & Da Liễu Chuẩn Hàn Quốc" },
       { property: "og:description", content: "Học nghề Spa chuyên nghiệp, cập nhật công nghệ trị liệu da chuẩn y khoa cùng chuyên gia DESEMBRE Training Center." },
-      { property: "og:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
-      { property: "og:url", content: "https://academy.desembre-vn.com/" },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
+      { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "DESEMBRE Training Center — Viện Đào Tạo Thẩm Mỹ & Da Liễu Chuẩn Hàn Quốc" },
       { name: "twitter:description", content: "Học nghề Spa chuyên nghiệp, cập nhật công nghệ trị liệu da chuẩn y khoa cùng chuyên gia DESEMBRE Training Center." },
-      { name: "twitter:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
     ],
     links: [
-      { rel: "canonical", href: "https://academy.desembre-vn.com/" },
+      { rel: "canonical", href: `${SITE_URL}/` },
     ],
   }),
   component: Home,

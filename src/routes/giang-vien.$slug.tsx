@@ -12,13 +12,15 @@ import { PublicEmptyState } from "@/features/public-training/components/PublicEm
 import { Loader2, User, Award, CheckCircle2, Calendar, Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/config/site";
+
 export const Route = createFileRoute("/giang-vien/$slug")({
   head: ({ params }) => {
     const slug = params.slug;
     const title = `Giảng viên ${slug.replace(/-/g, ' ').toUpperCase()} | DESEMBRE Training Center`;
     const description = "Chuyên gia đào tạo Da liễu & Thẩm mỹ chuẩn Y Khoa tại DESEMBRE Training Center.";
-    const canonicalUrl = `https://academy.desembre-vn.com/giang-vien/${slug}`;
-    const defaultOgImage = "https://academy.desembre-vn.com/og/academy-home.jpg";
+    const canonicalUrl = `${SITE_URL}/giang-vien/${slug}`;
+    const defaultOgImage = DEFAULT_OG_IMAGE;
 
     return {
       meta: [

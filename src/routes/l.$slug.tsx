@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { DynamicAcademyLandingPage } from "@/features/public-training/pages/DynamicAcademyLandingPage";
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/config/site";
 
 export const Route = createFileRoute("/l/$slug")({
   head: ({ params }) => {
     const slug = params.slug;
     const isSynergistic = slug === "synergistic-protocol";
     const canonicalUrl = isSynergistic
-      ? "https://academy.desembre-vn.com/synergistic-protocol"
-      : `https://academy.desembre-vn.com/l/${slug}`;
+      ? `${SITE_URL}/synergistic-protocol`
+      : `${SITE_URL}/l/${slug}`;
 
     const title = isSynergistic
       ? "SYNERGISTIC PROTOCOL | Khóa đào tạo protocol chuyên sâu | DESEMBRE Training Center"
@@ -23,13 +24,13 @@ export const Route = createFileRoute("/l/$slug")({
         { name: "description", content: description },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
-        { property: "og:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+        { property: "og:image", content: DEFAULT_OG_IMAGE },
         { property: "og:url", content: canonicalUrl },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
-        { name: "twitter:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+        { name: "twitter:image", content: DEFAULT_OG_IMAGE },
       ],
       links: [
         { rel: "canonical", href: canonicalUrl },

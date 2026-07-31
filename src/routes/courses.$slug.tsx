@@ -12,6 +12,8 @@ import { useAuth } from "@/features/auth/useAuth";
 import { useOptionalCourseRuntime } from "@/features/courses/useCourseRuntime";
 import { toast } from "sonner";
 
+import { SITE_URL } from "@/config/site";
+
 export const Route = createFileRoute("/courses/$slug")({
   loader: async ({ params }) => {
     // Fetch course meta server-side cho SSR head tags.
@@ -25,7 +27,7 @@ export const Route = createFileRoute("/courses/$slug")({
   head: ({ loaderData, params }) => ({
     meta: buildCourseHeadMeta(loaderData ?? null),
     links: [
-      { rel: "canonical", href: `https://academy.desembre-vn.com/courses/${params.slug}` },
+      { rel: "canonical", href: `${SITE_URL}/courses/${params.slug}` },
     ],
   }),
   component: CourseDetailPage,
