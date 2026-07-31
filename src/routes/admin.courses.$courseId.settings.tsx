@@ -31,7 +31,7 @@ function CourseSettingsPage() {
   const { courseId } = Route.useParams();
 
   // Load editor data
-  const { data: editorData } = useAcademyAdminCourseEditor(courseId);
+  const { data: editorData, refetch: refetchEditorData } = useAcademyAdminCourseEditor(courseId);
   const { data: categories, isLoading: isLoadingCategories, isError: isErrorCategories } = useAcademyAdminCategories();
   const updateMutation = useUpdateAcademyCourse();
   const { setSettingsDirty, setActiveMutation, isReadOnly } = useCourseEditorRegistry();
@@ -40,20 +40,26 @@ function CourseSettingsPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<UpdateCourseFormData>({
     resolver: zodResolver(updateCourseSchema) as any,
   });
 
+  const [restoring, setRestoring] = useState(false);
+  const [savingCategoryOnly, setSavingCategoryOnly] = useState(false);
+  const [archivedCategoryId, setArchivedCategoryId] = useState<string>("");
+
   // Hydrate the form when data is available
   useEffect(() => {
     if (editorData?.course) {
       const c = editorData.course;
+      const catId = (c as any).category_id || c.category?.id || null;
       reset({
         title: c.title,
         slug: c.slug,
         description: c.description || "",
-        category_id: c.category?.id || null,
+        category_id: catId,
         catalog_visibility: c.catalog_visibility,
         enrollment_policy: c.enrollment_policy,
         access_policy: c.access_policy,
@@ -61,6 +67,7 @@ function CourseSettingsPage() {
         cover_url: (c as any).cover_url || "",
         summary: (c as any).summary || "",
       });
+      setArchivedCategoryId(catId || "");
     }
   }, [editorData, reset]);
 
@@ -96,6 +103,7 @@ function CourseSettingsPage() {
       });
 
       toast.success("Đã lưu cài đặt khóa học thành công");
+      refetchEditorData();
     } catch (error: unknown) {
       const err = error as Record<string, unknown>;
       toast.error(
@@ -103,16 +111,6 @@ function CourseSettingsPage() {
       );
     }
   };
-
-  const [restoring, setRestoring] = useState(false);
-  const [savingCategoryOnly, setSavingCategoryOnly] = useState(false);
-  const [archivedCategoryId, setArchivedCategoryId] = useState<string>("");
-
-  useEffect(() => {
-    if (editorData?.course?.category?.id) {
-      setArchivedCategoryId(editorData.course.category.id);
-    }
-  }, [editorData]);
 
   const handleRestoreCourse = async () => {
     const confirmRestore = window.confirm(
@@ -133,7 +131,7 @@ function CourseSettingsPage() {
       if (restoreErr) throw restoreErr;
 
       toast.success("Đã khôi phục khóa học về dạng Bản nháp (Draft)!");
-      window.location.reload();
+      refetchEditorData();
     } catch (err: any) {
       toast.error(err.message || "Không thể khôi phục khóa học");
     } finally {
@@ -156,7 +154,9 @@ function CourseSettingsPage() {
 
       if (catErr) throw catErr;
 
+      setValue("category_id", realCatId);
       toast.success("Đã lưu phân loại khóa học thành công!");
+      await refetchEditorData();
     } catch (err: any) {
       toast.error(err.message || "Không thể cập nhật danh mục khóa học");
     } finally {

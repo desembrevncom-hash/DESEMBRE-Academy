@@ -107,11 +107,26 @@ export const academyAdminCoursesApi = {
     const client = getClientOrThrow();
     const { data, error } = await client.rpc("admin_list_academy_categories");
 
-    if (error) {
-      handleRpcError(error);
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data as AcademyAdminCategory[];
     }
 
-    return (data as AcademyAdminCategory[]) || [];
+    // Direct table fetch from public.course_categories to guarantee real DB records
+    const { data: dbCategories } = await client
+      .from("course_categories")
+      .select("id, name, slug")
+      .order("name");
+
+    if (dbCategories && dbCategories.length > 0) {
+      return dbCategories as AcademyAdminCategory[];
+    }
+
+    const { data: fallbackCategories } = await client
+      .from("categories")
+      .select("id, name, slug")
+      .order("name");
+
+    return (fallbackCategories as AcademyAdminCategory[]) || [];
   },
 
   async listCategoryManager(): Promise<AcademyAdminCategoryManagerItem[]> {

@@ -5,7 +5,7 @@ import { useAcademyAdminCourses, useArchiveAcademyCourse, useAcademyAdminCategor
 import { academyAdminCoursesApi } from "@/features/admin/services/academyAdminCoursesApi";
 import type { AcademyCourseStatus } from "@/features/admin/types";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
-import { PREDEFINED_COURSE_TYPES, getCourseTypeMeta } from "@/features/admin/constants";
+import { PREDEFINED_COURSE_TYPES, getCourseTypeMeta, resolveCourseType } from "@/features/admin/constants";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Search, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -23,7 +23,7 @@ function AdminCourseList() {
   const [updatingCourseId, setUpdatingCourseId] = useState<string | null>(null);
 
   const archiveMutation = useArchiveAcademyCourse();
-  const { data: dbCategories = [] } = useAcademyAdminCategories();
+  const { data: dbCategories = [], refetch: refetchCategories } = useAcademyAdminCategories();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -68,16 +68,12 @@ function AdminCourseList() {
     }
 
     if (categoryFilter !== "all") {
-      const dbCat = dbCategories.find(c => c.id === course.category_id);
-      const catSlug = course.category_slug || dbCat?.slug;
-      const catName = course.category_name || dbCat?.name;
-      const typeMeta = getCourseTypeMeta(catSlug || catName);
-
+      const resolved = resolveCourseType(course.category_id, dbCategories);
       if (categoryFilter === "uncategorized") {
-        if (course.category_id || typeMeta) return false;
+        if (!resolved.isUncategorized) return false;
       } else {
-        const matchesSlug = catSlug === categoryFilter;
-        const matchesMeta = typeMeta?.slug === categoryFilter;
+        const matchesSlug = resolved.category?.slug === categoryFilter;
+        const matchesMeta = resolved.typeMeta?.slug === categoryFilter;
         if (!matchesSlug && !matchesMeta) return false;
       }
     }
@@ -127,9 +123,8 @@ function AdminCourseList() {
             }
           } catch (createErr) {
             console.warn("Could not create category via RPC, searching DB table directly", createErr);
-            // Search categories table directly
             const { data: catRow } = await supabase
-              .from("categories")
+              .from("course_categories")
               .select("id")
               .or(`slug.eq.${preSlug},name.ilike.%${catName}%`)
               .maybeSingle();
@@ -153,6 +148,7 @@ function AdminCourseList() {
       if (updateErr) throw updateErr;
 
       toast.success("Cập nhật loại khóa học thành công!");
+      await refetchCategories();
       queryClient.invalidateQueries({ queryKey: [...academyAdminKeys.all] });
       await refetch();
     } catch (err: any) {
@@ -271,17 +267,7 @@ function AdminCourseList() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {courses?.map((course) => {
-                  const dbCat = dbCategories.find((c) => c.id === course.category_id);
-                  const catSlug = course.category_slug || dbCat?.slug;
-                  const catName = course.category_name || dbCat?.name;
-                  const typeMeta = getCourseTypeMeta(catSlug || catName);
-                  const badgeLabel = catName || typeMeta?.name;
-
-                  const currentSelectVal =
-                    course.category_id ||
-                    dbCat?.id ||
-                    (typeMeta ? mergedCategories.find((c) => c.slug === typeMeta.slug || c.name === typeMeta.name)?.id : "") ||
-                    "";
+                  const resolved = resolveCourseType(course.category_id, dbCategories);
 
                   return (
                     <tr key={course.id} className="hover:bg-slate-50/70 transition-colors">
@@ -300,23 +286,15 @@ function AdminCourseList() {
                       {/* Cột Loại khóa học / Badge + Quick Change */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5">
-                          {badgeLabel ? (
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
-                                typeMeta?.badgeClass || "bg-indigo-50 text-indigo-700 border-indigo-200"
-                              }`}
-                            >
-                              {badgeLabel}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200">
-                              Chưa phân loại
-                            </span>
-                          )}
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${resolved.badgeClass}`}
+                          >
+                            {resolved.label}
+                          </span>
                           
                           {/* Quick Change Select Dropdown */}
                           <select
-                            value={currentSelectVal}
+                            value={course.category_id || ""}
                             onChange={(e) => handleQuickCategoryChange(course.id, e.target.value)}
                             disabled={updatingCourseId === course.id}
                             className="text-[10px] bg-transparent text-indigo-600 hover:text-indigo-800 font-bold border border-indigo-200/80 rounded px-1 py-0.5 focus:outline-none cursor-pointer"

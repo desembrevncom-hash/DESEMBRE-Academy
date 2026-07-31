@@ -74,3 +74,38 @@ export function getCourseTypeMeta(slugOrName?: string | null): CourseTypeDefinit
   );
 }
 
+export function resolveCourseType(
+  categoryId: string | null | undefined,
+  categories: { id: string; name: string; slug: string }[] = []
+) {
+  if (!categoryId) {
+    return {
+      category: null,
+      typeMeta: null,
+      label: "Chưa phân loại",
+      isUncategorized: true,
+      badgeClass: "bg-slate-100 text-slate-500 border-slate-200",
+    };
+  }
+
+  const foundCat = categories.find((c) => c.id === categoryId);
+  if (!foundCat) {
+    return {
+      category: null,
+      typeMeta: null,
+      label: "Loại không xác định",
+      isUncategorized: false,
+      badgeClass: "bg-amber-50 text-amber-700 border-amber-200",
+    };
+  }
+
+  const typeMeta = getCourseTypeMeta(foundCat.slug) || getCourseTypeMeta(foundCat.name);
+  return {
+    category: foundCat,
+    typeMeta,
+    label: foundCat.name,
+    isUncategorized: false,
+    badgeClass: typeMeta?.badgeClass || "bg-indigo-50 text-indigo-700 border-indigo-200",
+  };
+}
+
