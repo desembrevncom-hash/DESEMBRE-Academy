@@ -14,6 +14,7 @@ import {
   LandingTrustItem,
   LandingFaqItem,
 } from "@/features/admin/services/academyAdminLandingPagesApi";
+import { getPublicTrainingSchedule } from "@/features/public-training/services/publicTrainingApi";
 import { academyAdminCoursesApi } from "@/features/admin/services/academyAdminCoursesApi";
 import type { AcademyAdminCourseListItem } from "@/features/admin/types";
 import {
@@ -39,6 +40,7 @@ function generateSlug(title: string) {
 function AdminAcademyLandingsPage() {
   const [landings, setLandings] = useState<AcademyLandingPage[]>([]);
   const [courses, setCourses] = useState<AcademyAdminCourseListItem[]>([]);
+  const [publicSchedule, setPublicSchedule] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +64,13 @@ function AdminAcademyLandingsPage() {
       }
 
       // Ensure default landing pages are listed in Admin table
-      const defaultSlugs = ["biological-trigger", "targeted-modulation"];
+      const defaultSlugs = [
+        "biological-trigger",
+        "targeted-modulation",
+        "3-phase-biological-peel-demo",
+        "premium-glass-skin-program",
+      ];
+
       for (const dSlug of defaultSlugs) {
         if (!landingsData.some((item) => item.slug === dSlug)) {
           const defaultLanding = await getLandingPageBySlug(dSlug);
@@ -78,6 +86,15 @@ function AdminAcademyLandingsPage() {
         console.warn("Failed to load courses for dropdown:", err);
       }
 
+      // Fetch public training schedule to match valid public batches for QA Checklist
+      let publicBatches: any[] = [];
+      try {
+        publicBatches = await getPublicTrainingSchedule();
+      } catch (err: any) {
+        console.warn("Failed to load public training schedule:", err);
+      }
+
+      setPublicSchedule(publicBatches);
       setLandings(landingsData);
       setCourses(coursesData);
     } catch (err: any) {
@@ -228,122 +245,177 @@ function AdminAcademyLandingsPage() {
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase font-bold tracking-wider">
                     <tr>
                       <th className="px-6 py-3.5">Tiêu đề Landing</th>
-                      <th className="px-6 py-3.5">Đường dẫn (Slug)</th>
-                      <th className="px-6 py-3.5">Kiểm tra Thành phần</th>
+                      <th className="px-6 py-3.5">Slug URL</th>
+                      <th className="px-6 py-3.5">QA Checklist & Ads Readiness</th>
                       <th className="px-6 py-3.5">Trạng thái</th>
                       <th className="px-6 py-3.5">Cập nhật</th>
                       <th className="px-6 py-3.5 text-right">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {landings.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-slate-900">{item.title}</div>
-                          {item.hero_badge && (
-                            <div className="text-xs text-indigo-600 font-medium truncate max-w-xs">
-                              {item.hero_badge}
+                    {landings.map((item) => {
+                      const hasCourse = !!(item.course_id || item.course);
+                      const hasCover = !!item.hero_cover_url;
+                      const hasAudience = !!(item.audience && item.audience.length > 0);
+                      const hasOutcomes = !!(item.outcomes && item.outcomes.length > 0);
+                      const hasFaqs = !!(item.faqs && item.faqs.length > 0);
+                      const hasSeo = !!(item.seo_title && item.seo_description);
+
+                      // Check if matching public batch exists for this campaign slug/course
+                      const hasPublicBatch = publicSchedule.some((b: any) => {
+                        const cSlug = (b.course?.slug || "").toLowerCase().trim();
+                        const bSlug = (b.slug || "").toLowerCase().trim();
+                        const targetSlug = item.slug.toLowerCase().trim();
+                        return cSlug === targetSlug || bSlug === targetSlug || cSlug.includes(targetSlug) || targetSlug.includes(cSlug);
+                      });
+
+                      const hasFullContent = hasCover && hasAudience && hasOutcomes && hasFaqs && hasSeo;
+
+                      let readinessBadge = {
+                        label: "⚪ Bản nháp (Draft)",
+                        cls: "bg-slate-100 text-slate-600 border-slate-200",
+                      };
+
+                      if (item.is_published) {
+                        if (hasFullContent && hasPublicBatch) {
+                          readinessBadge = {
+                            label: "🟢 Sẵn sàng chạy Ads",
+                            cls: "bg-emerald-50 text-emerald-700 border-emerald-300 font-bold",
+                          };
+                        } else if (hasFullContent && !hasPublicBatch) {
+                          readinessBadge = {
+                            label: "🟡 Thiếu Lớp Public (CTA Thông Báo)",
+                            cls: "bg-amber-50 text-amber-700 border-amber-300 font-bold",
+                          };
+                        } else {
+                          readinessBadge = {
+                            label: "🔵 Cần bổ sung nội dung",
+                            cls: "bg-sky-50 text-sky-700 border-sky-300 font-bold",
+                          };
+                        }
+                      }
+
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-slate-900">{item.title}</div>
+                            {item.hero_badge && (
+                              <div className="text-xs text-indigo-600 font-medium truncate max-w-xs">
+                                {item.hero_badge}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className="px-6 py-4 text-xs font-mono text-slate-600">
+                            /l/{item.slug}
+                          </td>
+
+                          <td className="px-6 py-4 text-xs space-y-1.5">
+                            <div>
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] border ${readinessBadge.cls}`}>
+                                {readinessBadge.label}
+                              </span>
                             </div>
-                          )}
-                        </td>
 
-                        <td className="px-6 py-4 text-xs font-mono text-slate-600">
-                          /l/{item.slug}
-                        </td>
+                            <div className="flex flex-wrap gap-1">
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${hasCourse ? "bg-slate-100 text-slate-700" : "bg-amber-50 text-amber-700"}`}>
+                                {hasCourse ? "✓ Khóa" : "! Khóa"}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${hasCover ? "bg-slate-100 text-slate-700" : "bg-amber-50 text-amber-700"}`}>
+                                {hasCover ? "✓ Cover" : "! Cover"}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${hasAudience ? "bg-slate-100 text-slate-700" : "bg-amber-50 text-amber-700"}`}>
+                                {hasAudience ? "✓ Audience" : "! Audience"}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${hasOutcomes ? "bg-slate-100 text-slate-700" : "bg-amber-50 text-amber-700"}`}>
+                                {hasOutcomes ? "✓ Outcomes" : "! Outcomes"}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${hasFaqs ? "bg-slate-100 text-slate-700" : "bg-amber-50 text-amber-700"}`}>
+                                {hasFaqs ? "✓ FAQ" : "! FAQ"}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${hasSeo ? "bg-slate-100 text-slate-700" : "bg-amber-50 text-amber-700"}`}>
+                                {hasSeo ? "✓ SEO" : "! SEO"}
+                              </span>
+                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${hasPublicBatch ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>
+                                {hasPublicBatch ? "✓ Batch" : "! 0 Batch"}
+                              </span>
+                            </div>
+                          </td>
 
-                        <td className="px-6 py-4 text-xs space-y-1">
-                          <div className="flex flex-wrap gap-1.5">
-                            <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                              item.course_id || item.course ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
-                            }`}>
-                              {item.course_id || item.course ? "✓ Khóa học" : "! Tự do"}
-                            </span>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => handleTogglePublish(item)}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
+                                item.is_published
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                  : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                              }`}
+                            >
+                              {item.is_published ? (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Đã xuất bản</span>
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>Bản nháp</span>
+                                </>
+                              )}
+                            </button>
+                          </td>
 
-                            <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                              item.hero_cover_url ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-600 border border-slate-200"
-                            }`}>
-                              {item.hero_cover_url ? "✓ Cover" : "Thiếu Cover"}
-                            </span>
+                          <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
+                            {format(parseISO(item.updated_at), "dd/MM/yyyy HH:mm")}
+                          </td>
 
-                            <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-[11px] font-semibold">
-                              ✓ Form CTA
-                            </span>
-                          </div>
-                        </td>
+                          <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                            <a
+                              href={`/admin/academy-landings/${item.slug}/preview`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
+                            >
+                              <span>Preview</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
 
-                        <td className="px-6 py-4">
-                          <button
-                            onClick={() => handleTogglePublish(item)}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-colors ${
-                              item.is_published
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                                : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
-                            }`}
-                          >
-                            {item.is_published ? (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>Đã xuất bản</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="w-3.5 h-3.5 text-slate-400" />
-                                <span>Bản nháp</span>
-                              </>
-                            )}
-                          </button>
-                        </td>
+                            <a
+                              href={`/l/${item.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                            >
+                              <span>Xem public</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
 
-                        <td className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap">
-                          {format(parseISO(item.updated_at), "dd/MM/yyyy HH:mm")}
-                        </td>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingLanding(item)}
+                              className="rounded-lg text-slate-600 hover:text-slate-900"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
 
-                        <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-                          <a
-                            href={`/admin/academy-landings/${item.slug}/preview`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
-                          >
-                            <span>Preview</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-
-                          <a
-                            href={`/l/${item.slug}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"
-                          >
-                            <span>Xem public</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setEditingLanding(item)}
-                            className="rounded-lg text-slate-600 hover:text-slate-900"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={deletingId === item.id}
-                            onClick={() => handleDelete(item.id, item.title)}
-                            className="rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                          >
-                            {deletingId === item.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-3.5 w-3.5" />
-                            )}
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={deletingId === item.id}
+                              onClick={() => handleDelete(item.id, item.title)}
+                              className="rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                            >
+                              {deletingId === item.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

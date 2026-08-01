@@ -319,6 +319,110 @@ export async function getLandingPageBySlug(slug: string): Promise<AcademyLanding
     };
   }
 
+  // Fallback default landing configuration for 3-PHASE BIOLOGICAL PEEL DEMO campaign
+  if (normalizedSlug === "3-phase-biological-peel-demo") {
+    return {
+      id: "default-3-phase-biological-peel-demo-landing",
+      title: "Chuyên đề: 3-PHASE BIOLOGICAL PEEL DEMO",
+      slug: "3-phase-biological-peel-demo",
+      course_id: null,
+      hero_badge: "Demo Thao tác Lâm sàng • Online Zoom",
+      hero_title: "Chuyên đề: 3-PHASE BIOLOGICAL PEEL DEMO",
+      hero_subtitle: "Kỹ thuật Peel Sinh học 3 Pha chuẩn Y Khoa giúp tái tạo da đa tầng an toàn & hiệu quả vượt trội.",
+      hero_cover_url: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&auto=format&fit=crop",
+      primary_cta_label: "Đăng ký giữ chỗ ngay",
+      secondary_cta_label: "Xem lịch học chi tiết",
+      audience: [
+        {
+          title: "Chủ Spa & Thẩm mỹ viện",
+          description: "Muốn trải nghiệm thực tế hiệu quả của công nghệ Peel sinh học 3 pha trước khi chuyển giao."
+        },
+        {
+          title: "Kỹ thuật viên Thẩm mỹ",
+          description: "Muốn quan sát trực tiếp kỹ thuật thao tác lâm sàng 3 pha và quy trình phục hồi làm dịu da."
+        }
+      ],
+      outcomes: [
+        {
+          title: "Quy trình Peel 3 Pha Chuẩn Y Khoa",
+          description: "Làm chủ từng bước trong liệu trình Peel sinh học 3 pha từ chuẩn bị da, thao tác đến phục hồi."
+        },
+        {
+          title: "Kỹ thuật Làm dịu & Bảo vệ Da",
+          description: "Nắm vững kỹ thuật dập tắt kích ứng tức thì và dặn dò khách hàng chăm sóc tại nhà."
+        }
+      ],
+      curriculum_fallback: [],
+      trust_items: [
+        { title: "Chứng nhận Tham gia Demo", description: "Cấp bởi DESEMBRE Training Center", badge: "Uy tín" }
+      ],
+      faqs: [
+        {
+          q: "Khóa Demo có phí tham gia không?",
+          a: "Buổi Demo được tổ chức miễn phí dành cho các đối tác, chủ spa và kỹ thuật viên ngành làm đẹp."
+        }
+      ],
+      seo_title: "Chuyên đề 3-PHASE BIOLOGICAL PEEL DEMO | DESEMBRE Training Center",
+      seo_description: "Đăng ký tham gia demo Peel sinh học 3 pha chuẩn Y Khoa cùng chuyên gia DESEMBRE.",
+      og_image_url: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&auto=format&fit=crop",
+      is_published: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  // Fallback default landing configuration for PREMIUM GLASS SKIN PROGRAM campaign
+  if (normalizedSlug === "premium-glass-skin-program") {
+    return {
+      id: "default-premium-glass-skin-program-landing",
+      title: "Chuyên đề: PREMIUM GLASS SKIN PROGRAM",
+      slug: "premium-glass-skin-program",
+      course_id: null,
+      hero_badge: "Chương trình Cao cấp • Online & Hands-on",
+      hero_title: "Chuyên đề: PREMIUM GLASS SKIN PROGRAM",
+      hero_subtitle: "Kỹ thuật Phục hồi Da Căng bóng Glass Skin chuẩn Clinic Hàn Quốc với HA & Peptide Tầng sâu.",
+      hero_cover_url: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&auto=format&fit=crop",
+      primary_cta_label: "Đăng ký giữ chỗ ngay",
+      secondary_cta_label: "Xem chi tiết chương trình",
+      audience: [
+        {
+          title: "Clinic / Spa Cao Cấp",
+          description: "Muốn sở hữu kịch bản liệu trình Glass Skin mũi nhọn thu hút khách hàng phân khúc cao cấp."
+        },
+        {
+          title: "Kỹ thuật viên & Chuyên viên Phục hồi",
+          description: "Cần nâng cao tay nghề cấp ẩm tầng sâu và phục hồi màng lipid da chuyên sâu."
+        }
+      ],
+      outcomes: [
+        {
+          title: "Kỹ thuật Căng bóng Da Tầng sâu",
+          description: "Hiểu rõ cơ chế thẩm thấu HA đa phân tử kết hợp huyết thanh Peptide tái cấu trúc da."
+        },
+        {
+          title: "Thiết kế Liệu trình Thẩm mỹ Đột phá",
+          description: "Xây dựng kịch bản chăm sóc da mướt mịn, duy trì hiệu quả căng bóng lâu dài."
+        }
+      ],
+      curriculum_fallback: [],
+      trust_items: [
+        { title: "Chứng nhận Hoàn thành", description: "Cấp bởi DESEMBRE Training Center", badge: "Uy tín" }
+      ],
+      faqs: [
+        {
+          q: "Liệu trình Glass Skin áp dụng cho loại da nào?",
+          a: "Liệu trình áp dụng cho da khô, da mất nước, da mệt mỏi thiếu sức sống và da cần phục hồi sau xâm lấn."
+        }
+      ],
+      seo_title: "Chuyên đề PREMIUM GLASS SKIN PROGRAM | DESEMBRE Training Center",
+      seo_description: "Đăng ký chuyên đề PREMIUM GLASS SKIN PROGRAM - Liệu trình căng bóng da chuẩn Clinic Hàn Quốc.",
+      og_image_url: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&auto=format&fit=crop",
+      is_published: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
   // Dynamic Fallback for any valid training campaign slug
   const titleFormatted = normalizedSlug
     .split("-")
