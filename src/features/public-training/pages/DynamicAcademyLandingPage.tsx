@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -127,10 +127,33 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
     }
   };
 
+  const hasTrackedView = useRef(false);
+
   useEffect(() => {
     loadLandingData();
-    trackLandingEvent("campaign_landing_view", { slug, canonical_path: canonicalPath || `/l/${slug}` });
-  }, [slug, canonicalPath]);
+    if (!hasTrackedView.current) {
+      hasTrackedView.current = true;
+
+      let utm_source: string | undefined;
+      let utm_medium: string | undefined;
+      let utm_campaign: string | undefined;
+
+      if (typeof window !== "undefined") {
+        const sp = new URLSearchParams(window.location.search);
+        utm_source = sp.get("utm_source") || undefined;
+        utm_medium = sp.get("utm_medium") || undefined;
+        utm_campaign = sp.get("utm_campaign") || undefined;
+      }
+
+      trackLandingEvent("landing_view", {
+        campaign_slug: slug,
+        source: "landing_page",
+        utm_source,
+        utm_medium,
+        utm_campaign,
+      });
+    }
+  }, [slug]);
 
   const coverUrl = useMemo(() => {
     if (landing?.hero_cover_url) return landing.hero_cover_url;
@@ -171,17 +194,26 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
       batch_id: batch.id,
       batch_title: batch.title,
       campaign_slug: slug,
+      source: "landing_page",
       utm_source,
       utm_medium,
       utm_campaign,
     });
     setInitialNotes(notes);
     setRegisteringBatch(batch);
-    trackLandingEvent("campaign_registration_open", { batch_id: batch.id, campaign_slug: slug });
+    trackLandingEvent("registration_form_open", {
+      batch_id: batch.id,
+      batch_title: batch.title,
+      campaign_slug: slug,
+      source: "landing_page",
+      utm_source,
+      utm_medium,
+      utm_campaign,
+    });
   }, [slug]);
 
   const handleOpenConsult = useCallback(() => {
-    trackLandingEvent("campaign_consult_cta_click", { slug });
+    trackLandingEvent("landing_cta_click", { campaign_slug: slug, source: "landing_page" });
     if (batches.length > 0) {
       handleOpenRegister(batches[0], `Tôi muốn được tư vấn thêm về khóa ${landing?.title || ""} trước khi đăng ký.`);
     } else {
@@ -198,11 +230,13 @@ export function DynamicAcademyLandingPage({ slug, canonicalPath }: DynamicAcadem
     if (registeringBatch) {
       const title = registeringBatch.course?.title || registeringBatch.title;
       setSuccessBatchTitle(title);
-      if (isDuplicate) {
-        trackLandingEvent("campaign_duplicate_registration", { batch_title: title, slug });
-      } else {
-        trackLandingEvent("campaign_registration_success", { batch_title: title, slug });
-      }
+      trackLandingEvent("registration_submit_success", {
+        batch_id: registeringBatch.id,
+        batch_title: title,
+        campaign_slug: slug,
+        source: "landing_page",
+        duplicate: !!isDuplicate,
+      });
     }
     setIsDuplicateRegistration(!!isDuplicate);
     setRegisteringBatch(null);

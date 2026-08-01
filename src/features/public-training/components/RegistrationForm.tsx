@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { PublicCourseBatch, submitPublicCourseRegistration } from "../services/publicTrainingApi";
 import { formatDateSafe, getFormatConfig } from "../utils/formatters";
+import { trackLandingEvent } from "../utils/landingTracking";
 import { X, Loader2, Calendar, MapPin, ShieldCheck, User, Phone, Mail, GraduationCap } from "lucide-react";
 
 const registrationSchema = z.object({
@@ -70,6 +71,19 @@ export function RegistrationForm({
       utm_campaign = searchParams.get("utm_campaign") || undefined;
     }
 
+    const effectiveSource = source || (campaignSlug ? "landing_page" : "public_schedule");
+    const effectiveCampaign = campaignSlug || (effectiveSource === "landing_page" ? "biological-trigger" : undefined);
+
+    trackLandingEvent("registration_submit_attempt", {
+      batch_id: batch.id,
+      batch_title: batch.title,
+      campaign_slug: effectiveCampaign,
+      source: effectiveSource,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+    });
+
     try {
       const res = await submitPublicCourseRegistration({
         batchId: batch.id,
@@ -77,22 +91,46 @@ export function RegistrationForm({
         phone: values.phone,
         email: values.email || undefined,
         notes: values.notes || undefined,
-        source: source || (campaignSlug ? "landing_page" : "public_schedule"),
-        campaign_slug: campaignSlug || (source === "landing_page" ? "biological-trigger" : undefined),
+        source: effectiveSource,
+        campaign_slug: effectiveCampaign,
         utm_source,
         utm_medium,
         utm_campaign,
       });
 
       if (res && res.ok !== false) {
+        trackLandingEvent("registration_submit_success", {
+          batch_id: batch.id,
+          batch_title: batch.title,
+          campaign_slug: effectiveCampaign,
+          source: effectiveSource,
+          registration_id: res.registration_id,
+          duplicate: !!res.duplicate,
+          utm_source,
+          utm_medium,
+          utm_campaign,
+        });
         onSuccess(!!res.duplicate);
       } else {
-        setErrorMsg(res?.error || "Không thể gửi đăng ký lúc này. Vui lòng thử lại sau hoặc liên hệ DESEMBRE Training Center.");
+        const errorText = res?.error || "Không thể gửi đăng ký lúc này. Vui lòng thử lại sau hoặc liên hệ DESEMBRE Training Center.";
+        setErrorMsg(errorText);
+        trackLandingEvent("registration_submit_error", {
+          batch_id: batch.id,
+          campaign_slug: effectiveCampaign,
+          source: effectiveSource,
+          error_message: errorText,
+        });
       }
     } catch (err: any) {
       console.error("[PublicRegistration Error]:", err);
-      // Show user-friendly error message in Vietnamese
-      setErrorMsg("Không thể gửi đăng ký lúc này. Vui lòng thử lại sau hoặc liên hệ DESEMBRE Training Center.");
+      const errorText = "Không thể gửi đăng ký lúc này. Vui lòng thử lại sau hoặc liên hệ DESEMBRE Training Center.";
+      setErrorMsg(errorText);
+      trackLandingEvent("registration_submit_error", {
+        batch_id: batch.id,
+        campaign_slug: effectiveCampaign,
+        source: effectiveSource,
+        error_message: err?.message || errorText,
+      });
     } finally {
       setIsSubmitting(false);
     }
