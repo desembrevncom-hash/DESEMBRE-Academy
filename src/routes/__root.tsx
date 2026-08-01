@@ -125,9 +125,14 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 import { AuthProvider } from "@/features/auth/AuthProvider";
+import { initAdsTracking } from "@/features/public-training/tracking/pixelSdkLoader";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    initAdsTracking();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

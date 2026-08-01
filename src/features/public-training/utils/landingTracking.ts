@@ -49,6 +49,22 @@ export function trackLandingEvent(eventName: LandingEventName | string, payload?
     console.debug(`[Landing Tracking Event: ${eventName}]`, fullPayload);
   }
 
+  // Sanitized payload: EXPLICITLY exclude PII (full_name, phone, email, notes) from ad pixels
+  const sanitizedPayload = {
+    campaign_slug: payload?.campaign_slug,
+    source: payload?.source,
+    utm_source: payload?.utm_source,
+    utm_medium: payload?.utm_medium,
+    utm_campaign: payload?.utm_campaign,
+    course_slug: payload?.course_slug,
+    batch_id: payload?.batch_id,
+    batch_title: payload?.batch_title,
+    registration_id: payload?.registration_id,
+    duplicate: payload?.duplicate,
+    timestamp: new Date().toISOString(),
+    url: window.location.href,
+  };
+
   try {
     const win = window as any;
     const isSuccessConversion = eventName === "registration_submit_success";
@@ -56,28 +72,28 @@ export function trackLandingEvent(eventName: LandingEventName | string, payload?
     // 1. Google Analytics 4 / Tag Manager
     if (typeof win.gtag === "function") {
       if (isSuccessConversion) {
-        win.gtag("event", "generate_lead", fullPayload);
+        win.gtag("event", "generate_lead", sanitizedPayload);
       } else {
-        win.gtag("event", eventName, fullPayload);
+        win.gtag("event", eventName, sanitizedPayload);
       }
     }
 
     // 2. Meta (Facebook) Pixel
     if (typeof win.fbq === "function") {
       if (isSuccessConversion) {
-        win.fbq("track", "Lead", fullPayload);
+        win.fbq("track", "Lead", sanitizedPayload);
       } else {
-        win.fbq("trackCustom", eventName, fullPayload);
+        win.fbq("trackCustom", eventName, sanitizedPayload);
       }
     }
 
     // 3. TikTok Pixel
     if (typeof win.ttq === "object" && typeof win.ttq.track === "function") {
       if (isSuccessConversion) {
-        win.ttq.track("SubmitForm", fullPayload);
-        win.ttq.track("CompleteRegistration", fullPayload);
+        win.ttq.track("SubmitForm", sanitizedPayload);
+        win.ttq.track("CompleteRegistration", sanitizedPayload);
       } else {
-        win.ttq.track(eventName, fullPayload);
+        win.ttq.track(eventName, sanitizedPayload);
       }
     }
   } catch (err) {

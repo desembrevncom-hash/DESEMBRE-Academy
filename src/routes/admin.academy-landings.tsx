@@ -15,6 +15,7 @@ import {
   LandingFaqItem,
 } from "@/features/admin/services/academyAdminLandingPagesApi";
 import { getPublicTrainingSchedule } from "@/features/public-training/services/publicTrainingApi";
+import { getTrackingConfigStatus } from "@/features/public-training/tracking/pixelSdkLoader";
 import { academyAdminCoursesApi } from "@/features/admin/services/academyAdminCoursesApi";
 import type { AcademyAdminCourseListItem } from "@/features/admin/types";
 import {
@@ -159,6 +160,58 @@ function AdminAcademyLandingsPage() {
           </Button>
         )}
       </div>
+
+      {/* Ads Tracking Config Status Widget */}
+      {(() => {
+        const trackingStatus = getTrackingConfigStatus();
+        return (
+          <div className="bg-slate-900 text-white p-4 sm:p-5 rounded-2xl border border-slate-800 shadow-md">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-indigo-400" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Cấu Hình Ads Tracking SDK (Meta / TikTok / GA4)
+                </span>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                trackingStatus.isEnabled ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-slate-800 text-slate-400 border border-slate-700"
+              }`}>
+                {trackingStatus.isEnabled ? "🟢 Ads Tracking: ENABLED" : "⚪ Ads Tracking: DISABLED (Env)"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">Meta Pixel</span>
+                <span className={`font-semibold ${trackingStatus.metaPixel.configured ? "text-emerald-400" : "text-slate-500"}`}>
+                  {trackingStatus.metaPixel.maskedId}
+                </span>
+              </div>
+
+              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">TikTok Pixel</span>
+                <span className={`font-semibold ${trackingStatus.tikTokPixel.configured ? "text-emerald-400" : "text-slate-500"}`}>
+                  {trackingStatus.tikTokPixel.maskedId}
+                </span>
+              </div>
+
+              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">GA4 Measurement</span>
+                <span className={`font-semibold ${trackingStatus.ga4.configured ? "text-emerald-400" : "text-slate-500"}`}>
+                  {trackingStatus.ga4.maskedId}
+                </span>
+              </div>
+
+              <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80">
+                <span className="text-slate-400 block text-[10px] font-bold uppercase mb-0.5">GTM Container</span>
+                <span className={`font-semibold ${trackingStatus.gtm.configured ? "text-emerald-400" : "text-slate-500"}`}>
+                  {trackingStatus.gtm.maskedId}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Form Area */}
       {(isCreating || editingLanding) && (
