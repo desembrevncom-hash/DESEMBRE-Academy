@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, HelpCircle } from "lucide-react";
+import { ArrowLeft, Calendar, HelpCircle, Sparkles } from "lucide-react";
 import { AcademyLandingPage } from "@/features/admin/services/academyAdminLandingPagesApi";
 import { PublicCourseBatch } from "@/features/public-training/services/publicTrainingApi";
 import { trackLandingEvent } from "@/features/public-training/utils/landingTracking";
@@ -64,10 +64,18 @@ export function CampaignLandingTemplate({
     }
   }, [slug]);
 
+  const isPreview = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const sp = new URLSearchParams(window.location.search);
+    return sp.get("preview") === "1";
+  }, []);
+
+  const isPublished = landing?.is_published ?? true;
+
   const hasPublicBatch = batches.length > 0;
   const openBatch = hasPublicBatch ? batches[0] : null;
 
-  const title = landing?.title || openBatch?.course?.title || openBatch?.title || `Chuyên đề ${slug}`;
+  const title = landing?.hero_title || landing?.title || openBatch?.course?.title || openBatch?.title || `Chuyên đề ${slug}`;
   const subtitle = landing?.hero_subtitle || openBatch?.course?.summary || null;
   const badge = landing?.hero_badge || null;
 
@@ -169,8 +177,42 @@ export function CampaignLandingTemplate({
     );
   }
 
+  // Draft Guard: If not published and not in preview mode, render clean Not Published screen
+  if (!isPublished && !isPreview) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans">
+        <SiteHeader />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="max-w-md w-full space-y-4 bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl">
+            <div className="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/20">
+              <Calendar className="w-8 h-8" />
+            </div>
+            <h2 className="text-xl font-extrabold text-white">Trang Chiến Dịch Chưa Xuất Bản</h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              Trang chiến dịch <span className="text-white font-bold">{slug}</span> hiện đang ở trạng thái bản nháp. Vui lòng tham khảo các lớp khai giảng mới nhất tại Lịch Khai Giảng.
+            </p>
+            <Link to="/lich-khai-giang">
+              <Button className="h-12 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl mt-2 shadow-lg shadow-indigo-600/30">
+                Xem Lịch Khai Giảng Công Khai
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 font-sans antialiased selection:bg-indigo-500 selection:text-white">
+      {/* Admin Preview Top Notice Banner */}
+      {!isPublished && isPreview && (
+        <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-black text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-lg uppercase tracking-wider">
+          <Sparkles className="w-4 h-4 text-slate-950 animate-pulse" />
+          <span>[CHẾ ĐỘ PREVIEW ADMIN] Landing Page đang ở trạng thái Bản nháp (Draft). Chỉ hiển thị khi có param ?preview=1</span>
+        </div>
+      )}
+
       <SiteHeader />
 
       <main className="flex-1">

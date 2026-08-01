@@ -300,13 +300,23 @@ function AdminAcademyLandingsPage() {
 
                         <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                           <a
+                            href={`/l/${item.slug}?preview=1`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
+                          >
+                            <span>Preview</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+
+                          <a
                             href={`/l/${item.slug}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"
                           >
                             <span>Xem public</span>
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <ExternalLink className="w-3 h-3" />
                           </a>
 
                           <Button
@@ -376,6 +386,7 @@ function LandingForm({ landing, courses, onDone, onCancel }: LandingFormProps) {
   // SEO fields
   const [seoTitle, setSeoTitle] = useState(landing?.seo_title || "");
   const [seoDescription, setSeoDescription] = useState(landing?.seo_description || "");
+  const [ogImageUrl, setOgImageUrl] = useState(landing?.og_image_url || "");
 
   // Dynamic JSON Lists
   const [audience, setAudience] = useState<LandingAudienceItem[]>(landing?.audience || []);
@@ -392,14 +403,16 @@ function LandingForm({ landing, courses, onDone, onCancel }: LandingFormProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) {
+  const handleSave = async (publishTargetState: boolean) => {
+    const cleanTitle = title.trim();
+    const cleanSlug = slug.toLowerCase().trim().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
+
+    if (!cleanTitle) {
       setError("Vui lòng nhập tiêu đề landing page.");
       return;
     }
-    if (!slug.trim()) {
-      setError("Vui lòng nhập slug.");
+    if (!cleanSlug) {
+      setError("Vui lòng nhập slug hợp lệ (chữ thường, gạch nối).");
       return;
     }
 
@@ -408,11 +421,11 @@ function LandingForm({ landing, courses, onDone, onCancel }: LandingFormProps) {
       setError(null);
 
       const payload: CreateLandingPagePayload = {
-        title: title.trim(),
-        slug: slug.trim(),
+        title: cleanTitle,
+        slug: cleanSlug,
         course_id: courseId || null,
         hero_badge: heroBadge.trim() || null,
-        hero_title: heroTitle.trim() || title.trim(),
+        hero_title: heroTitle.trim() || cleanTitle,
         hero_subtitle: heroSubtitle.trim() || null,
         hero_cover_url: heroCoverUrl.trim() || null,
         primary_cta_label: primaryCtaLabel.trim(),
@@ -420,9 +433,10 @@ function LandingForm({ landing, courses, onDone, onCancel }: LandingFormProps) {
         audience,
         outcomes,
         faqs,
-        seo_title: seoTitle.trim() || title.trim(),
+        seo_title: seoTitle.trim() || cleanTitle,
         seo_description: seoDescription.trim() || null,
-        is_published: isPublished,
+        og_image_url: ogImageUrl.trim() || heroCoverUrl.trim() || null,
+        is_published: publishTargetState,
       };
 
       if (landing) {
@@ -437,6 +451,11 @@ function LandingForm({ landing, courses, onDone, onCancel }: LandingFormProps) {
       setError(err.message || "Không thể lưu thông tin landing page.");
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSave(isPublished);
   };
 
   return (
@@ -770,7 +789,7 @@ function LandingForm({ landing, courses, onDone, onCancel }: LandingFormProps) {
 
       {/* SEO Metadata */}
       <div className="space-y-4 pt-4 border-t border-slate-100">
-        <h3 className="text-base font-bold text-slate-900">SEO & Metadata</h3>
+        <h3 className="text-base font-bold text-slate-900">SEO & Metadata Social</h3>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
@@ -793,28 +812,66 @@ function LandingForm({ landing, courses, onDone, onCancel }: LandingFormProps) {
               placeholder="Mô tả cho Google Search & Social Card..."
             />
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700">Link Ảnh Chia Sẻ Social (OG Image URL)</label>
+            <input
+              type="text"
+              value={ogImageUrl}
+              onChange={(e) => setOgImageUrl(e.target.value)}
+              className={inputCls}
+              placeholder="https://..."
+            />
+          </div>
         </div>
       </div>
 
       {/* Form Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-200">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          className="rounded-xl px-5 h-11 font-semibold"
-        >
-          Hủy
-        </Button>
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-slate-200">
+        <div>
+          {slug && (
+            <a
+              href={`/l/${slug}?preview=1`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 px-4 h-11 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+            >
+              <span>Xem preview admin</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
 
-        <Button
-          type="submit"
-          disabled={submitting}
-          className="rounded-xl px-7 h-11 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20"
-        >
-          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {landing ? "Lưu thay đổi" : "Tạo Landing Page"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            className="rounded-xl px-5 h-11 font-semibold"
+          >
+            Hủy
+          </Button>
+
+          <Button
+            type="button"
+            disabled={submitting}
+            onClick={() => handleSave(false)}
+            className="rounded-xl px-6 h-11 font-bold bg-slate-800 hover:bg-slate-900 text-white shadow-sm"
+          >
+            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Lưu bản nháp
+          </Button>
+
+          <Button
+            type="button"
+            disabled={submitting}
+            onClick={() => handleSave(true)}
+            className="rounded-xl px-7 h-11 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/20"
+          >
+            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Xuất bản ngay
+          </Button>
+        </div>
       </div>
     </form>
   );
