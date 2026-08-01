@@ -20,6 +20,31 @@ export interface LandingTrackPayload extends Record<string, unknown> {
   error_message?: string;
 }
 
+export function sanitizePixelPayload(eventName: string, payload?: LandingTrackPayload) {
+  const eventId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `evt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+
+  // STRICT ALLOWLIST: Never include full_name, phone, email, notes, registration_id, or raw url/query
+  return {
+    event_name: eventName,
+    event_id: eventId,
+    timestamp: new Date().toISOString(),
+    pathname,
+    campaign_slug: payload?.campaign_slug,
+    source: payload?.source,
+    utm_source: payload?.utm_source,
+    utm_medium: payload?.utm_medium,
+    utm_campaign: payload?.utm_campaign,
+    course_slug: payload?.course_slug,
+    batch_id: payload?.batch_id,
+    duplicate: payload?.duplicate,
+  };
+}
+
 export function trackLandingEvent(eventName: LandingEventName | string, payload?: LandingTrackPayload): void {
   if (typeof window === "undefined") return;
 
@@ -29,9 +54,9 @@ export function trackLandingEvent(eventName: LandingEventName | string, payload?
     window.location.search.includes("preview=1") ||
     window.location.pathname.includes("/admin/");
 
-  const fullPayload = {
+  const internalPayload = {
     timestamp: new Date().toISOString(),
-    url: window.location.href,
+    pathname: window.location.pathname,
     isPreview,
     ...payload,
   };
@@ -39,31 +64,18 @@ export function trackLandingEvent(eventName: LandingEventName | string, payload?
   // Preview Mode: DO NOT fire third-party tracking pixels
   if (isPreview) {
     if (import.meta.env.DEV) {
-      console.debug(`[PREVIEW MODE Suppressed Tracking Event: ${eventName}]`, fullPayload);
+      console.debug(`[PREVIEW MODE Suppressed Tracking Event: ${eventName}]`, internalPayload);
     }
     return;
   }
 
-  // Only log detailed debug in development environment
+  // Internal log for DEV (may contain internal registration_id for debugging)
   if (import.meta.env.DEV) {
-    console.debug(`[Landing Tracking Event: ${eventName}]`, fullPayload);
+    console.debug(`[Landing Tracking Event: ${eventName}]`, internalPayload);
   }
 
-  // Sanitized payload: EXPLICITLY exclude PII (full_name, phone, email, notes) from ad pixels
-  const sanitizedPayload = {
-    campaign_slug: payload?.campaign_slug,
-    source: payload?.source,
-    utm_source: payload?.utm_source,
-    utm_medium: payload?.utm_medium,
-    utm_campaign: payload?.utm_campaign,
-    course_slug: payload?.course_slug,
-    batch_id: payload?.batch_id,
-    batch_title: payload?.batch_title,
-    registration_id: payload?.registration_id,
-    duplicate: payload?.duplicate,
-    timestamp: new Date().toISOString(),
-    url: window.location.href,
-  };
+  // Strict Sanitized Payload for third-party pixels (NO PII, NO registration_id, NO raw URL)
+  const sanitizedPayload = sanitizePixelPayload(eventName, payload);
 
   try {
     const win = window as any;
@@ -97,7 +109,6 @@ export function trackLandingEvent(eventName: LandingEventName | string, payload?
       }
     }
   } catch (err) {
-    // Fail silently in production without crashing form flow
     if (import.meta.env.DEV) {
       console.warn("[trackLandingEvent error]:", err);
     }
