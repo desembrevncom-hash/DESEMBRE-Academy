@@ -177,6 +177,71 @@ export async function getLandingPageBySlug(slug: string): Promise<AcademyLanding
     }
   }
 
+  // Fallback default landing configuration for TARGETED MODULATION campaign
+  if (normalizedSlug === "targeted-modulation") {
+    return {
+      id: "default-targeted-modulation-landing",
+      title: "Chuyên đề: TARGETED MODULATION",
+      slug: "targeted-modulation",
+      course_id: null,
+      hero_badge: "Chuyên đề Chuyên sâu • Online Zoom",
+      hero_title: "Chuyên đề: TARGETED MODULATION",
+      hero_subtitle: "Điều hòa Đích & Tái cấu trúc Hàng rào Bảo vệ Da bằng Công nghệ Phối hợp Hoạt chất Thẩm mỹ.",
+      hero_cover_url: "https://images.unsplash.com/photo-1512290900673-7002b54173b4?w=1200&auto=format&fit=crop",
+      primary_cta_label: "Đăng ký giữ chỗ ngay",
+      secondary_cta_label: "Xem lịch học chi tiết",
+      audience: [
+        {
+          title: "Chủ Spa / Clinic Thẩm mỹ",
+          description: "Cần xây dựng giải pháp phục hồi da nhiễm corticoid, da mỏng yếu và tăng sắc tố sau xâm lấn."
+        },
+        {
+          title: "Kỹ thuật viên & Bác sĩ Da liễu",
+          description: "Muốn làm chủ công nghệ Targeted Modulation để ứng dụng điều trị trúng đích cho từng nhóm da nhạy cảm."
+        },
+        {
+          title: "Tư vấn viên Dược Mỹ phẩm",
+          description: "Cần nâng cao năng lực kê đơn sản phẩm DESEMBRE phục hồi chuyên sâu tại nhà cho khách hàng."
+        }
+      ],
+      outcomes: [
+        {
+          title: "Cơ chế Điều hòa Đích (Targeted Modulation)",
+          description: "Hiểu rõ nguyên lý đưa hoạt chất thẩm mỹ thâm nhập trúng đích vào lớp thượng bì mà không gây tổn thương."
+        },
+        {
+          title: "Phục hồi Hàng rào Da Y Khoa",
+          description: "Quy trình tái tạo màng Hydrolipid, giảm đỏ sốc nhiệt và phục hồi da nhạy cảm tức thì."
+        },
+        {
+          title: "Tối ưu Kịch bản Chốt Sales",
+          description: "Phương pháp tư vấn khoa học giúp nâng cao uy tín spa và tăng giá trị đơn hàng liệu trình."
+        }
+      ],
+      curriculum_fallback: [],
+      trust_items: [
+        { title: "Chứng nhận Hoàn thành", description: "Cấp bởi DESEMBRE Training Center", badge: "Uy tín" },
+        { title: "Tài liệu Protocol Chuẩn", description: "Cung cấp sơ đồ phối hợp sản phẩm chi tiết", badge: "Thực chiến" }
+      ],
+      faqs: [
+        {
+          q: "Khóa TARGETED MODULATION kéo dài bao lâu?",
+          a: "Khóa học diễn ra trực tuyến trong 1 buổi chuyên sâu (2-3 tiếng) bao gồm lý thuyết lâm sàng và hỏi đáp trực tiếp."
+        },
+        {
+          q: "Chương trình có cấp tài liệu protocol không?",
+          a: "Có, tất cả học viên được nhận trọn bộ tài liệu protocol Targeted Modulation chuẩn Hàn Quốc."
+        }
+      ],
+      seo_title: "Chuyên đề TARGETED MODULATION | DESEMBRE Training Center",
+      seo_description: "Đăng ký chuyên đề TARGETED MODULATION - Điều hòa đích & tái cấu trúc màng bảo vệ da Y Khoa.",
+      og_image_url: "https://images.unsplash.com/photo-1512290900673-7002b54173b4?w=1200&auto=format&fit=crop",
+      is_published: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
   // Fallback default landing configuration for BIOLOGICAL TRIGGER campaign
   if (normalizedSlug === "biological-trigger") {
     return {
@@ -254,7 +319,48 @@ export async function getLandingPageBySlug(slug: string): Promise<AcademyLanding
     };
   }
 
-  return null;
+  // Dynamic Fallback for any valid training campaign slug
+  const titleFormatted = normalizedSlug
+    .split("-")
+    .map((word) => word.toUpperCase())
+    .join(" ");
+
+  return {
+    id: `default-${normalizedSlug}-landing`,
+    title: `Chuyên đề: ${titleFormatted}`,
+    slug: normalizedSlug,
+    course_id: null,
+    hero_badge: "Chương trình Đào tạo Chuyên sâu",
+    hero_title: `Chuyên đề: ${titleFormatted}`,
+    hero_subtitle: "Chuẩn hóa protocol thẩm mỹ & kỹ năng lâm sàng cùng DESEMBRE Training Center.",
+    hero_cover_url: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&auto=format&fit=crop",
+    primary_cta_label: "Đăng ký giữ chỗ ngay",
+    secondary_cta_label: "Xem lịch học chi tiết",
+    audience: [
+      { title: "Chủ Spa / Clinic", description: "Nâng cao uy tín và chuẩn hóa liệu trình cho cơ sở." },
+      { title: "Kỹ thuật viên Thẩm mỹ", description: "Rèn luyện tay nghề và nắm vững protocol chuẩn Y Khoa." }
+    ],
+    outcomes: [
+      { title: "Kỹ năng Thực chiến", description: "Thao tác tự tin và kiểm soát tối đa độ an toàn cho khách." },
+      { title: "Tài liệu Hướng dẫn", description: "Nhận trọn bộ slide bài giảng và quy trình chăm sóc." }
+    ],
+    curriculum_fallback: [],
+    trust_items: [
+      { title: "DESEMBRE Academy", description: "Trung tâm đào tạo thẩm mỹ chuyên nghiệp", badge: "Uy tín" }
+    ],
+    faqs: [
+      {
+        q: "Tôi đăng ký tham gia như thế nào?",
+        a: "Bạn bấm nút 'Đăng ký giữ chỗ ngay' để gửi thông tin. Bộ phận tư vấn DESEMBRE sẽ liên hệ hỗ trợ trực tiếp."
+      }
+    ],
+    seo_title: `Chuyên đề ${titleFormatted} | DESEMBRE Training Center`,
+    seo_description: `Đăng ký chuyên đề ${titleFormatted} tại DESEMBRE Training Center.`,
+    og_image_url: null,
+    is_published: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
 }
 
 export async function createLandingPage(payload: CreateLandingPagePayload): Promise<AcademyLandingPage> {

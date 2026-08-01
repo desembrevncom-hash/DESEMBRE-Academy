@@ -61,12 +61,14 @@ function AdminAcademyLandingsPage() {
         setError(err.message || "Không thể tải danh sách landing pages từ Supabase.");
       }
 
-      // Ensure BIOLOGICAL TRIGGER landing page is listed in Admin table
-      const hasBioTrigger = landingsData.some((item) => item.slug === "biological-trigger");
-      if (!hasBioTrigger) {
-        const bioTriggerDefault = await getLandingPageBySlug("biological-trigger");
-        if (bioTriggerDefault) {
-          landingsData.unshift(bioTriggerDefault);
+      // Ensure default landing pages are listed in Admin table
+      const defaultSlugs = ["biological-trigger", "targeted-modulation"];
+      for (const dSlug of defaultSlugs) {
+        if (!landingsData.some((item) => item.slug === dSlug)) {
+          const defaultLanding = await getLandingPageBySlug(dSlug);
+          if (defaultLanding) {
+            landingsData.push(defaultLanding);
+          }
         }
       }
 
@@ -103,45 +105,48 @@ function AdminAcademyLandingsPage() {
     }
   };
 
-  const handleTogglePublish = async (landing: AcademyLandingPage) => {
+  const handleTogglePublish = async (landingItem: AcademyLandingPage) => {
     try {
-      await updateLandingPage(landing.id, { is_published: !landing.is_published });
+      await updateLandingPage(landingItem.id, {
+        is_published: !landingItem.is_published,
+      });
       await loadData();
     } catch (err: any) {
-      alert(err.message || "Lỗi khi thay đổi trạng thái xuất bản.");
+      alert(err.message || "Không thể thay đổi trạng thái xuất bản.");
     }
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 font-sans antialiased text-slate-900">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Quản lý Landing Pages Campaign
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-600 mb-1">
+            <Sparkles className="w-4 h-4" />
+            <span>DESEMBRE ACADEMY LANDING PAGES</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Quản Lý Landing Page Chiến Dịch
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Tạo và cấu hình landing page riêng cho từng chiến dịch/khóa học để chạy Ads và thu hút học viên.
+          <p className="text-slate-500 text-xs sm:text-sm mt-1">
+            Tạo và tùy chỉnh landing page chạy Ads cho từng khóa học & chuyên đề đào tạo.
           </p>
         </div>
 
         {!isCreating && !editingLanding && (
           <Button
-            onClick={() => {
-              setEditingLanding(null);
-              setIsCreating(true);
-            }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shrink-0"
+            onClick={() => setIsCreating(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-11 px-5 rounded-xl shadow-md shadow-indigo-600/20"
           >
-            <Plus className="mr-2 h-4 w-4" /> Tạo Landing Mới
+            <Plus className="mr-1.5 h-4 w-4" /> Tạo Landing Page Mới
           </Button>
         )}
       </div>
 
       {/* Form Area */}
       {(isCreating || editingLanding) && (
-        <div className="mb-10 bg-white border border-slate-200 rounded-2xl p-6 shadow-md">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <h2 className="text-xl font-bold text-slate-900">
               {isCreating ? "Tạo Landing Page Mới" : `Chỉnh sửa: ${editingLanding?.title}`}
             </h2>
@@ -224,7 +229,7 @@ function AdminAcademyLandingsPage() {
                     <tr>
                       <th className="px-6 py-3.5">Tiêu đề Landing</th>
                       <th className="px-6 py-3.5">Đường dẫn (Slug)</th>
-                      <th className="px-6 py-3.5">Khóa học liên kết</th>
+                      <th className="px-6 py-3.5">Kiểm tra Thành phần</th>
                       <th className="px-6 py-3.5">Trạng thái</th>
                       <th className="px-6 py-3.5">Cập nhật</th>
                       <th className="px-6 py-3.5 text-right">Thao tác</th>
@@ -246,8 +251,24 @@ function AdminAcademyLandingsPage() {
                           /l/{item.slug}
                         </td>
 
-                        <td className="px-6 py-4 text-xs text-slate-700">
-                          {item.course?.title || <span className="text-slate-400 italic">Chưa gán</span>}
+                        <td className="px-6 py-4 text-xs space-y-1">
+                          <div className="flex flex-wrap gap-1.5">
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                              item.course_id || item.course ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                            }`}>
+                              {item.course_id || item.course ? "✓ Khóa học" : "! Tự do"}
+                            </span>
+
+                            <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
+                              item.hero_cover_url ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}>
+                              {item.hero_cover_url ? "✓ Cover" : "Thiếu Cover"}
+                            </span>
+
+                            <span className="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-[11px] font-semibold">
+                              ✓ Form CTA
+                            </span>
+                          </div>
                         </td>
 
                         <td className="px-6 py-4">
