@@ -19,10 +19,11 @@ import { getTrackingConfigStatus } from "@/features/public-training/tracking/pix
 import { academyAdminCoursesApi } from "@/features/admin/services/academyAdminCoursesApi";
 import type { AcademyAdminCourseListItem } from "@/features/admin/types";
 import {
-  Plus, Pencil, Trash2, ExternalLink, Loader2, Globe, Sparkles, CheckCircle2, XCircle, ArrowLeft, Layers
+  Plus, Pencil, Trash2, ExternalLink, Loader2, Globe, Sparkles, CheckCircle2, XCircle, ArrowLeft, Layers, ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
+import { AdsLaunchChecklistModal } from "@/features/admin/components/AdsLaunchChecklistModal";
 
 export const Route = createFileRoute("/admin/academy-landings")({
   component: AdminAcademyLandingsPage,
@@ -48,6 +49,7 @@ function AdminAcademyLandingsPage() {
   const [editingLanding, setEditingLanding] = useState<AcademyLandingPage | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [checklistLanding, setChecklistLanding] = useState<AcademyLandingPage | null>(null);
 
   const loadData = async () => {
     try {
@@ -423,6 +425,15 @@ function AdminAcademyLandingsPage() {
                           </td>
 
                           <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                            <button
+                              onClick={() => setChecklistLanding(item)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                              title="Xem Ads Launch Checklist & QA Audit"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              <span>QA Launch</span>
+                            </button>
+
                             <a
                               href={`/admin/academy-landings/${item.slug}/preview`}
                               target="_blank"
@@ -476,6 +487,14 @@ function AdminAcademyLandingsPage() {
           )}
         </>
       )}
+
+      {/* Ads Launch Checklist Modal */}
+      <AdsLaunchChecklistModal
+        landing={checklistLanding}
+        publicSchedule={publicSchedule}
+        isOpen={!!checklistLanding}
+        onClose={() => setChecklistLanding(null)}
+      />
     </div>
   );
 }
