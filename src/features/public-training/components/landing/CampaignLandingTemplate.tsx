@@ -22,6 +22,9 @@ interface CampaignLandingTemplateProps {
   landing?: AcademyLandingPage | null;
   batches: PublicCourseBatch[];
   loading?: boolean;
+  isAdmin?: boolean;
+  isAdminLoading?: boolean;
+  isForceAdminPreview?: boolean;
   onRefreshSchedule?: () => void;
 }
 
@@ -30,6 +33,9 @@ export function CampaignLandingTemplate({
   landing,
   batches,
   loading,
+  isAdmin = false,
+  isAdminLoading = false,
+  isForceAdminPreview = false,
   onRefreshSchedule,
 }: CampaignLandingTemplateProps) {
   const [registeringBatch, setRegisteringBatch] = useState<PublicCourseBatch | null>(null);
@@ -37,10 +43,21 @@ export function CampaignLandingTemplate({
   const [successBatchTitle, setSuccessBatchTitle] = useState<string | null>(null);
   const [isDuplicateRegistration, setIsDuplicateRegistration] = useState(false);
 
+  const isPreviewRequested = useMemo(() => {
+    if (isForceAdminPreview) return true;
+    if (typeof window === "undefined") return false;
+    const sp = new URLSearchParams(window.location.search);
+    return sp.get("preview") === "1" || window.location.pathname.includes("/admin/");
+  }, [isForceAdminPreview]);
+
+  const isPublished = landing?.is_published ?? true;
+  const isPreviewMode = !isPublished && isPreviewRequested && isAdmin;
+
   const hasTrackedView = useRef(false);
 
   useEffect(() => {
-    if (!hasTrackedView.current) {
+    // DO NOT track landing_view if in preview mode or unpublished draft!
+    if (!hasTrackedView.current && isPublished && !isPreviewRequested) {
       hasTrackedView.current = true;
 
       let utm_source: string | undefined;
@@ -62,15 +79,20 @@ export function CampaignLandingTemplate({
         utm_campaign,
       });
     }
-  }, [slug]);
+  }, [slug, isPublished, isPreviewRequested]);
 
-  const isPreview = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const sp = new URLSearchParams(window.location.search);
-    return sp.get("preview") === "1";
-  }, []);
-
-  const isPublished = landing?.is_published ?? true;
+  // Dynamically inject noindex, nofollow for Draft / Preview mode
+  useEffect(() => {
+    if (!isPublished || isPreviewRequested) {
+      let metaTag = document.querySelector('meta[name="robots"]');
+      if (!metaTag) {
+        metaTag = document.createElement("meta");
+        metaTag.setAttribute("name", "robots");
+        document.head.appendChild(metaTag);
+      }
+      metaTag.setAttribute("content", "noindex, nofollow");
+    }
+  }, [isPublished, isPreviewRequested]);
 
   const hasPublicBatch = batches.length > 0;
   const openBatch = hasPublicBatch ? batches[0] : null;
@@ -117,7 +139,8 @@ export function CampaignLandingTemplate({
         batch_id: targetBatch.id,
         batch_title: targetBatch.title,
         campaign_slug: slug,
-        source: "landing_page",
+        source: isPreviewMode ? "preview" : "landing_page",
+        isPreview: isPreviewMode,
         utm_source,
         utm_medium,
         utm_campaign,
@@ -128,23 +151,24 @@ export function CampaignLandingTemplate({
         batch_id: targetBatch.id,
         batch_title: targetBatch.title,
         campaign_slug: slug,
-        source: "landing_page",
+        source: isPreviewMode ? "preview" : "landing_page",
+        isPreview: isPreviewMode,
         utm_source,
         utm_medium,
         utm_campaign,
       });
     },
-    [openBatch, slug]
+    [openBatch, slug, isPreviewMode]
   );
 
   const handleOpenConsult = useCallback(() => {
-    trackLandingEvent("landing_cta_click", { campaign_slug: slug, source: "landing_page" });
+    trackLandingEvent("landing_cta_click", { campaign_slug: slug, source: isPreviewMode ? "preview" : "landing_page", isPreview: isPreviewMode });
     if (hasPublicBatch && openBatch) {
       handleOpenRegister(openBatch, `Tôi muốn được tư vấn thêm về ${title} trước khi đăng ký.`);
     } else {
       window.open("https://zalo.me", "_blank");
     }
-  }, [hasPublicBatch, openBatch, handleOpenRegister, slug, title]);
+  }, [hasPublicBatch, openBatch, handleOpenRegister, slug, title, isPreviewMode]);
 
   const handleCloseRegister = () => {
     setRegisteringBatch(null);
@@ -159,7 +183,8 @@ export function CampaignLandingTemplate({
         batch_id: registeringBatch.id,
         batch_title: bTitle,
         campaign_slug: slug,
-        source: "landing_page",
+        source: isPreviewMode ? "preview" : "landing_page",
+        isPreview: isPreviewMode,
         duplicate: !!isDuplicate,
       });
     }
@@ -169,7 +194,7 @@ export function CampaignLandingTemplate({
     if (onRefreshSchedule) onRefreshSchedule();
   };
 
-  if (loading) {
+  if (loading || (isPreviewRequested && !isPublished && isAdminLoading)) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400" />
@@ -177,8 +202,8 @@ export function CampaignLandingTemplate({
     );
   }
 
-  // Draft Guard: If not published and not in preview mode, render clean Not Published screen
-  if (!isPublished && !isPreview) {
+  // Case A: Landing is Unpublished and request is NOT preview -> Render Public Not Published Card
+  if (!isPublished && !isPreviewRequested) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans">
         <SiteHeader />
@@ -203,13 +228,46 @@ export function CampaignLandingTemplate({
     );
   }
 
+  // Case B: Landing is Unpublished and preview requested, but user is NOT ADMIN -> Access Denied Card
+  if (!isPublished && isPreviewRequested && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col font-sans">
+        <SiteHeader />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="max-w-md w-full space-y-4 bg-slate-900 border border-rose-900/50 p-8 rounded-3xl shadow-2xl">
+            <div className="w-16 h-16 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20">
+              <Sparkles className="w-8 h-8 text-rose-400" />
+            </div>
+            <h2 className="text-xl font-extrabold text-white">Không Có Quyền Xem Preview</h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              Chức năng preview bản nháp chỉ dành riêng cho Quản trị viên (Admin). Vui lòng đăng nhập tài khoản admin để truy cập.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Link to="/auth/login" className="flex-1">
+                <Button className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs">
+                  Đăng Nhập Admin
+                </Button>
+              </Link>
+              <Link to="/lich-khai-giang" className="flex-1">
+                <Button variant="outline" className="w-full h-11 bg-white/5 border-white/15 text-white font-bold rounded-xl text-xs">
+                  Lịch Khai Giảng
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 font-sans antialiased selection:bg-indigo-500 selection:text-white">
       {/* Admin Preview Top Notice Banner */}
-      {!isPublished && isPreview && (
+      {!isPublished && isPreviewRequested && isAdmin && (
         <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-black text-center flex items-center justify-center gap-2 sticky top-0 z-50 shadow-lg uppercase tracking-wider">
           <Sparkles className="w-4 h-4 text-slate-950 animate-pulse" />
-          <span>[CHẾ ĐỘ PREVIEW ADMIN] Landing Page đang ở trạng thái Bản nháp (Draft). Chỉ hiển thị khi có param ?preview=1</span>
+          <span>[CHẾ ĐỘ PREVIEW ADMIN] Bạn đang xem bản preview. Trang này chưa được xuất bản công khai.</span>
         </div>
       )}
 

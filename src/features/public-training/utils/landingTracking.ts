@@ -23,11 +23,26 @@ export interface LandingTrackPayload extends Record<string, unknown> {
 export function trackLandingEvent(eventName: LandingEventName | string, payload?: LandingTrackPayload): void {
   if (typeof window === "undefined") return;
 
+  const isPreview =
+    payload?.isPreview === true ||
+    payload?.source === "preview" ||
+    window.location.search.includes("preview=1") ||
+    window.location.pathname.includes("/admin/");
+
   const fullPayload = {
     timestamp: new Date().toISOString(),
     url: window.location.href,
+    isPreview,
     ...payload,
   };
+
+  // Preview Mode: DO NOT fire third-party tracking pixels
+  if (isPreview) {
+    if (import.meta.env.DEV) {
+      console.debug(`[PREVIEW MODE Suppressed Tracking Event: ${eventName}]`, fullPayload);
+    }
+    return;
+  }
 
   // Only log detailed debug in development environment
   if (import.meta.env.DEV) {

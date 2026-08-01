@@ -51,6 +51,7 @@ import { Route as AdminBatchesBatchIdIndexRouteImport } from './routes/admin.bat
 import { Route as AdminCoursesCourseIdSettingsRouteImport } from './routes/admin.courses.$courseId.settings'
 import { Route as AdminCoursesCourseIdContentRouteImport } from './routes/admin.courses.$courseId.content'
 import { Route as AdminBatchesBatchIdRegistrationsRouteImport } from './routes/admin.batches.$batchId.registrations'
+import { Route as AdminAcademyLandingsSlugPreviewRouteImport } from './routes/admin.academy-landings.$slug.preview'
 import { Route as StudentCoursesSlugLessonsLessonIdRouteImport } from './routes/student.courses.$slug.lessons.$lessonId'
 
 const SynergisticProtocolRoute = SynergisticProtocolRouteImport.update({
@@ -268,6 +269,12 @@ const AdminBatchesBatchIdRegistrationsRoute =
     path: '/registrations',
     getParentRoute: () => AdminBatchesBatchIdRoute,
   } as any)
+const AdminAcademyLandingsSlugPreviewRoute =
+  AdminAcademyLandingsSlugPreviewRouteImport.update({
+    id: '/$slug/preview',
+    path: '/$slug/preview',
+    getParentRoute: () => AdminAcademyLandingsRoute,
+  } as any)
 const StudentCoursesSlugLessonsLessonIdRoute =
   StudentCoursesSlugLessonsLessonIdRouteImport.update({
     id: '/$slug/lessons/$lessonId',
@@ -288,7 +295,7 @@ export interface FileRoutesByFullPath {
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
-  '/admin/academy-landings': typeof AdminAcademyLandingsRoute
+  '/admin/academy-landings': typeof AdminAcademyLandingsRouteWithChildren
   '/admin/academy-students': typeof AdminAcademyStudentsRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/instructors': typeof AdminInstructorsRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/admin/batches/': typeof AdminBatchesIndexRoute
   '/admin/courses/': typeof AdminCoursesIndexRoute
   '/student/courses/': typeof StudentCoursesIndexRoute
+  '/admin/academy-landings/$slug/preview': typeof AdminAcademyLandingsSlugPreviewRoute
   '/admin/batches/$batchId/registrations': typeof AdminBatchesBatchIdRegistrationsRoute
   '/admin/courses/$courseId/content': typeof AdminCoursesCourseIdContentRoute
   '/admin/courses/$courseId/settings': typeof AdminCoursesCourseIdSettingsRoute
@@ -331,7 +339,7 @@ export interface FileRoutesByTo {
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
-  '/admin/academy-landings': typeof AdminAcademyLandingsRoute
+  '/admin/academy-landings': typeof AdminAcademyLandingsRouteWithChildren
   '/admin/academy-students': typeof AdminAcademyStudentsRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/instructors': typeof AdminInstructorsRoute
@@ -353,6 +361,7 @@ export interface FileRoutesByTo {
   '/admin/batches': typeof AdminBatchesIndexRoute
   '/admin/courses': typeof AdminCoursesIndexRoute
   '/student/courses': typeof StudentCoursesIndexRoute
+  '/admin/academy-landings/$slug/preview': typeof AdminAcademyLandingsSlugPreviewRoute
   '/admin/batches/$batchId/registrations': typeof AdminBatchesBatchIdRegistrationsRoute
   '/admin/courses/$courseId/content': typeof AdminCoursesCourseIdContentRoute
   '/admin/courses/$courseId/settings': typeof AdminCoursesCourseIdSettingsRoute
@@ -374,7 +383,7 @@ export interface FileRoutesById {
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
-  '/admin/academy-landings': typeof AdminAcademyLandingsRoute
+  '/admin/academy-landings': typeof AdminAcademyLandingsRouteWithChildren
   '/admin/academy-students': typeof AdminAcademyStudentsRoute
   '/admin/calendar': typeof AdminCalendarRoute
   '/admin/instructors': typeof AdminInstructorsRoute
@@ -399,6 +408,7 @@ export interface FileRoutesById {
   '/admin/batches/': typeof AdminBatchesIndexRoute
   '/admin/courses/': typeof AdminCoursesIndexRoute
   '/student/courses/': typeof StudentCoursesIndexRoute
+  '/admin/academy-landings/$slug/preview': typeof AdminAcademyLandingsSlugPreviewRoute
   '/admin/batches/$batchId/registrations': typeof AdminBatchesBatchIdRegistrationsRoute
   '/admin/courses/$courseId/content': typeof AdminCoursesCourseIdContentRoute
   '/admin/courses/$courseId/settings': typeof AdminCoursesCourseIdSettingsRoute
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/admin/batches/'
     | '/admin/courses/'
     | '/student/courses/'
+    | '/admin/academy-landings/$slug/preview'
     | '/admin/batches/$batchId/registrations'
     | '/admin/courses/$courseId/content'
     | '/admin/courses/$courseId/settings'
@@ -486,6 +497,7 @@ export interface FileRouteTypes {
     | '/admin/batches'
     | '/admin/courses'
     | '/student/courses'
+    | '/admin/academy-landings/$slug/preview'
     | '/admin/batches/$batchId/registrations'
     | '/admin/courses/$courseId/content'
     | '/admin/courses/$courseId/settings'
@@ -531,6 +543,7 @@ export interface FileRouteTypes {
     | '/admin/batches/'
     | '/admin/courses/'
     | '/student/courses/'
+    | '/admin/academy-landings/$slug/preview'
     | '/admin/batches/$batchId/registrations'
     | '/admin/courses/$courseId/content'
     | '/admin/courses/$courseId/settings'
@@ -855,6 +868,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBatchesBatchIdRegistrationsRouteImport
       parentRoute: typeof AdminBatchesBatchIdRoute
     }
+    '/admin/academy-landings/$slug/preview': {
+      id: '/admin/academy-landings/$slug/preview'
+      path: '/$slug/preview'
+      fullPath: '/admin/academy-landings/$slug/preview'
+      preLoaderRoute: typeof AdminAcademyLandingsSlugPreviewRouteImport
+      parentRoute: typeof AdminAcademyLandingsRoute
+    }
     '/student/courses/$slug/lessons/$lessonId': {
       id: '/student/courses/$slug/lessons/$lessonId'
       path: '/$slug/lessons/$lessonId'
@@ -864,6 +884,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AdminAcademyLandingsRouteChildren {
+  AdminAcademyLandingsSlugPreviewRoute: typeof AdminAcademyLandingsSlugPreviewRoute
+}
+
+const AdminAcademyLandingsRouteChildren: AdminAcademyLandingsRouteChildren = {
+  AdminAcademyLandingsSlugPreviewRoute: AdminAcademyLandingsSlugPreviewRoute,
+}
+
+const AdminAcademyLandingsRouteWithChildren =
+  AdminAcademyLandingsRoute._addFileChildren(AdminAcademyLandingsRouteChildren)
 
 interface AdminBatchesBatchIdRouteChildren {
   AdminBatchesBatchIdRegistrationsRoute: typeof AdminBatchesBatchIdRegistrationsRoute
@@ -897,7 +928,7 @@ interface AdminRouteChildren {
   AdminAcademyAccessRoute: typeof AdminAcademyAccessRoute
   AdminAcademyCategoriesRoute: typeof AdminAcademyCategoriesRoute
   AdminAcademyEnrollmentsRoute: typeof AdminAcademyEnrollmentsRoute
-  AdminAcademyLandingsRoute: typeof AdminAcademyLandingsRoute
+  AdminAcademyLandingsRoute: typeof AdminAcademyLandingsRouteWithChildren
   AdminAcademyStudentsRoute: typeof AdminAcademyStudentsRoute
   AdminCalendarRoute: typeof AdminCalendarRoute
   AdminInstructorsRoute: typeof AdminInstructorsRoute
@@ -914,7 +945,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAcademyAccessRoute: AdminAcademyAccessRoute,
   AdminAcademyCategoriesRoute: AdminAcademyCategoriesRoute,
   AdminAcademyEnrollmentsRoute: AdminAcademyEnrollmentsRoute,
-  AdminAcademyLandingsRoute: AdminAcademyLandingsRoute,
+  AdminAcademyLandingsRoute: AdminAcademyLandingsRouteWithChildren,
   AdminAcademyStudentsRoute: AdminAcademyStudentsRoute,
   AdminCalendarRoute: AdminCalendarRoute,
   AdminInstructorsRoute: AdminInstructorsRoute,

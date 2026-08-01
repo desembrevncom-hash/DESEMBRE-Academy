@@ -300,7 +300,7 @@ function AdminAcademyLandingsPage() {
 
                         <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                           <a
-                            href={`/l/${item.slug}?preview=1`}
+                            href={`/admin/academy-landings/${item.slug}/preview`}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors"
@@ -831,7 +831,7 @@ function LandingForm({ landing, courses, onDone, onCancel }: LandingFormProps) {
         <div>
           {slug && (
             <a
-              href={`/l/${slug}?preview=1`}
+              href={`/admin/academy-landings/${slug}/preview`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 px-4 h-11 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"

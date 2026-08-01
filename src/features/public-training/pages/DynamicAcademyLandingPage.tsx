@@ -8,17 +8,21 @@ import {
   AcademyLandingPage,
 } from "@/features/admin/services/academyAdminLandingPagesApi";
 import { CampaignLandingTemplate } from "@/features/public-training/components/landing/CampaignLandingTemplate";
+import { useAdminAccess } from "@/features/admin/hooks/useAdminAccess";
 import { isDemoRecord } from "@/features/admin/utils/demoData";
 
 interface DynamicAcademyLandingPageProps {
   slug: string;
   canonicalPath?: string;
+  isForceAdminPreview?: boolean;
 }
 
-export function DynamicAcademyLandingPage({ slug }: DynamicAcademyLandingPageProps) {
+export function DynamicAcademyLandingPage({ slug, isForceAdminPreview }: DynamicAcademyLandingPageProps) {
   const [landing, setLanding] = useState<AcademyLandingPage | null>(null);
   const [batches, setBatches] = useState<PublicCourseBatch[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { isAdmin, isLoading: isAdminLoading } = useAdminAccess();
 
   const loadLandingData = useCallback(async () => {
     try {
@@ -64,6 +68,9 @@ export function DynamicAcademyLandingPage({ slug }: DynamicAcademyLandingPagePro
       landing={landing}
       batches={batches}
       loading={loading}
+      isAdmin={isAdmin}
+      isAdminLoading={isAdminLoading}
+      isForceAdminPreview={isForceAdminPreview}
       onRefreshSchedule={loadLandingData}
     />
   );
