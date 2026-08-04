@@ -126,11 +126,15 @@ function Dashboard() {
         </h2>
         <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {currentCourses.length === 0 && (
-            <div className="sm:col-span-2 lg:col-span-3 rounded-3xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-              Bạn chưa có khóa học nào.{" "}
-              <Link to="/courses" className="text-primary-dark underline">
-                Khám phá ngay
-              </Link>
+            <div className="sm:col-span-2 lg:col-span-3 rounded-3xl border border-slate-200 border-dashed p-10 text-center text-sm text-slate-500 bg-white space-y-3">
+              <BookOpen className="h-10 w-10 text-slate-400 mx-auto" />
+              <div className="font-bold text-slate-800 text-base">Bạn chưa có khóa học nào đang mở.</div>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                Hãy đăng ký tham gia khóa đào tạo chuyên sâu tại DESEMBRE Academy để kích hoạt tài khoản học viên.
+              </p>
+              <Button asChild className="rounded-xl px-5 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md">
+                <Link to="/lich-khai-giang">Xem lịch khai giảng</Link>
+              </Button>
             </div>
           )}
           {currentCourses.length > 0 && activeCourses.length === 0 && continueCourse === null && (

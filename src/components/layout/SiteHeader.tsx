@@ -13,7 +13,7 @@ const nav = [
   { to: "/about", label: "Về DESEMBRE" },
   { to: "/lich-khai-giang", label: "Lịch khai giảng" },
   { to: "/courses", label: "Khóa học" },
-  { to: "/", hash: "resources", label: "Tài liệu" },
+  { to: "/tai-lieu", label: "Tài liệu" },
 ];
 
 export function SiteHeader() {
@@ -42,9 +42,8 @@ export function SiteHeader() {
           {nav.map((n, i) => (
             <Link
               key={i}
-              to={n.to}
-              hash={n.hash}
-              activeOptions={{ exact: n.to === "/" && !n.hash }}
+              to={n.to as any}
+              activeOptions={{ exact: n.to === "/" }}
               className="rounded-full px-3 py-2 text-slate-600 transition hover:text-teal-700 hover:bg-teal-50 data-[status=active]:text-teal-700 data-[status=active]:bg-teal-50 data-[status=active]:font-semibold"
             >
               {n.label}
@@ -107,8 +106,7 @@ export function SiteHeader() {
             {nav.map((n, i) => (
               <Link
                 key={i}
-                to={n.to}
-                hash={n.hash}
+                to={n.to as any}
                 onClick={() => setOpen(false)}
                 className="rounded-2xl px-4 py-3 text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-700 data-[status=active]:bg-teal-50 data-[status=active]:text-teal-700 data-[status=active]:font-semibold"
               >

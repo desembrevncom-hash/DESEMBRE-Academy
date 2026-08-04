@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TaiLieuRouteImport } from './routes/tai-lieu'
 import { Route as SynergisticProtocolRouteImport } from './routes/synergistic-protocol'
 import { Route as StudentRouteImport } from './routes/student'
 import { Route as PendingReviewRouteImport } from './routes/pending-review'
@@ -54,6 +55,11 @@ import { Route as AdminBatchesBatchIdRegistrationsRouteImport } from './routes/a
 import { Route as AdminAcademyLandingsSlugPreviewRouteImport } from './routes/admin.academy-landings.$slug.preview'
 import { Route as StudentCoursesSlugLessonsLessonIdRouteImport } from './routes/student.courses.$slug.lessons.$lessonId'
 
+const TaiLieuRoute = TaiLieuRouteImport.update({
+  id: '/tai-lieu',
+  path: '/tai-lieu',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SynergisticProtocolRoute = SynergisticProtocolRouteImport.update({
   id: '/synergistic-protocol',
   path: '/synergistic-protocol',
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/pending-review': typeof PendingReviewRoute
   '/student': typeof StudentRouteWithChildren
   '/synergistic-protocol': typeof SynergisticProtocolRoute
+  '/tai-lieu': typeof TaiLieuRoute
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
@@ -336,6 +343,7 @@ export interface FileRoutesByTo {
   '/lich-khai-giang': typeof LichKhaiGiangRoute
   '/pending-review': typeof PendingReviewRoute
   '/synergistic-protocol': typeof SynergisticProtocolRoute
+  '/tai-lieu': typeof TaiLieuRoute
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/pending-review': typeof PendingReviewRoute
   '/student': typeof StudentRouteWithChildren
   '/synergistic-protocol': typeof SynergisticProtocolRoute
+  '/tai-lieu': typeof TaiLieuRoute
   '/admin/academy-access': typeof AdminAcademyAccessRoute
   '/admin/academy-categories': typeof AdminAcademyCategoriesRoute
   '/admin/academy-enrollments': typeof AdminAcademyEnrollmentsRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/pending-review'
     | '/student'
     | '/synergistic-protocol'
+    | '/tai-lieu'
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
@@ -472,6 +482,7 @@ export interface FileRouteTypes {
     | '/lich-khai-giang'
     | '/pending-review'
     | '/synergistic-protocol'
+    | '/tai-lieu'
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
@@ -515,6 +526,7 @@ export interface FileRouteTypes {
     | '/pending-review'
     | '/student'
     | '/synergistic-protocol'
+    | '/tai-lieu'
     | '/admin/academy-access'
     | '/admin/academy-categories'
     | '/admin/academy-enrollments'
@@ -562,6 +574,7 @@ export interface RootRouteChildren {
   PendingReviewRoute: typeof PendingReviewRoute
   StudentRoute: typeof StudentRouteWithChildren
   SynergisticProtocolRoute: typeof SynergisticProtocolRoute
+  TaiLieuRoute: typeof TaiLieuRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthPhoneRoute: typeof AuthPhoneRoute
   AuthVerifyOtpRoute: typeof AuthVerifyOtpRoute
@@ -574,6 +587,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tai-lieu': {
+      id: '/tai-lieu'
+      path: '/tai-lieu'
+      fullPath: '/tai-lieu'
+      preLoaderRoute: typeof TaiLieuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/synergistic-protocol': {
       id: '/synergistic-protocol'
       path: '/synergistic-protocol'
@@ -1013,6 +1033,7 @@ const rootRouteChildren: RootRouteChildren = {
   PendingReviewRoute: PendingReviewRoute,
   StudentRoute: StudentRouteWithChildren,
   SynergisticProtocolRoute: SynergisticProtocolRoute,
+  TaiLieuRoute: TaiLieuRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthPhoneRoute: AuthPhoneRoute,
   AuthVerifyOtpRoute: AuthVerifyOtpRoute,
