@@ -46,6 +46,7 @@ import {
 import { toast } from "sonner";
 import { format, parseISO, isToday, isBefore, startOfDay, endOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { ordersApi, AcademyOrder } from "@/features/public-training/services/ordersApi";
 
 export const Route = createFileRoute("/admin/academy-enrollments")({
   component: AcademyRegistrationsCrmAdmin,
@@ -271,6 +272,9 @@ function AcademyRegistrationsCrmAdmin() {
     });
   }, [registrations, quickFilter, campaignFilter]);
 
+  const [leadOrder, setLeadOrder] = useState<AcademyOrder | null>(null);
+  const [processingOrder, setProcessingOrder] = useState(false);
+
   const loadLeadDetails = async (lead: BatchRegistrationLead) => {
     setSelectedLead(lead);
     setFollowUpStatus(lead.follow_up_status || "new");
@@ -281,18 +285,97 @@ function AcademyRegistrationsCrmAdmin() {
     setLostReason(lead.lost_reason || "");
 
     setPhoneHistory([]);
+    setLeadOrder(null);
     setLoadingInsights(true);
     try {
-      const [insights, phoneRegs] = await Promise.all([
+      const [insights, phoneRegs, existingOrder] = await Promise.all([
         getLeadInsights(lead.id).catch(() => null),
         getRegistrationsByPhone(lead.phone).catch(() => []),
+        ordersApi.getOrderByRegistrationId(lead.id).catch(() => null),
       ]);
       setLeadInsights(insights);
       setPhoneHistory(phoneRegs || []);
+      setLeadOrder(existingOrder);
     } catch (e) {
       console.error("loadLeadDetails error:", e);
     } finally {
       setLoadingInsights(false);
+    }
+  };
+
+  const handleAdminConfirmPayment = async () => {
+    if (!selectedLead) return;
+    setProcessingOrder(true);
+    try {
+      const courseId = (selectedLead as any).course_id || "course-default-id";
+      const res = await ordersApi.adminConfirmPayment({
+        orderId: leadOrder?.id,
+        registrationId: selectedLead.id,
+        courseId: courseId,
+        batchId: selectedLead.batch_id,
+        phone: selectedLead.phone,
+        fullName: selectedLead.full_name,
+      });
+      if (res.ok) {
+        toast.success("Đã xác nhận thanh toán & mở quyền học viên thành công!");
+        fetchRegistrations();
+        loadLeadDetails({ ...selectedLead, status: "paid" as any });
+      } else {
+        toast.error(res.message || "Không thể xác nhận thanh toán.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi xác nhận thanh toán.");
+    } finally {
+      setProcessingOrder(false);
+    }
+  };
+
+  const handleAdminCreateOrder = async () => {
+    if (!selectedLead) return;
+    const inputAmount = window.prompt("Nhập số tiền đơn hàng (VNĐ):", "1500000");
+    if (!inputAmount) return;
+    const amount = parseFloat(inputAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Số tiền không hợp lệ.");
+      return;
+    }
+
+    setProcessingOrder(true);
+    try {
+      const res = await ordersApi.createPaidCourseOrder({
+        registrationId: selectedLead.id,
+        courseId: (selectedLead as any).course_id,
+        batchId: selectedLead.batch_id,
+        fullName: selectedLead.full_name,
+        phone: selectedLead.phone,
+        email: selectedLead.email || undefined,
+        amount: amount,
+      });
+      if (res.ok && res.order) {
+        toast.success("Đã tạo đơn thanh toán mới thành công!");
+        setLeadOrder(res.order);
+      } else {
+        toast.error(res.message || "Không thể tạo đơn thanh toán.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi tạo đơn thanh toán.");
+    } finally {
+      setProcessingOrder(false);
+    }
+  };
+
+  const handleAdminCancelOrder = async () => {
+    if (!leadOrder) return;
+    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn thanh toán này?")) return;
+    setProcessingOrder(true);
+    try {
+      await ordersApi.adminCancelOrder(leadOrder.id);
+      toast.success("Đã hủy đơn thanh toán.");
+      setLeadOrder({ ...leadOrder, payment_status: "cancelled" });
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi hủy đơn thanh toán.");
+    } finally {
+      setProcessingOrder(false);
     }
   };
 
@@ -755,6 +838,98 @@ function AcademyRegistrationsCrmAdmin() {
                     className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500/20"
                     placeholder="Ghi chú kết quả cuộc gọi, nhu cầu đặc biệt..."
                   />
+                </div>
+              </div>
+
+              {/* Section 2: Thanh Toán & Quyền Học Viên (P3C.65) */}
+              <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    <span>Thanh toán & Quyền học viên</span>
+                  </h4>
+                  {leadOrder ? (
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                      leadOrder.payment_status === "paid"
+                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        : leadOrder.payment_status === "cancelled"
+                        ? "bg-slate-100 text-slate-600 border-slate-200"
+                        : "bg-amber-100 text-amber-800 border-amber-300"
+                    }`}>
+                      {leadOrder.payment_status === "paid"
+                        ? "Đã thanh toán"
+                        : leadOrder.payment_status === "cancelled"
+                        ? "Đã hủy đơn"
+                        : "Chờ thanh toán"}
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-500 text-[11px] font-bold">
+                      Chưa có đơn hàng
+                    </span>
+                  )}
+                </div>
+
+                {leadOrder ? (
+                  <div className="space-y-2 text-xs text-emerald-950">
+                    <div className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-emerald-200/80">
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">Số tiền đơn hàng:</span>
+                        <span className="font-extrabold text-emerald-700 text-sm">{leadOrder.amount.toLocaleString("vi-VN")} VNĐ</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-slate-500 block text-[10px]">Nội dung CK:</span>
+                        <span className="font-mono font-bold text-slate-800">{leadOrder.bank_transfer_content}</span>
+                      </div>
+                    </div>
+
+                    {leadOrder.paid_at && (
+                      <div className="text-[11px] text-slate-500">
+                        Xác nhận thanh toán lúc: <span className="font-semibold text-slate-800">{format(parseISO(leadOrder.paid_at), "dd/MM/yyyy HH:mm")}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">
+                    Khách hàng chưa có đơn thanh toán tạo tự động.
+                  </p>
+                )}
+
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {(!leadOrder || leadOrder.payment_status === "pending_payment") && (
+                    <Button
+                      onClick={handleAdminConfirmPayment}
+                      disabled={processingOrder}
+                      size="sm"
+                      className="h-8 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs gap-1"
+                    >
+                      {processingOrder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                      <span>Xác nhận đã thanh toán & Mở quyền</span>
+                    </Button>
+                  )}
+
+                  {!leadOrder && (
+                    <Button
+                      onClick={handleAdminCreateOrder}
+                      disabled={processingOrder}
+                      size="sm"
+                      variant="outline"
+                      className="h-8 rounded-xl text-xs font-semibold border-emerald-300 text-emerald-800 bg-emerald-50 hover:bg-emerald-100 gap-1"
+                    >
+                      <span>Tạo đơn thanh toán</span>
+                    </Button>
+                  )}
+
+                  {leadOrder && leadOrder.payment_status === "pending_payment" && (
+                    <Button
+                      onClick={handleAdminCancelOrder}
+                      disabled={processingOrder}
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                    >
+                      Hủy đơn
+                    </Button>
+                  )}
                 </div>
               </div>
 

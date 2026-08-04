@@ -31,18 +31,38 @@ export const authService = {
     }
 
     try {
-      // 1. Query course_registrations for confirmed/enrolled/paid/completed
+      // 1. PRIORITY 1: Query student_course_access for active access
+      try {
+        const { data: accesses, error: accessError } = await supabase
+          .from("student_course_access")
+          .select("id, access_status, expires_at")
+          .or(`phone_e164.eq.${normalizedE164},phone.eq.${localPhone}`)
+          .eq("access_status", "active");
+
+        if (!accessError && accesses && accesses.length > 0) {
+          const now = new Date().toISOString();
+          const validAccesses = accesses.filter((a) => !a.expires_at || a.expires_at > now);
+          if (validAccesses.length > 0) {
+            return { isEligible: true, registrationCount: validAccesses.length };
+          }
+        }
+      } catch (_) {}
+
+      // 2. PRIORITY 2: Fallback query course_registrations for confirmed/enrolled/paid/completed
       const { data: registrations, error: regError } = await supabase
         .from("course_registrations")
-        .select("id, phone, status")
+        .select("id, phone, status, source")
         .or(`phone.eq.${normalizedE164},phone.eq.${localPhone}`)
         .in("status", ["confirmed", "enrolled", "paid", "completed"]);
 
       if (!regError && registrations && registrations.length > 0) {
-        return { isEligible: true, registrationCount: registrations.length };
+        const validRegs = registrations.filter((r) => r.source !== "resource_download" || r.status === "paid" || r.status === "enrolled");
+        if (validRegs.length > 0) {
+          return { isEligible: true, registrationCount: validRegs.length };
+        }
       }
 
-      // 2. Fallback query academy_enrollments if available
+      // 3. Fallback query academy_enrollments if available
       try {
         const { data: enrollments, error: enrollError } = await supabase
           .from("academy_enrollments")
@@ -53,9 +73,7 @@ export const authService = {
         if (!enrollError && enrollments && enrollments.length > 0) {
           return { isEligible: true, registrationCount: enrollments.length };
         }
-      } catch (_) {
-        // Table might not exist or RLS guarded
-      }
+      } catch (_) {}
 
       return { isEligible: false, registrationCount: 0 };
     } catch (err) {

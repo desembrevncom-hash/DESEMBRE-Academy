@@ -18,10 +18,12 @@ const registrationSchema = z.object({
 
 type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
+import { ordersApi, AcademyOrder } from "../services/ordersApi";
+
 interface RegistrationFormProps {
   batch: PublicCourseBatch;
   onClose: () => void;
-  onSuccess: (isDuplicate?: boolean) => void;
+  onSuccess: (isDuplicate?: boolean, order?: AcademyOrder | null) => void;
   initialNotes?: string;
   source?: string;
   campaignSlug?: string;
@@ -110,7 +112,28 @@ export function RegistrationForm({
           utm_medium,
           utm_campaign,
         });
-        onSuccess(!!res.duplicate);
+
+        let createdOrder: AcademyOrder | null = null;
+        const courseAmount = (batch as any).amount || (batch as any).price || (batch as any).tuition_fee || 0;
+
+        if (courseAmount > 0) {
+          try {
+            const orderRes = await ordersApi.createPaidCourseOrder({
+              registrationId: res.registration_id,
+              courseId: batch.course?.id,
+              batchId: batch.id,
+              fullName: values.fullName,
+              phone: values.phone,
+              email: values.email || undefined,
+              amount: courseAmount,
+            });
+            if (orderRes.ok && orderRes.order) {
+              createdOrder = orderRes.order;
+            }
+          } catch (_) {}
+        }
+
+        onSuccess(!!res.duplicate, createdOrder);
       } else {
         const errorText = res?.error || "Không thể gửi đăng ký lúc này. Vui lòng thử lại sau hoặc liên hệ DESEMBRE Training Center.";
         setErrorMsg(errorText);

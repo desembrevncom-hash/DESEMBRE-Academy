@@ -106,6 +106,27 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
           </div>
         )}
 
+        {(data as any).access_info && (
+          <div className="mt-3 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs space-y-1 text-slate-600">
+            {(data as any).access_info.batch_title && (
+              <div className="font-semibold text-slate-800">
+                Lớp: <span className="text-indigo-600 font-bold">{(data as any).access_info.batch_title}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center text-[11px]">
+              <span className="font-bold text-emerald-600 uppercase">Quyền học: Hoạt động</span>
+              {(data as any).access_info.starts_at && (
+                <span className="text-slate-500">Bắt đầu: {new Date((data as any).access_info.starts_at).toLocaleDateString("vi-VN")}</span>
+              )}
+            </div>
+            {(data as any).access_info.expires_at && (
+              <div className="text-[11px] text-amber-700 font-semibold">
+                Hết hạn: {new Date((data as any).access_info.expires_at).toLocaleDateString("vi-VN")}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-5 pt-5 border-t border-border/50 mt-auto flex flex-col gap-2">
           {isBlocked ? (
             <>
@@ -121,12 +142,12 @@ export function StudentCourseCard({ data }: { data: CurrentStudentCourse }) {
             </>
           ) : (
             <Button 
-              className="w-full rounded-full" 
+              className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold" 
               onClick={handleContinue}
               disabled={loading}
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Tiếp tục học
+              Vào học
             </Button>
           )}
         </div>
