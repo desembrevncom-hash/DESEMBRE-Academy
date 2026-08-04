@@ -1,5 +1,5 @@
 -- ====================================================================
--- P3C.65K — Production Student OTP Login Provider
+-- P3C.65K-SECURITY — Safe Production Student OTP Login Provider
 -- File: scratch/p3c65k_student_otp_login_provider.sql
 -- ====================================================================
 
@@ -21,10 +21,13 @@ CREATE INDEX IF NOT EXISTS idx_student_otps_phone_e164 ON public.student_login_o
 CREATE INDEX IF NOT EXISTS idx_student_otps_expires ON public.student_login_otps(expires_at);
 CREATE INDEX IF NOT EXISTS idx_student_otps_consumed ON public.student_login_otps(consumed_at);
 
--- 2. CREATE SECURITY DEFINER RPC: create_student_login_otp
+-- 2. DROP any previous function signatures with p_is_dev boolean flag
+DROP FUNCTION IF EXISTS public.create_student_login_otp(text, boolean) CASCADE;
+DROP FUNCTION IF EXISTS public.create_student_login_otp(text) CASCADE;
+
+-- 3. CREATE SAFE PRODUCTION SECURITY DEFINER RPC: create_student_login_otp(p_phone)
 CREATE OR REPLACE FUNCTION public.create_student_login_otp(
-  p_phone text,
-  p_is_dev boolean DEFAULT false
+  p_phone text
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -67,12 +70,8 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'message', 'NOT_ELIGIBLE');
   END IF;
 
-  -- Generate 6-digit OTP
-  IF p_is_dev IS TRUE THEN
-    v_otp := '123456';
-  ELSE
-    v_otp := lpad((floor(random() * 900000) + 100000)::text, 6, '0');
-  END IF;
+  -- ALWAYS generate secure random 6-digit OTP in Production
+  v_otp := lpad((floor(random() * 900000) + 100000)::text, 6, '0');
 
   -- Hash OTP with SHA256 (encode(digest(...)))
   v_otp_hash := encode(digest(v_otp, 'sha256'), 'hex');
@@ -95,26 +94,19 @@ BEGIN
   )
   RETURNING id INTO v_otp_id;
 
-  IF p_is_dev IS TRUE THEN
-    RETURN jsonb_build_object(
-      'ok', true,
-      'phone_e164', v_phone_e164,
-      'otp_id', v_otp_id,
-      'raw_otp', v_otp,
-      'message', 'DEV_OTP_CREATED'
-    );
-  ELSE
-    RETURN jsonb_build_object(
-      'ok', true,
-      'phone_e164', v_phone_e164,
-      'otp_id', v_otp_id,
-      'message', 'OTP_CREATED'
-    );
-  END IF;
+  -- Never return raw_otp to client
+  RETURN jsonb_build_object(
+    'ok', true,
+    'phone_e164', v_phone_e164,
+    'otp_id', v_otp_id,
+    'message', 'OTP_CREATED'
+  );
 END;
 $$;
 
--- 3. CREATE SECURITY DEFINER RPC: verify_student_login_otp
+-- 4. CREATE SECURITY DEFINER RPC: verify_student_login_otp(p_phone, p_otp)
+DROP FUNCTION IF EXISTS public.verify_student_login_otp(text, text) CASCADE;
+
 CREATE OR REPLACE FUNCTION public.verify_student_login_otp(
   p_phone text,
   p_otp text
@@ -194,7 +186,7 @@ END;
 $$;
 
 -- Grants
-GRANT EXECUTE ON FUNCTION public.create_student_login_otp(text, boolean) TO anon, authenticated, service_role, postgres;
+GRANT EXECUTE ON FUNCTION public.create_student_login_otp(text) TO anon, authenticated, service_role, postgres;
 GRANT EXECUTE ON FUNCTION public.verify_student_login_otp(text, text) TO anon, authenticated, service_role, postgres;
 
 NOTIFY pgrst, 'reload schema';

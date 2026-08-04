@@ -70,7 +70,7 @@ export const authService = {
   },
 
   /**
-   * Sends OTP to phone number or uses DEV mock fallback / RPC OTP provider.
+   * Sends OTP to phone number or uses RPC OTP provider.
    */
   requestOtp: async (phone: string): Promise<OtpRequestResult> => {
     const supabase = getSupabaseBrowserClient();
@@ -79,10 +79,9 @@ export const authService = {
     const isDev = import.meta.env.DEV;
 
     try {
-      // Execute SECURITY DEFINER RPC to create OTP
+      // Execute SECURITY DEFINER RPC to create OTP (safe, single parameter p_phone)
       const { data, error } = await supabase.rpc("create_student_login_otp", {
         p_phone: phone,
-        p_is_dev: isDev,
       });
 
       if (error) {
@@ -99,17 +98,12 @@ export const authService = {
       const res = data as {
         ok: boolean;
         phone_e164?: string;
-        raw_otp?: string;
         message?: string;
       };
 
       if (!res || !res.ok) {
         if (isDev) return { ok: true, phone, isMock: true };
         throw new Error(res?.message || "OTP_NOT_CONFIGURED");
-      }
-
-      if (isDev && res.raw_otp) {
-        console.log(`[authService DEV] OTP for ${res.phone_e164}: ${res.raw_otp}`);
       }
 
       return { ok: true, phone: res.phone_e164 || phone };
