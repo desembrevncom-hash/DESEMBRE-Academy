@@ -23,57 +23,45 @@ export const authService = {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return { isEligible: false, registrationCount: 0, message: "Hệ thống chưa khởi tạo." };
 
-    const normalizedE164 = normalizeVietnamPhone(phone);
-    const localPhone = toLocalVietnamPhone(phone);
-
-    if (!normalizedE164 || !localPhone) {
-      return { isEligible: false, registrationCount: 0, message: "Số điện thoại không hợp lệ." };
-    }
-
     try {
-      // 1. PRIORITY 1: Query student_course_access for active access
-      try {
-        const { data: accesses, error: accessError } = await supabase
-          .from("student_course_access")
-          .select("id, access_status, expires_at")
-          .or(`phone_e164.eq.${normalizedE164},phone.eq.${localPhone}`)
-          .eq("access_status", "active");
+      // Execute SECURITY DEFINER RPC to bypass RLS and check student access
+      const { data, error } = await supabase.rpc("check_student_phone_access", {
+        p_phone: phone,
+      });
 
-        if (!accessError && accesses && accesses.length > 0) {
-          const now = new Date().toISOString();
-          const validAccesses = accesses.filter((a) => !a.expires_at || a.expires_at > now);
-          if (validAccesses.length > 0) {
-            return { isEligible: true, registrationCount: validAccesses.length };
-          }
-        }
-      } catch (_) {}
+      if (!error && data) {
+        const res = data as {
+          ok: boolean;
+          phone_e164?: string;
+          course_count?: number;
+          courses?: any[];
+          message?: string;
+        };
 
-      // 2. PRIORITY 2: Fallback query course_registrations for confirmed/enrolled/paid/completed
-      const { data: registrations, error: regError } = await supabase
-        .from("course_registrations")
-        .select("id, phone, status, source")
-        .or(`phone.eq.${normalizedE164},phone.eq.${localPhone}`)
-        .in("status", ["confirmed", "enrolled", "paid", "completed"]);
-
-      if (!regError && registrations && registrations.length > 0) {
-        const validRegs = registrations.filter((r) => r.source !== "resource_download" || r.status === "paid" || r.status === "enrolled");
-        if (validRegs.length > 0) {
-          return { isEligible: true, registrationCount: validRegs.length };
+        if (res.ok && (res.course_count || 0) > 0) {
+          return {
+            isEligible: true,
+            registrationCount: res.course_count || 0,
+            message: res.message,
+          };
         }
       }
 
-      // 3. Fallback query academy_enrollments if available
-      try {
-        const { data: enrollments, error: enrollError } = await supabase
-          .from("academy_enrollments")
-          .select("id, status")
-          .or(`student_phone.eq.${normalizedE164},student_phone.eq.${localPhone}`)
-          .in("status", ["active", "confirmed", "enrolled", "completed"]);
+      // If RPC fails or returns ok=false, fallback check via direct queries
+      const normalizedE164 = normalizeVietnamPhone(phone);
+      const localPhone = toLocalVietnamPhone(phone);
 
-        if (!enrollError && enrollments && enrollments.length > 0) {
-          return { isEligible: true, registrationCount: enrollments.length };
+      if (normalizedE164 && localPhone) {
+        const { data: registrations, error: regError } = await supabase
+          .from("course_registrations")
+          .select("id, phone, status, source")
+          .or(`phone.eq.${normalizedE164},phone.eq.${localPhone}`)
+          .in("status", ["confirmed", "enrolled", "paid", "completed"]);
+
+        if (!regError && registrations && registrations.length > 0) {
+          return { isEligible: true, registrationCount: registrations.length };
         }
-      } catch (_) {}
+      }
 
       return { isEligible: false, registrationCount: 0 };
     } catch (err) {
