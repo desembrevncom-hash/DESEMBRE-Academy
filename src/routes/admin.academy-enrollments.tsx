@@ -47,6 +47,7 @@ import { toast } from "sonner";
 import { format, parseISO, isToday, isBefore, startOfDay, endOfDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ordersApi, AcademyOrder } from "@/features/public-training/services/ordersApi";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const Route = createFileRoute("/admin/academy-enrollments")({
   component: AcademyRegistrationsCrmAdmin,
@@ -307,15 +308,52 @@ function AcademyRegistrationsCrmAdmin() {
     if (!selectedLead) return;
     setProcessingOrder(true);
     try {
+      let currentOrder = leadOrder;
+
+      // 1. If order doesn't exist yet, auto-create a pending order first
+      if (!currentOrder) {
+        let suggestedAmount = 1500000;
+        const supabase = getSupabaseBrowserClient();
+        if (supabase && (selectedLead as any).course_id) {
+          const { data: cData } = await supabase
+            .from("courses")
+            .select("price_amount, deposit_amount")
+            .eq("id", (selectedLead as any).course_id)
+            .maybeSingle();
+          if (cData) {
+            const dep = Number(cData.deposit_amount || 0);
+            const pri = Number(cData.price_amount || 0);
+            if (dep > 0) suggestedAmount = dep;
+            else if (pri > 0) suggestedAmount = pri;
+          }
+        }
+
+        const createRes = await ordersApi.createPaidCourseOrder({
+          registrationId: selectedLead.id,
+          courseId: (selectedLead as any).course_id,
+          batchId: selectedLead.batch_id,
+          fullName: selectedLead.full_name,
+          phone: selectedLead.phone,
+          email: selectedLead.email || undefined,
+          amount: suggestedAmount,
+        });
+
+        if (createRes.ok && createRes.order) {
+          currentOrder = createRes.order;
+          setLeadOrder(currentOrder);
+        }
+      }
+
       const courseId = (selectedLead as any).course_id || "course-default-id";
       const res = await ordersApi.adminConfirmPayment({
-        orderId: leadOrder?.id,
+        orderId: currentOrder?.id,
         registrationId: selectedLead.id,
         courseId: courseId,
         batchId: selectedLead.batch_id,
         phone: selectedLead.phone,
         fullName: selectedLead.full_name,
       });
+
       if (res.ok) {
         toast.success("Đã xác nhận thanh toán & mở quyền học viên thành công!");
         fetchRegistrations();
@@ -332,7 +370,23 @@ function AcademyRegistrationsCrmAdmin() {
 
   const handleAdminCreateOrder = async () => {
     if (!selectedLead) return;
-    const inputAmount = window.prompt("Nhập số tiền đơn hàng (VNĐ):", "1500000");
+    let defaultAmount = "1500000";
+    const supabase = getSupabaseBrowserClient();
+    if (supabase && (selectedLead as any).course_id) {
+      const { data: cData } = await supabase
+        .from("courses")
+        .select("price_amount, deposit_amount")
+        .eq("id", (selectedLead as any).course_id)
+        .maybeSingle();
+      if (cData) {
+        const dep = Number(cData.deposit_amount || 0);
+        const pri = Number(cData.price_amount || 0);
+        if (dep > 0) defaultAmount = String(dep);
+        else if (pri > 0) defaultAmount = String(pri);
+      }
+    }
+
+    const inputAmount = window.prompt("Nhập số tiền đơn hàng (VNĐ):", defaultAmount);
     if (!inputAmount) return;
     const amount = parseFloat(inputAmount);
     if (isNaN(amount) || amount <= 0) {

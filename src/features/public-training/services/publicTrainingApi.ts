@@ -86,6 +86,33 @@ export async function getPublicTrainingSchedule(): Promise<PublicCourseBatch[]> 
   const rawBatches = (data || []) as PublicCourseBatch[];
   console.log('[PublicTraining] raw schedule from RPC', rawBatches);
 
+  // Enrich courses with pricing data directly from public.courses
+  const courseIds = Array.from(new Set(rawBatches.map((b) => b.course?.id).filter(Boolean)));
+  if (courseIds.length > 0) {
+    try {
+      const { data: coursePrices } = await supabase
+        .from("courses")
+        .select("id, pricing_model, price_amount, deposit_amount, price_currency, payment_note")
+        .in("id", courseIds);
+
+      if (coursePrices && coursePrices.length > 0) {
+        const priceMap = new Map(coursePrices.map((cp: any) => [cp.id, cp]));
+        rawBatches.forEach((b) => {
+          if (b.course?.id && priceMap.has(b.course.id)) {
+            const cp = priceMap.get(b.course.id)!;
+            (b.course as any).pricing_model = cp.pricing_model || (b.course as any).pricing_model || "included";
+            (b.course as any).price_amount = cp.price_amount ?? (b.course as any).price_amount ?? 0;
+            (b.course as any).deposit_amount = cp.deposit_amount ?? (b.course as any).deposit_amount ?? null;
+            (b.course as any).price_currency = cp.price_currency ?? (b.course as any).price_currency ?? "VND";
+            (b.course as any).payment_note = cp.payment_note ?? (b.course as any).payment_note ?? null;
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("[getPublicTrainingSchedule] pricing enrichment warning:", e);
+    }
+  }
+
   // Hard filter client-side: MUST have sessions array with at least 1 valid session containing starts_at and ends_at
   const cleanBatches = rawBatches.filter((batch) => {
     return Array.isArray(batch.sessions)

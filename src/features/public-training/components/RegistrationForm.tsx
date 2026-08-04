@@ -114,9 +114,12 @@ export function RegistrationForm({
         });
 
         let createdOrder: AcademyOrder | null = null;
-        const pricingModel = (batch.course as any)?.pricing_model;
-        const courseAmount = (batch as any).amount || (batch as any).price || (batch.course as any)?.price_amount || 0;
-        const isPaidCourse = pricingModel === "paid" || courseAmount > 0;
+        const cObj = (batch.course as any) || {};
+        const pricingModel = cObj.pricing_model;
+        const depositAmt = Number(cObj.deposit_amount || (batch as any).deposit_amount || 0);
+        const priceAmt = Number(cObj.price_amount || (batch as any).amount || (batch as any).price || 0);
+        const effectiveAmount = depositAmt > 0 ? depositAmt : priceAmt;
+        const isPaidCourse = pricingModel === "paid" || effectiveAmount > 0 || priceAmt > 0;
 
         if (isPaidCourse) {
           try {
@@ -127,12 +130,14 @@ export function RegistrationForm({
               fullName: values.fullName,
               phone: values.phone,
               email: values.email || undefined,
-              amount: courseAmount > 0 ? courseAmount : 1500000,
+              amount: effectiveAmount > 0 ? effectiveAmount : 1500000,
             });
             if (orderRes.ok && orderRes.order) {
               createdOrder = orderRes.order;
             }
-          } catch (_) {}
+          } catch (e) {
+            console.error("[RegistrationForm] createPaidCourseOrder error:", e);
+          }
         }
 
         onSuccess(!!res.duplicate, createdOrder);
