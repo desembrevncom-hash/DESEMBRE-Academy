@@ -48,6 +48,10 @@ DECLARE
   v_effective_amount numeric(12,2) := 0;
   v_order_id uuid;
   v_order_json jsonb := NULL;
+  v_order_currency text;
+  v_order_payment_status text;
+  v_order_bank_transfer_content text;
+  v_order_payment_note text;
 BEGIN
   -- 1. Validate inputs
   IF p_full_name IS NULL OR trim(p_full_name) = '' THEN
@@ -77,7 +81,11 @@ BEGIN
   END IF;
 
   -- 3. Resolve source & build attribution text for notes
-  v_final_source := COALESCE(NULLIF(trim(p_source), ''), 'public_schedule');
+  v_final_source := CASE
+    WHEN p_campaign_slug IS NOT NULL AND trim(p_campaign_slug) <> '' THEN 'landing_page'
+    WHEN lower(coalesce(trim(p_source), '')) = 'landing_page' THEN 'landing_page'
+    ELSE COALESCE(NULLIF(trim(p_source), ''), 'public_schedule')
+  END;
 
   IF p_campaign_slug IS NOT NULL AND trim(p_campaign_slug) <> '' THEN
     v_attribution := v_attribution || '[campaign: ' || trim(p_campaign_slug) || '] ';
@@ -155,15 +163,31 @@ BEGIN
   SELECT id INTO v_existing_id
   FROM public.course_registrations
   WHERE batch_id = p_batch_id
-    AND regexp_replace(phone, '\D', '', 'g') = v_clean_phone
-    AND status IN ('pending', 'contacted', 'confirmed', 'enrolled', 'paid')
+    AND (
+      regexp_replace(phone, '\D', '', 'g') = v_clean_phone
+      OR regexp_replace(phone, '\D', '', 'g') = regexp_replace(v_phone_local, '\D', '', 'g')
+      OR regexp_replace(phone, '\D', '', 'g') = replace(v_phone_e164, '+', '')
+    )
+    AND coalesce(status, 'pending') IN ('new', 'pending', 'contacted', 'confirmed', 'enrolled', 'paid')
   ORDER BY created_at DESC
   LIMIT 1;
 
   IF v_existing_id IS NOT NULL THEN
     -- Check if existing registration already has an order
-    SELECT id, amount, currency, payment_status, bank_transfer_content, payment_note
-    INTO v_order_id, v_effective_amount, v_phone_raw, v_phone_digits, v_attribution, v_final_notes
+    SELECT
+      id,
+      amount,
+      currency,
+      payment_status,
+      bank_transfer_content,
+      payment_note
+    INTO
+      v_order_id,
+      v_effective_amount,
+      v_order_currency,
+      v_order_payment_status,
+      v_order_bank_transfer_content,
+      v_order_payment_note
     FROM public.academy_orders
     WHERE registration_id = v_existing_id
     LIMIT 1;
@@ -173,10 +197,10 @@ BEGIN
         'id', v_order_id,
         'registration_id', v_existing_id,
         'amount', v_effective_amount,
-        'currency', COALESCE(v_phone_raw, 'VND'),
-        'payment_status', v_phone_digits,
-        'bank_transfer_content', v_attribution,
-        'payment_note', v_final_notes
+        'currency', COALESCE(v_order_currency, 'VND'),
+        'payment_status', v_order_payment_status,
+        'bank_transfer_content', v_order_bank_transfer_content,
+        'payment_note', v_order_payment_note
       );
     END IF;
 
@@ -327,7 +351,11 @@ BEGIN
     SELECT id INTO v_existing_id
     FROM public.course_registrations
     WHERE batch_id = p_batch_id
-      AND regexp_replace(phone, '\D', '', 'g') = v_clean_phone
+      AND (
+        regexp_replace(phone, '\D', '', 'g') = v_clean_phone
+        OR regexp_replace(phone, '\D', '', 'g') = regexp_replace(v_phone_local, '\D', '', 'g')
+        OR regexp_replace(phone, '\D', '', 'g') = replace(v_phone_e164, '+', '')
+      )
     LIMIT 1;
 
     RETURN jsonb_build_object(
