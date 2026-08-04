@@ -362,7 +362,7 @@ function AdminNotificationsPage() {
                     <td className="p-4 align-top">
                       <div className="font-semibold text-sm text-indigo-700 flex items-center gap-1.5">
                         {job.channel === 'zalo' ? <MessageSquare className="h-4 w-4 text-indigo-600" /> : <Mail className="h-4 w-4 text-slate-600" />} 
-                        {job.template_code === 'class_reminder' ? 'Nhắc lịch học' : job.template_code === 'registration_received' ? 'Đã nhận đăng ký' : job.template_code}
+                        {job.template_code === 'student_login_otp' ? 'Mã OTP Đăng Nhập' : job.template_code === 'class_reminder' ? 'Nhắc lịch học' : job.template_code === 'registration_received' ? 'Đã nhận đăng ký' : job.template_code}
                       </div>
                       <div className="text-[11px] text-slate-500 font-mono mt-0.5">{job.template_code}</div>
                       <div className="text-xs uppercase text-slate-400 font-semibold tracking-wider mt-1">{job.channel}</div>
