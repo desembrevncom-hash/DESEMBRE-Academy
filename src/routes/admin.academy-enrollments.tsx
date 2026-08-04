@@ -366,7 +366,7 @@ function AcademyRegistrationsCrmAdmin() {
         fullName: selectedLead.full_name,
       });
 
-      if (res.ok) {
+      if (res.ok && res.access_id) {
         toast.success("Đã xác nhận thanh toán & mở quyền học viên thành công!");
         fetchRegistrations();
         loadLeadDetails({ ...selectedLead, status: "paid" as any });
