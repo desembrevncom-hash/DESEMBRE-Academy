@@ -74,7 +74,7 @@ export function RegistrationForm({
     }
 
     const effectiveSource = source || (campaignSlug ? "landing_page" : "public_schedule");
-    const effectiveCampaign = campaignSlug || (effectiveSource === "landing_page" ? "biological-trigger" : undefined);
+    const effectiveCampaign = campaignSlug || undefined;
 
     trackLandingEvent("registration_submit_attempt", {
       batch_id: batch.id,

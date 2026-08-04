@@ -153,7 +153,7 @@ export const ordersApi = {
   async adminConfirmPayment(payload: {
     orderId?: string;
     registrationId?: string;
-    courseId: string;
+    courseId?: string;
     batchId?: string;
     phone: string;
     fullName?: string;
@@ -166,8 +166,66 @@ export const ordersApi = {
     const local = toLocalVietnamPhone(payload.phone) || payload.phone;
 
     try {
-      // 1. Update order if orderId is provided
-      if (payload.orderId) {
+      // 1. Derive course_id from batch_id if missing or invalid
+      let finalCourseId = payload.courseId;
+      if (!finalCourseId || finalCourseId === "course-default-id") {
+        if (payload.batchId) {
+          const { data: bData } = await supabase
+            .from("course_batches")
+            .select("course_id")
+            .eq("id", payload.batchId)
+            .maybeSingle();
+          if (bData?.course_id) {
+            finalCourseId = bData.course_id;
+          }
+        }
+      }
+
+      if (!finalCourseId) {
+        return { ok: false, message: "Không thể xác định ID khóa học (course_id). Vui lòng kiểm tra lại lớp học." };
+      }
+
+      // 2. Ensure an order exists and update payment status = paid
+      let finalOrderId = payload.orderId;
+      if (!finalOrderId && payload.registrationId) {
+        const { data: existingOrd } = await supabase
+          .from("academy_orders")
+          .select("id")
+          .eq("registration_id", payload.registrationId)
+          .maybeSingle();
+
+        if (existingOrd?.id) {
+          finalOrderId = existingOrd.id;
+        } else {
+          // Auto create paid order if none exists yet
+          const { data: newOrd } = await supabase
+            .from("academy_orders")
+            .insert([
+              {
+                registration_id: payload.registrationId,
+                course_id: finalCourseId,
+                batch_id: payload.batchId || null,
+                full_name: payload.fullName || "Học viên",
+                phone: local,
+                phone_e164: e164,
+                amount: 300000,
+                payment_method: "bank_transfer",
+                payment_status: "paid",
+                bank_transfer_content: `DESEMBRE ${local.replace(/[^\d]/g, "")}`,
+                paid_at: new Date().toISOString(),
+                confirmed_by: payload.confirmedBy || null,
+              },
+            ])
+            .select("id")
+            .single();
+
+          if (newOrd?.id) {
+            finalOrderId = newOrd.id;
+          }
+        }
+      }
+
+      if (finalOrderId) {
         await supabase
           .from("academy_orders")
           .update({
@@ -176,10 +234,10 @@ export const ordersApi = {
             confirmed_by: payload.confirmedBy || null,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", payload.orderId);
+          .eq("id", finalOrderId);
       }
 
-      // 2. Update course_registrations status
+      // 3. Update course_registrations status = paid
       if (payload.registrationId) {
         await supabase
           .from("course_registrations")
@@ -190,11 +248,11 @@ export const ordersApi = {
           .eq("id", payload.registrationId);
       }
 
-      // 3. Upsert active student_course_access with robust fallback
+      // 4. Insert/Upsert active student_course_access
       const accessPayload = {
-        order_id: payload.orderId || null,
+        order_id: finalOrderId || null,
         registration_id: payload.registrationId || null,
-        course_id: payload.courseId,
+        course_id: finalCourseId,
         batch_id: payload.batchId || null,
         phone: local,
         phone_e164: e164,
@@ -203,19 +261,16 @@ export const ordersApi = {
         updated_at: new Date().toISOString(),
       };
 
-      // Try upsert with onConflict specification
-      const { error: upsertErr } = await supabase
+      const { error: insErr } = await supabase
         .from("student_course_access")
         .upsert([accessPayload], { onConflict: "course_id, phone_e164" });
 
-      if (upsertErr) {
-        console.warn("[ordersApi] upsert onConflict warning, executing insert/update fallback:", upsertErr.message);
-        
-        // Fallback: Check if active/expired access row exists for this course and phone
+      if (insErr) {
+        console.warn("[ordersApi] student_course_access upsert error, trying fallback:", insErr.message);
         const { data: existing } = await supabase
           .from("student_course_access")
           .select("id")
-          .eq("course_id", payload.courseId)
+          .eq("course_id", finalCourseId)
           .or(`phone_e164.eq.${e164},phone.eq.${local}`)
           .limit(1);
 
@@ -224,7 +279,7 @@ export const ordersApi = {
             .from("student_course_access")
             .update({
               access_status: "active",
-              order_id: payload.orderId || null,
+              order_id: finalOrderId || null,
               batch_id: payload.batchId || null,
               registration_id: payload.registrationId || null,
               updated_at: new Date().toISOString(),
@@ -233,6 +288,22 @@ export const ordersApi = {
         } else {
           await supabase.from("student_course_access").insert([accessPayload]);
         }
+      }
+
+      // 5. DB WRITE VERIFICATION: Read back from CSDL to verify row is active
+      const { data: verifiedRows } = await supabase
+        .from("student_course_access")
+        .select("id, access_status")
+        .eq("course_id", finalCourseId)
+        .or(`phone_e164.eq.${e164},phone.eq.${local}`)
+        .eq("access_status", "active")
+        .limit(1);
+
+      if (!verifiedRows || verifiedRows.length === 0) {
+        return {
+          ok: false,
+          message: `Xác nhận thất bại: Không ghi nhận được student_course_access vào CSDL (Course ID: ${finalCourseId}, Phone: ${e164}).`,
+        };
       }
 
       return { ok: true, message: "Đã xác nhận thanh toán & mở quyền học viên thành công!" };

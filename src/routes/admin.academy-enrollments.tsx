@@ -310,15 +310,28 @@ function AcademyRegistrationsCrmAdmin() {
     try {
       let currentOrder = leadOrder;
 
+      // Derive courseId from batch_id if needed
+      let derivedCourseId: string | undefined = (selectedLead as any).course_id;
+      const supabase = getSupabaseBrowserClient();
+      if (!derivedCourseId && selectedLead.batch_id && supabase) {
+        const { data: bData } = await supabase
+          .from("course_batches")
+          .select("course_id")
+          .eq("id", selectedLead.batch_id)
+          .maybeSingle();
+        if (bData?.course_id) {
+          derivedCourseId = bData.course_id;
+        }
+      }
+
       // 1. If order doesn't exist yet, auto-create a pending order first
       if (!currentOrder) {
         let suggestedAmount = 1500000;
-        const supabase = getSupabaseBrowserClient();
-        if (supabase && (selectedLead as any).course_id) {
+        if (supabase && derivedCourseId) {
           const { data: cData } = await supabase
             .from("courses")
             .select("price_amount, deposit_amount")
-            .eq("id", (selectedLead as any).course_id)
+            .eq("id", derivedCourseId)
             .maybeSingle();
           if (cData) {
             const dep = Number(cData.deposit_amount || 0);
@@ -330,7 +343,7 @@ function AcademyRegistrationsCrmAdmin() {
 
         const createRes = await ordersApi.createPaidCourseOrder({
           registrationId: selectedLead.id,
-          courseId: (selectedLead as any).course_id,
+          courseId: derivedCourseId,
           batchId: selectedLead.batch_id,
           fullName: selectedLead.full_name,
           phone: selectedLead.phone,
@@ -344,11 +357,10 @@ function AcademyRegistrationsCrmAdmin() {
         }
       }
 
-      const courseId = (selectedLead as any).course_id || "course-default-id";
       const res = await ordersApi.adminConfirmPayment({
         orderId: currentOrder?.id,
         registrationId: selectedLead.id,
-        courseId: courseId,
+        courseId: derivedCourseId,
         batchId: selectedLead.batch_id,
         phone: selectedLead.phone,
         fullName: selectedLead.full_name,
