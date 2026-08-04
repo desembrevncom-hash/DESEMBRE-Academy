@@ -36,11 +36,18 @@ export function DynamicAcademyLandingPage({ slug, isForceAdminPreview }: Dynamic
       const scheduleBatches = await getPublicTrainingSchedule();
       const cleanSchedule = scheduleBatches.filter((b) => !isDemoRecord(b));
 
-      // Match batch by course slug or campaign slug
+      // Match batch strictly by course_id (if landing.course_id exists), course slug, or batch slug
+      const landingCourseId = landingConfig?.course_id;
+      const targetSlug = slug.toLowerCase().trim();
+
       const matchedBatches = cleanSchedule.filter((b) => {
+        const cId = (b.course?.id || "").toLowerCase().trim();
         const cSlug = (b.course?.slug || "").toLowerCase().trim();
         const bSlug = (b.slug || "").toLowerCase().trim();
-        const targetSlug = slug.toLowerCase().trim();
+
+        if (landingCourseId && cId && cId === landingCourseId.toLowerCase().trim()) {
+          return true;
+        }
 
         return (
           cSlug === targetSlug ||
@@ -50,7 +57,8 @@ export function DynamicAcademyLandingPage({ slug, isForceAdminPreview }: Dynamic
         );
       });
 
-      setBatches(matchedBatches.length > 0 ? matchedBatches : cleanSchedule);
+      // Strictly set matchedBatches ONLY (do NOT fallback to cleanSchedule!)
+      setBatches(matchedBatches);
     } catch (err: any) {
       console.error("loadLandingData error:", err);
     } finally {

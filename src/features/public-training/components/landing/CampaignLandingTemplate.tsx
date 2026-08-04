@@ -16,6 +16,7 @@ import { LandingAgendaSection } from "./LandingAgendaSection";
 import { LandingInstructorSection } from "./LandingInstructorSection";
 import { LandingFAQSection } from "./LandingFAQSection";
 import { LandingStickyCTA } from "./LandingStickyCTA";
+import { AcademyOrder } from "@/features/public-training/services/ordersApi";
 
 interface CampaignLandingTemplateProps {
   slug: string;
@@ -42,6 +43,7 @@ export function CampaignLandingTemplate({
   const [initialNotes, setInitialNotes] = useState<string | undefined>(undefined);
   const [successBatchTitle, setSuccessBatchTitle] = useState<string | null>(null);
   const [isDuplicateRegistration, setIsDuplicateRegistration] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<AcademyOrder | null>(null);
 
   const isPreviewRequested = useMemo(() => {
     if (isForceAdminPreview) return true;
@@ -175,10 +177,11 @@ export function CampaignLandingTemplate({
     setInitialNotes(undefined);
   };
 
-  const handleSuccess = (isDuplicate?: boolean) => {
+  const handleSuccess = (isDuplicate?: boolean, order?: AcademyOrder | null) => {
     if (registeringBatch) {
       const bTitle = registeringBatch.course?.title || registeringBatch.title;
       setSuccessBatchTitle(bTitle);
+      setCreatedOrder(order || null);
       trackLandingEvent("registration_submit_success", {
         batch_id: registeringBatch.id,
         batch_title: bTitle,
@@ -337,7 +340,11 @@ export function CampaignLandingTemplate({
           batchTitle={successBatchTitle}
           isDuplicate={isDuplicateRegistration}
           courseSlug={slug}
-          onClose={() => setSuccessBatchTitle(null)}
+          order={createdOrder}
+          onClose={() => {
+            setSuccessBatchTitle(null);
+            setCreatedOrder(null);
+          }}
         />
       )}
     </div>

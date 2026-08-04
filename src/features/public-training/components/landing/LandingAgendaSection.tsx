@@ -100,9 +100,9 @@ export function LandingAgendaSection({ batches, onOpenRegister, onOpenConsult }:
               <Calendar className="w-7 h-7" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-bold text-slate-900">Hiện chưa có lịch khai giảng công bố mới</h3>
+              <h3 className="text-lg font-bold text-slate-900">Hiện chưa có lịch khai giảng phù hợp cho chiến dịch này.</h3>
               <p className="text-xs sm:text-sm text-slate-600">
-                Các đợt khai giảng tiếp theo đang được sắp xếp. Bạn có thể để lại thông tin để bộ phận đào tạo DESEMBRE ưu tiên gửi thông báo lịch sớm nhất.
+                Đợt khai giảng tiếp theo đang được sắp xếp. Vui lòng để lại thông tin để bộ phận tư vấn DESEMBRE ưu tiên liên hệ gửi lịch mới nhất.
               </p>
             </div>
             <Button

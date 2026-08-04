@@ -121,6 +121,22 @@ export function RegistrationForm({
         const effectiveAmount = depositAmt > 0 ? depositAmt : priceAmt;
         const isPaidCourse = pricingModel === "paid" || effectiveAmount > 0 || priceAmt > 0;
 
+        if (import.meta.env.DEV) {
+          console.log("[P3C.65E DEV Debug]", {
+            landingSlug: campaignSlug,
+            selectedBatchId: batch.id,
+            selectedBatchTitle: batch.title,
+            selectedBatchCourseSlug: batch.course?.slug,
+            source: effectiveSource,
+            campaignSlug: effectiveCampaign,
+            pricing_model: pricingModel,
+            price_amount: priceAmt,
+            deposit_amount: depositAmt,
+            effectiveAmount,
+            isPaidCourse,
+          });
+        }
+
         if (isPaidCourse) {
           try {
             const orderRes = await ordersApi.createPaidCourseOrder({
