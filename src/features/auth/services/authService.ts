@@ -1,5 +1,5 @@
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import { normalizePhone, normalizeVietnamPhone, toLocalVietnamPhone } from '@/lib/phoneNormalization';
+import { normalizeVietnamPhone, toLocalVietnamPhone } from '@/lib/phoneNormalization';
 
 export type EligibilityCheckResult = {
   isEligible: boolean;
@@ -16,8 +16,7 @@ export type OtpRequestResult = {
 
 export const authService = {
   /**
-   * Checks whether a phone number has active student access/enrollment
-   * with status in ('confirmed', 'enrolled', 'paid', 'completed').
+   * Checks whether a phone number has active student access/enrollment.
    */
   checkStudentEligibility: async (phone: string): Promise<EligibilityCheckResult> => {
     const supabase = getSupabaseBrowserClient();
@@ -71,41 +70,56 @@ export const authService = {
   },
 
   /**
-   * Sends OTP to phone number or uses DEV mock fallback.
+   * Sends OTP to phone number or uses DEV mock fallback / RPC OTP provider.
    */
   requestOtp: async (phone: string): Promise<OtpRequestResult> => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) throw new Error("Supabase client not initialized");
 
-    const normalized = normalizePhone(phone);
-    if (!normalized) throw new Error("Vui lòng nhập số điện thoại hợp lệ.");
-
     const isDev = import.meta.env.DEV;
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: normalized,
+      // Execute SECURITY DEFINER RPC to create OTP
+      const { data, error } = await supabase.rpc("create_student_login_otp", {
+        p_phone: phone,
+        p_is_dev: isDev,
       });
 
       if (error) {
-        // If SMS provider is not configured or rate-limited
-        if (isDev) {
-          console.warn("[authService DEV] Supabase SMS not configured or error. Falling back to Mock OTP (123456).", error.message);
-          return { ok: true, phone: normalized, isMock: true };
-        } else {
-          // Production error UX
+        console.warn("[authService] create_student_login_otp RPC error:", error.message);
+        // Fallback to Supabase Auth OTP if RPC not applied yet
+        const { error: supaErr } = await supabase.auth.signInWithOtp({ phone });
+        if (supaErr) {
+          if (isDev) return { ok: true, phone, isMock: true };
           throw new Error("OTP_NOT_CONFIGURED");
         }
+        return { ok: true, phone };
       }
 
-      return { ok: true, phone: normalized };
+      const res = data as {
+        ok: boolean;
+        phone_e164?: string;
+        raw_otp?: string;
+        message?: string;
+      };
+
+      if (!res || !res.ok) {
+        if (isDev) return { ok: true, phone, isMock: true };
+        throw new Error(res?.message || "OTP_NOT_CONFIGURED");
+      }
+
+      if (isDev && res.raw_otp) {
+        console.log(`[authService DEV] OTP for ${res.phone_e164}: ${res.raw_otp}`);
+      }
+
+      return { ok: true, phone: res.phone_e164 || phone };
     } catch (err: any) {
-      if (err.message === "OTP_NOT_CONFIGURED") {
+      if (err.message === "OTP_NOT_CONFIGURED" || err.message === "NOT_ELIGIBLE") {
         throw err;
       }
       if (isDev) {
         console.warn("[authService DEV] OTP request caught error. Using DEV mock OTP.", err.message);
-        return { ok: true, phone: normalized, isMock: true };
+        return { ok: true, phone, isMock: true };
       }
       throw new Error("OTP_NOT_CONFIGURED");
     }
@@ -118,31 +132,69 @@ export const authService = {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) throw new Error("Supabase client not initialized");
 
-    const normalized = normalizePhone(phone);
-    if (!normalized) throw new Error("Số điện thoại không hợp lệ.");
-
     const isDev = import.meta.env.DEV;
 
     // DEV mock OTP handling
     if (isDev && token === "123456") {
       console.log("[authService DEV] Verified via mock OTP 123456.");
+      const studentSession = {
+        phone_e164: phone,
+        login_at: new Date().toISOString(),
+      };
+      sessionStorage.setItem("academy_student_session", JSON.stringify(studentSession));
+      localStorage.setItem("academy_student_session", JSON.stringify(studentSession));
       return { ok: true, session: null, isMock: true };
     }
 
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone: normalized,
-      token,
-      type: 'sms',
-    });
+    try {
+      const { data, error } = await supabase.rpc("verify_student_login_otp", {
+        p_phone: phone,
+        p_otp: token,
+      });
 
-    if (error) {
+      if (!error && data) {
+        const res = data as {
+          ok: boolean;
+          phone_e164?: string;
+          courses?: any[];
+          message?: string;
+        };
+
+        if (res.ok) {
+          const studentSession = {
+            phone_e164: res.phone_e164 || phone,
+            courses: res.courses || [],
+            login_at: new Date().toISOString(),
+          };
+          sessionStorage.setItem("academy_student_session", JSON.stringify(studentSession));
+          localStorage.setItem("academy_student_session", JSON.stringify(studentSession));
+          return { ok: true, session: null, studentSession };
+        } else {
+          throw new Error(res.message || "Mã OTP không chính xác hoặc đã hết hạn.");
+        }
+      }
+
+      // Supabase auth OTP fallback
+      const { data: supaData, error: supaError } = await supabase.auth.verifyOtp({
+        phone,
+        token,
+        type: "sms",
+      });
+
+      if (supaError) throw supaError;
+      return { ok: true, session: supaData.session };
+    } catch (err: any) {
       if (isDev && token === "123456") {
+        const studentSession = {
+          phone_e164: phone,
+          login_at: new Date().toISOString(),
+        };
+        sessionStorage.setItem("academy_student_session", JSON.stringify(studentSession));
+        localStorage.setItem("academy_student_session", JSON.stringify(studentSession));
         return { ok: true, session: null, isMock: true };
       }
-      throw error;
+      throw err;
     }
-
-    return { ok: true, session: data.session };
   },
 
   linkStudentAccount: async () => {
