@@ -77,8 +77,8 @@ function PublicCourseDetailPage() {
           const rawCover = data.cover_url;
           const ogImage = rawCover && (rawCover.startsWith("http://") || rawCover.startsWith("https://"))
             ? rawCover
-            : "https://academy.desembre-vn.com/og/academy-home.jpg";
-          const canonicalUrl = `https://academy.desembre-vn.com/khoa-hoc/${slug}`;
+            : DEFAULT_OG_IMAGE;
+          const canonicalUrl = `${SITE_URL}/khoa-hoc/${slug}`;
 
           document.title = pageTitle;
 

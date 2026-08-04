@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppStoreProvider } from "@/lib/store";
 import { Toaster } from "@/components/ui/sonner";
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/config/site";
 
 function NotFoundComponent() {
   return (
@@ -84,13 +85,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:title", content: "DESEMBRE Training Center" },
       { property: "og:description", content: "Học đúng kiến thức. Phát triển đúng hướng." },
-      { property: "og:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
-      { property: "og:url", content: "https://academy.desembre-vn.com/" },
+      { property: "og:image", content: DEFAULT_OG_IMAGE },
+      { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "DESEMBRE Training Center" },
       { name: "twitter:description", content: "Học đúng kiến thức. Phát triển đúng hướng." },
-      { name: "twitter:image", content: "https://academy.desembre-vn.com/og/academy-home.jpg" },
+      { name: "twitter:image", content: DEFAULT_OG_IMAGE },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

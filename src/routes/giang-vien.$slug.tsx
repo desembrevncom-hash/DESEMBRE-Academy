@@ -69,8 +69,8 @@ function PublicInstructorProfilePage() {
           const rawAvatar = data.avatar_url;
           const ogImage = rawAvatar && (rawAvatar.startsWith("http://") || rawAvatar.startsWith("https://"))
             ? rawAvatar
-            : "https://academy.desembre-vn.com/og/academy-home.jpg";
-          const canonicalUrl = `https://academy.desembre-vn.com/giang-vien/${slug}`;
+            : DEFAULT_OG_IMAGE;
+          const canonicalUrl = `${SITE_URL}/giang-vien/${slug}`;
 
           document.title = pageTitle;
 

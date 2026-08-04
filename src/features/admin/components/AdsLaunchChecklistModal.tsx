@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { AcademyLandingPage } from "@/features/admin/services/academyAdminLandingPagesApi";
 import { getTrackingConfigStatus } from "@/features/public-training/tracking/pixelSdkLoader";
+import { getPublicSiteUrl } from "@/config/site";
 import {
   CheckCircle2, XCircle, AlertTriangle, ShieldCheck, ExternalLink, Play, Copy, Check, Sparkles, Globe, Layers, ArrowRight,
   FlaskConical, Save, FileText, AlertCircle, RefreshCw
@@ -147,7 +148,8 @@ export function AdsLaunchChecklistModal({
   const passedCount = checklistItems.filter((i) => i.status).length;
   const totalCount = checklistItems.length;
 
-  const smokeTestUtmUrl = `https://academy.desembre-vn.com/l/${landing.slug}?utm_source=facebook&utm_medium=cpc_ads&utm_campaign=${landing.slug}_smoke_test`;
+  const publicBaseUrl = getPublicSiteUrl();
+  const smokeTestUtmUrl = `${publicBaseUrl}/l/${landing.slug}?utm_source=facebook&utm_medium=cpc_ads&utm_campaign=${landing.slug}_smoke_test`;
 
   const handleCopyUtm = () => {
     navigator.clipboard.writeText(smokeTestUtmUrl);
@@ -379,6 +381,20 @@ export function AdsLaunchChecklistModal({
                     </div>
                   </a>
                 </div>
+              </div>
+
+              {/* Production Domain Migration & Ads Platform Notes Card */}
+              <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-950 text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold text-indigo-900">
+                  <Globe className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span>🌐 CHUẨN HÓA DOMAIN SẢN XUẤT THẬT (training.desembre-vn.com):</span>
+                </div>
+                <ul className="list-disc list-inside space-y-1 text-indigo-900 leading-relaxed pl-1">
+                  <li>Domain public chính thức đã được chuyển sang: <span className="font-bold text-indigo-700 bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono">https://training.desembre-vn.com</span>.</li>
+                  <li><strong>Domain Verification cho Ads Platform</strong>: Vui lòng cập nhật domain xác minh trong Meta Business Manager & TikTok Ads Manager sang <span className="font-mono font-bold">training.desembre-vn.com</span>.</li>
+                  <li><strong>Cấu hình Link Quảng cáo thật (Final URL)</strong>: Cập nhật tất cả chiến dịch Meta/TikTok Ads sang URL mới: <span className="font-mono font-bold">{publicBaseUrl}/l/{landing.slug}</span>.</li>
+                  <li><strong>Cloudflare 301 Redirect</strong>: Khuyến nghị thiết lập cờ 301 Permanent Redirect từ domain cũ <span className="font-mono text-slate-600">academy.desembre-vn.com</span> sang domain mới <span className="font-mono font-bold">training.desembre-vn.com</span> để bảo toàn lượt truy cập và theo dõi tracking cũ.</li>
+                </ul>
               </div>
 
               {/* ZNS Safety Warning Alert */}

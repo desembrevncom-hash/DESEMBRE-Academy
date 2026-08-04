@@ -83,7 +83,7 @@ export function applyCourseSeoMeta(course: CourseOutline["course"]) {
   const seoImage =
     rawThumb && (rawThumb.startsWith("https://") || rawThumb.startsWith("http://"))
       ? rawThumb
-      : "https://academy.desembre-vn.com/og/academy-home.jpg";
+      : DEFAULT_OG_IMAGE;
   const seoImageAlt = course.marketing?.thumbnail_alt || seoTitle;
 
   // Cập nhật title
