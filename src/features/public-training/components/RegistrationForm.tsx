@@ -113,7 +113,7 @@ export function RegistrationForm({
           utm_campaign,
         });
 
-        let createdOrder: AcademyOrder | null = null;
+        let createdOrder: AcademyOrder | null = (res.order as AcademyOrder) || null;
         const cObj = (batch.course as any) || {};
         const pricingModel = cObj.pricing_model;
         const depositAmt = Number(cObj.deposit_amount || (batch as any).deposit_amount || 0);
@@ -122,7 +122,7 @@ export function RegistrationForm({
         const isPaidCourse = pricingModel === "paid" || effectiveAmount > 0 || priceAmt > 0;
 
         if (import.meta.env.DEV) {
-          console.log("[P3C.65E DEV Debug]", {
+          console.log("[P3C.65H DEV Debug]", {
             landingSlug: campaignSlug,
             selectedBatchId: batch.id,
             selectedBatchTitle: batch.title,
@@ -134,10 +134,11 @@ export function RegistrationForm({
             deposit_amount: depositAmt,
             effectiveAmount,
             isPaidCourse,
+            orderCreated: createdOrder,
           });
         }
 
-        if (isPaidCourse) {
+        if (isPaidCourse && !createdOrder && res.registration_id) {
           try {
             const orderRes = await ordersApi.createPaidCourseOrder({
               registrationId: res.registration_id,

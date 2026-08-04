@@ -60,6 +60,7 @@ export interface SubmitPublicRegistrationResponse {
   ok: boolean;
   duplicate?: boolean;
   registration_id?: string;
+  order?: any | null;
   message?: string;
   error?: string;
 }
