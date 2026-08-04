@@ -1160,10 +1160,23 @@ function AcademyRegistrationsCrmAdmin() {
                   <Button
                     onClick={() => handleUpdateRegistrationStatus("confirmed")}
                     size="sm"
-                    className="rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                    variant="outline"
+                    className="rounded-xl text-xs font-semibold border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100 shadow-xs"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                    Xác nhận (Queue ZNS)
+                    <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                    Xác nhận giữ chỗ (Queue ZNS)
+                  </Button>
+                )}
+
+                {(!leadOrder || leadOrder.payment_status === "pending_payment") && (
+                  <Button
+                    onClick={handleAdminConfirmPayment}
+                    disabled={processingOrder}
+                    size="sm"
+                    className="rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md gap-1"
+                  >
+                    {processingOrder ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                    <span>Xác nhận đã thanh toán & Mở quyền</span>
                   </Button>
                 )}
 

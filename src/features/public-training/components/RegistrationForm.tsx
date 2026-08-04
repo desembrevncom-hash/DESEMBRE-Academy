@@ -114,9 +114,11 @@ export function RegistrationForm({
         });
 
         let createdOrder: AcademyOrder | null = null;
-        const courseAmount = (batch as any).amount || (batch as any).price || (batch as any).tuition_fee || 0;
+        const pricingModel = (batch.course as any)?.pricing_model;
+        const courseAmount = (batch as any).amount || (batch as any).price || (batch.course as any)?.price_amount || 0;
+        const isPaidCourse = pricingModel === "paid" || courseAmount > 0;
 
-        if (courseAmount > 0) {
+        if (isPaidCourse) {
           try {
             const orderRes = await ordersApi.createPaidCourseOrder({
               registrationId: res.registration_id,
@@ -125,7 +127,7 @@ export function RegistrationForm({
               fullName: values.fullName,
               phone: values.phone,
               email: values.email || undefined,
-              amount: courseAmount,
+              amount: courseAmount > 0 ? courseAmount : 1500000,
             });
             if (orderRes.ok && orderRes.order) {
               createdOrder = orderRes.order;

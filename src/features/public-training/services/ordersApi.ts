@@ -190,28 +190,54 @@ export const ordersApi = {
           .eq("id", payload.registrationId);
       }
 
-      // 3. Upsert active student_course_access
-      const { error: accessError } = await supabase
-        .from("student_course_access")
-        .insert([
-          {
-            order_id: payload.orderId || null,
-            registration_id: payload.registrationId || null,
-            course_id: payload.courseId,
-            batch_id: payload.batchId || null,
-            phone: local,
-            phone_e164: e164,
-            access_status: "active",
-            starts_at: new Date().toISOString(),
-          },
-        ]);
+      // 3. Upsert active student_course_access with robust fallback
+      const accessPayload = {
+        order_id: payload.orderId || null,
+        registration_id: payload.registrationId || null,
+        course_id: payload.courseId,
+        batch_id: payload.batchId || null,
+        phone: local,
+        phone_e164: e164,
+        access_status: "active",
+        starts_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-      if (accessError) {
-        console.warn("[ordersApi] student_course_access insert warning:", accessError.message);
+      // Try upsert with onConflict specification
+      const { error: upsertErr } = await supabase
+        .from("student_course_access")
+        .upsert([accessPayload], { onConflict: "course_id, phone_e164" });
+
+      if (upsertErr) {
+        console.warn("[ordersApi] upsert onConflict warning, executing insert/update fallback:", upsertErr.message);
+        
+        // Fallback: Check if active/expired access row exists for this course and phone
+        const { data: existing } = await supabase
+          .from("student_course_access")
+          .select("id")
+          .eq("course_id", payload.courseId)
+          .or(`phone_e164.eq.${e164},phone.eq.${local}`)
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          await supabase
+            .from("student_course_access")
+            .update({
+              access_status: "active",
+              order_id: payload.orderId || null,
+              batch_id: payload.batchId || null,
+              registration_id: payload.registrationId || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existing[0].id);
+        } else {
+          await supabase.from("student_course_access").insert([accessPayload]);
+        }
       }
 
       return { ok: true, message: "Đã xác nhận thanh toán & mở quyền học viên thành công!" };
     } catch (err: any) {
+      console.error("[ordersApi] adminConfirmPayment exception:", err);
       return { ok: false, message: err.message };
     }
   },

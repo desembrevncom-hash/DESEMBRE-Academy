@@ -38,6 +38,10 @@ export const createCourseSchema = z.object({
   enrollment_policy: z.enum(["open", "approval", "assigned", "closed"]),
   access_policy: z.enum(["dynamic", "grandfathered"]),
   pricing_model: z.enum(["free", "paid", "included"]),
+  price_amount: z.coerce.number().min(0, "Học phí phải >= 0").optional().nullable().default(0),
+  deposit_amount: z.coerce.number().min(0).optional().nullable(),
+  price_currency: z.string().optional().nullable().default("VND"),
+  payment_note: z.string().optional().nullable(),
   cover_url: z.string().optional().nullable().or(z.literal("")),
   summary: z.string().max(1000, "Tóm tắt quá dài").optional().nullable(),
 });
@@ -50,6 +54,10 @@ export const updateCourseSchema = createCourseSchema.extend({
   enrollment_policy: z.enum(["open", "approval", "assigned", "closed"]),
   access_policy: z.enum(["dynamic", "grandfathered"]),
   pricing_model: z.enum(["free", "paid", "included"]),
+  price_amount: z.coerce.number().min(0).optional().nullable().default(0),
+  deposit_amount: z.coerce.number().min(0).optional().nullable(),
+  price_currency: z.string().optional().nullable().default("VND"),
+  payment_note: z.string().optional().nullable(),
   cover_url: z.string().optional().nullable().or(z.literal("")),
   summary: z.string().max(1000, "Tóm tắt quá dài").optional().nullable(),
 });

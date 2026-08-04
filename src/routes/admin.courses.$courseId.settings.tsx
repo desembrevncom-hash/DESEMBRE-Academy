@@ -64,6 +64,10 @@ function CourseSettingsPage() {
         enrollment_policy: c.enrollment_policy,
         access_policy: c.access_policy,
         pricing_model: c.pricing_model,
+        price_amount: (c as any).price_amount ?? 0,
+        deposit_amount: (c as any).deposit_amount ?? null,
+        price_currency: (c as any).price_currency || "VND",
+        payment_note: (c as any).payment_note || "",
         cover_url: (c as any).cover_url || "",
         summary: (c as any).summary || "",
       });
@@ -101,6 +105,22 @@ function CourseSettingsPage() {
         cover_url: data.cover_url || null,
         summary: data.summary || null,
       });
+
+      // Update price fields in DB directly
+      const supabase = getSupabaseBrowserClient();
+      if (supabase) {
+        await supabase
+          .from("courses")
+          .update({
+            pricing_model: data.pricing_model,
+            price_amount: data.price_amount ?? 0,
+            deposit_amount: data.deposit_amount ?? null,
+            price_currency: data.price_currency || "VND",
+            payment_note: data.payment_note || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", course.id);
+      }
 
       toast.success("Đã lưu cài đặt khóa học thành công");
       refetchEditorData();
@@ -519,6 +539,65 @@ function CourseSettingsPage() {
               {errors.pricing_model && (
                 <p className="text-sm text-destructive">{errors.pricing_model.message}</p>
               )}
+            </div>
+
+            {/* Pricing details */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
+              <div className="space-y-2">
+                <label htmlFor="price_amount" className="text-xs font-bold text-slate-700">
+                  Học phí chính thức (VNĐ)
+                </label>
+                <input
+                  id="price_amount"
+                  type="number"
+                  {...register("price_amount")}
+                  disabled={isReadOnly}
+                  placeholder="1500000"
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="deposit_amount" className="text-xs font-bold text-slate-700">
+                  Tiền đặt cọc giữ chỗ (VNĐ - N/A nếu 0)
+                </label>
+                <input
+                  id="deposit_amount"
+                  type="number"
+                  {...register("deposit_amount")}
+                  disabled={isReadOnly}
+                  placeholder="500000"
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="price_currency" className="text-xs font-bold text-slate-700">
+                  Đơn vị tiền tệ
+                </label>
+                <input
+                  id="price_currency"
+                  type="text"
+                  {...register("price_currency")}
+                  disabled={isReadOnly}
+                  placeholder="VND"
+                  className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="payment_note" className="text-xs font-bold text-slate-700">
+                Ghi chú thanh toán / Ưu đãi học phí
+              </label>
+              <input
+                id="payment_note"
+                type="text"
+                {...register("payment_note")}
+                disabled={isReadOnly}
+                placeholder="e.g. Giảm 20% cho cựu học viên DESEMBRE..."
+                className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background disabled:opacity-50"
+              />
             </div>
           </div>
         </div>
